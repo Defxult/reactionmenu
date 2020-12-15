@@ -1,3 +1,8 @@
+## How to install
+```
+pip install reactionmenu
+```
+
 ## How to import
 ```py
 from reactionmenu import ReactionMenu, Button, ButtonType
