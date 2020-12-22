@@ -5,7 +5,7 @@ def _get_readme():
         return fp.read()
 
 classifiers = [
-    'Development Status :: 4 - Beta',
+    'Development Status :: 5 - Production/Stable',
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.8'
 ]
@@ -27,7 +27,7 @@ setup(
     author='Defxult#8269',
     name='reactionmenu',
     description='A package to create a discord.py reaction menu. If your discord.py version is 1.5.0+, intents are required',
-    version='0.0.1', 
+    version='1.0.0', 
     url='https://github.com/Defxult',
     classifiers=classifiers,
     long_description=_get_readme(),

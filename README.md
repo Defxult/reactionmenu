@@ -1,8 +1,3 @@
-## How to install
-```
-pip install reactionmenu
-```
-
 ## How to import
 ```py
 from reactionmenu import ReactionMenu, Button, ButtonType
@@ -167,24 +162,24 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 
 ---
 #### All Attributes
-| Attribute | Return Type
-|-----------|------------
-| `ReactionMenu.config` | `int`
-| `ReactionMenu.is_running` | `bool`
-| `ReactionMenu.default_next_button` | `Button`
-| `ReactionMenu.default_back_button` | `Button`
-| `ReactionMenu.next_buttons` | `List[Button]`
-| `ReactionMenu.back_buttons` | `List[Button]`    
-| `ReactionMenu.first_page_buttons` | `List[Button]` 
-| `ReactionMenu.last_page_buttons` | `List[Button]`
-| `ReactionMenu.end_session_buttons` | `List[Button]`
-| `ReactionMenu.custom_embed_buttons` | `List[Button]` 
-| `ReactionMenu.all_buttons` | `List[Button]`
-| `ReactionMenu.rows_requested` | `int`
-| `ReactionMenu.timeout` | `float`   
-| `ReactionMenu.show_page_director` | `bool` 
-| `ReactionMenu.name` | `str` 
-| `ReactionMenu.style` | `str`
-| `ReactionMenu.all_can_react` | `bool`  
-| `ReactionMenu.custom_embed` | `discord.Embed` 
-| `ReactionMenu.wrap_in_codeblock` | `str` 
+| Attribute | Return Type | Info 
+|-----------|-------------|----------
+| `ReactionMenu.config` | `int` | menu config value. 0 = static, 1 = dynamic
+| `ReactionMenu.is_running` | `bool` | if the menu is currently active
+| `ReactionMenu.default_next_button` | `Button` | default next button (in the constructor)
+| `ReactionMenu.default_back_button` | `Button` | default back button (in the constructor)
+| `ReactionMenu.next_buttons` | `List[Button]` | all active next buttons
+| `ReactionMenu.back_buttons` | `List[Button]` | all active back buttons
+| `ReactionMenu.first_page_buttons` | `List[Button]` | all active first page buttons
+| `ReactionMenu.last_page_buttons` | `List[Button]` | all active last pages buttons
+| `ReactionMenu.end_session_buttons` | `List[Button]` | all active end session buttons
+| `ReactionMenu.custom_embed_buttons` | `List[Button]` | all active custum embed buttons
+| `ReactionMenu.all_buttons` | `List[Button]` | all active buttons
+| `ReactionMenu.rows_requested` | `int` | the amount of rows you have set to request
+| `ReactionMenu.timeout` | `float` | value in seconds of when the menu ends
+| `ReactionMenu.show_page_director` | `bool` | how/do not show the current page on the embed
+| `ReactionMenu.name` | `str` | name of the menu instance
+| `ReactionMenu.style` | `str` | custom page director style
+| `ReactionMenu.all_can_react` | `bool`  | if all members can navigate the menu or only the message author
+| `ReactionMenu.custom_embed` | `discord.Embed` | embed object used for custom pages
+| `ReactionMenu.wrap_in_codeblock` | `str` | language identifier when wrapping your data in a discord codeblock
