@@ -1,0 +1,7 @@
+v1.0.1
+    - Added the ability to limit the amount of active menu sessions
+    - Added new ButtonType (ButtonType.GO_TO_PAGE)
+    - Added "go_to_page_buttons" property
+    - Added "total_pages" property
+    - Added class method ReactionMenu.set_sessions_limit()    
+    - Added class method ReactionMenu.cancel_all_sessions()

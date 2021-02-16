@@ -5,14 +5,14 @@ from reactionmenu import ReactionMenu, Button, ButtonType
 ## Showcase
 ![demo](https://cdn.discordapp.com/attachments/655186216060321816/788099328656801852/demo.gif)
 
-This package comes with several methods and options in order to make a reaction menu simple. Once you have imported the proper classes, you will initialize the constructor like so:
+This package comes with several methods and options in order to make a discord reaction menu simple. Once you have imported the proper classes, you will initialize the constructor like so:
 ```py
 menu = ReactionMenu(ctx, back_button='\U000027a1', next_button='\U00002b05', config=ReactionMenu.STATIC) 
 ```
 ---
 ## Parameters of the ReactionMenu constructor
 * `ctx` The `discord.ext.commands.Context` object
-* `back_button` Emoji used to go the previous page. 
+* `back_button` Emoji used to go to the previous page. 
 * `next_button` Emoji used to go to the next page. 
 * `config` The config of the menu is important. You have two options when it comes to configuration. 
     * `ReactionMenu.STATIC` (details below)
@@ -26,7 +26,7 @@ menu = ReactionMenu(ctx, back_button='\U000027a1', next_button='\U00002b05', con
 | `wrap_in_codeblock` | `str` | `None` | `ReactionMenu.DYNAMIC` | (details below)
 | `clear_reactions_after` | `bool` | `True` | `STATIC and DYNAMIC` | delete all reactions after the menu ends
 | `timeout` | `float` | `60.0` | `STATIC and DYNAMIC` | timer in seconds for when the menu ends
-| `show_page_director` | `bool` | `True` | `STATIC and DYNAMIC` | show/do not show the current page on the embed
+| `show_page_director` | `bool` | `True` | `STATIC and DYNAMIC` | show/do not show the current page in the embed footer (Page 1/5)
 | `name` | `str` | `None` | `STATIC and DYNAMIC` | name of the menu instance
 | `style` | `str` | `Page 1/X` | `STATIC and DYNAMIC` | custom page director style
 | `all_can_react` | `bool` | `False` | `STATIC and DYNAMIC` | if all members can navigate the menu or only the message author
@@ -73,7 +73,7 @@ A dynamic menu is used when you do not know how much information will be applied
 
 ##### Adding Rows/data
 ```py
-menu = ReactionMenu(ctx, back_button='\U000027a1', next_button='\U00002b05', config=ReactionMenu.DYNAMIC)
+menu = ReactionMenu(ctx, back_button='\U000027a1', next_button='\U00002b05', config=ReactionMenu.DYNAMIC, rows_requested=2)
 
 for my_data in database.request('SELECT * FROM customers'):
     menu.add_row(my_data)
@@ -104,18 +104,22 @@ Buttons/button types are used when you want to add a reaction to the menu that d
 * `emoji` The emoji you would like to use as the reaction
 * `linked_to` When the reaction is clicked, this is what determines what it will do (`ButtonType`)
 > NOTE: The emoji parameter supports all forms of emojis. You can use the emoji itself, unicode (\U000027a1), or a guild emoji <:miscTwitter:705423192818450453>), etc..
-* There are 6 button types
-    * `ButtonType.NEXT_PAGE`
+* There are 7 button types
+    * `ButtonType.NEXT_PAGE` 
     * `ButtonType.PREVIOUS_PAGE`
     * `ButtonType.GO_TO_FIRST_PAGE`
     * `ButtonType.GO_TO_LAST_PAGE`
-    * `ButtonType.END_SESSION` 
+    * `ButtonType.GO_TO_PAGE`
+      * prompts the user to type in which page they would like to go to
+    * `ButtonType.END_SESSION`
+      * stops the reaction menu
     * `ButtonType.CUSTOM_EMBED`
+      * the embed used when setting your own embed
 ##### Options of the Button constructor [kwargs]
 | Name | Type | Default Value | Used for
 |------|------|---------------|----------
 | `name` | `str` |`None` | The name of the button object
-| `custom_embed` | `discord.Embed` | `None` | When a reaction is pressed, go to the specifed embed. Seperate from going page-to-page 
+| `custom_embed` | `discord.Embed` | `None` | When the reaction is pressed, go to the specifed embed. 
 ---
 ## Button and ButtonType in detail
 * Associated methods
@@ -153,6 +157,34 @@ menu.change_appear_order(first_button, menu.default_back_button, close_menu_butt
 If you did not make an instance of a Button object to access, you can still get that button object by its name if it is set. Example: `menu.get_button_by_name('end')`. With the helper function `menu.help_appear_order()`, it simply prints out all active buttons to the console so you can copy and paste each emoji in the order you'd like.
 
 ---
+## Setting Limits
+* Associated CLASS Methods
+    * `ReactionMenu.set_sessions_limit(limit: int, message: str)` 
+    * `ReactionMenu.cancel_all_sessions()`
+
+If you'd like, you can limit the amount of reaction menus that can be active at the same time. You can do this by using the class method above. Example:
+```py
+from discord.ext import commands
+from reactionmenu import ReactionMenu, Button, ButtonType
+
+class Example(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+	ReactionMenu.set_sessions_limit(3, 'Sessions are limited')
+```
+
+With the above example, only 3 menus can be active at once, and if someone tries to create more before other menus are finished, they will get an error message saying "Sessions are limited".
+
+Depending on where you host your bot, having an excess amount of menus running can possibly have an impact on your bots performance. It is possible to cancel all sessions. Example:
+```py
+@commands.command()
+@commands.has_role('Admin')
+async def killsessions(self, ctx):
+    # ...
+    ReactionMenu.cancel_all_sessions()
+```
+
+---
 ## Starting/Stopping the Menu
 * Associated Methods
     * `await ReactionMenu.start()`
@@ -173,13 +205,15 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 | `ReactionMenu.first_page_buttons` | `List[Button]` | all active first page buttons
 | `ReactionMenu.last_page_buttons` | `List[Button]` | all active last pages buttons
 | `ReactionMenu.end_session_buttons` | `List[Button]` | all active end session buttons
-| `ReactionMenu.custom_embed_buttons` | `List[Button]` | all active custum embed buttons
+| `ReactionMenu.custom_embed_buttons` | `List[Button]` | all active custom embed buttons
+| `ReactionMenu.go_to_page_buttons` | `List[Button]` | all active go to page buttons
 | `ReactionMenu.all_buttons` | `List[Button]` | all active buttons
 | `ReactionMenu.rows_requested` | `int` | the amount of rows you have set to request
 | `ReactionMenu.timeout` | `float` | value in seconds of when the menu ends
-| `ReactionMenu.show_page_director` | `bool` | how/do not show the current page on the embed
+| `ReactionMenu.show_page_director` | `bool` | show/do not show the current page on the embed
 | `ReactionMenu.name` | `str` | name of the menu instance
 | `ReactionMenu.style` | `str` | custom page director style
 | `ReactionMenu.all_can_react` | `bool`  | if all members can navigate the menu or only the message author
 | `ReactionMenu.custom_embed` | `discord.Embed` | embed object used for custom pages
 | `ReactionMenu.wrap_in_codeblock` | `str` | language identifier when wrapping your data in a discord codeblock
+| `ReactionMenu.total_pages` | `int` | total amount of built pages

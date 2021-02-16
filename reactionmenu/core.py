@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2020 Defxult#8269
+Copyright (c) 2021 Defxult#8269
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -23,11 +23,11 @@ DEALINGS IN THE SOFTWARE.
 """
 import collections
 import asyncio
+from enum import Enum, auto
+from typing import List, Union, Deque
 
 from discord import Embed
 from discord.ext.commands import Context
-from enum import Enum, auto
-from typing import List, Union, Deque
 
 from .decorators import *
 
@@ -40,6 +40,9 @@ class ButtonType(Enum):
 	GO_TO_LAST_PAGE = auto()
 	END_SESSION = auto()
 	CUSTOM_EMBED = auto()
+
+	"""Added v1.0.1"""
+	GO_TO_PAGE = auto()
 
 class Button:
 	"""A helper class for :class:`ReactionMenu`. Represents a reaction
@@ -119,6 +122,11 @@ class ReactionMenu:
 
 	STATIC = 0
 	DYNAMIC = 1
+	
+	"""Added v1.0.1"""
+	_active_sessions = []
+	_sessions_limit = None
+	_task_sessions_pool: List[asyncio.Task] = []
 
 	def __init__(self, ctx: Context, *, back_button: str, next_button: str, config: int, **options): 
 		self._ctx = ctx
@@ -193,9 +201,23 @@ class ReactionMenu:
 	def all_buttons(self) -> List[Button]:
 		return self._all_buttons
 	@property
+	def go_to_page_buttons(self) -> List[Button]:
+		""".. Added v1.0.1"""
+		temp = [button for button in self._all_buttons if button.linked_to is ButtonType.GO_TO_PAGE]
+		return temp if temp else None
+	@property
+	def total_pages(self) -> int:
+		"""With a dynamic menu, the total pages isn't known until AFTER the menu has started
+			
+			.. Added v1.0.1
+		"""
+		if self._config == ReactionMenu.STATIC:
+			return len(self._static_completed_pages)
+		elif self._config == ReactionMenu.DYNAMIC:
+			return len(self._dynamic_completed_pages)
+	@property
 	def rows_requested(self) -> int:
 		return self._rows_requested
-
 	@property
 	def clear_reactions_after(self) -> bool:
 		return self._clear_reactions_after
@@ -269,7 +291,7 @@ class ReactionMenu:
 			self._wrap_in_codeblock = value
 		else:
 			raise TypeError(f'"wrap_in_codeblock" expected str, got {value.__class__.__name__}')
-
+	
 	def _maybe_custom_embed(self) -> Embed:
 		"""If a custom embed is set, return it"""
 		if self._custom_embed:
@@ -627,6 +649,13 @@ class ReactionMenu:
 		elif self._current_page > self._last_page:
 			self._current_page = 0
 	
+	@classmethod
+	def _get_task(cls, name: str):
+		"""Return the static/dynamic task object"""
+		for task in cls._task_sessions_pool:
+			if task.get_name() == name:
+				return task
+
 	async def stop(self, *, delete_menu_message=False, clear_reactions=False):
 		"""|coro| Stops the process of the reaction menu with the option of deleting the menu's message or clearing reactions upon cancellation
 		
@@ -639,7 +668,10 @@ class ReactionMenu:
 			default False
 		"""
 		if self._is_running:
+			task = ReactionMenu._get_task('static_task' if self._config == ReactionMenu.STATIC else 'dynamic_task')
+			task.cancel()
 			self._is_running = False
+			ReactionMenu._remove_session(self)
 			if delete_menu_message:
 				await self._msg.delete()
 				return
@@ -666,6 +698,77 @@ class ReactionMenu:
 
 		return all((not_bot, correct_msg, correct_user))
 	
+	@classmethod
+	def _remove_session(cls, menu):
+		"""Upon session completion, remove it from the list of active sessions
+		
+			.. Added v1.0.1
+		"""
+		for curr_menu in cls._active_sessions:
+			if curr_menu == menu:
+				cls._active_sessions.remove(menu)
+				return
+	
+	@classmethod
+	def set_sessions_limit(cls, limit: int, message: str='Too many active reaction menus. Wait for other menus to be finished.'):
+		"""Sets the amount of menu sessions that can be concurrently active. Should be set before any menus are started and cannot be called more than once
+			
+			.. Added v1.0.1
+
+		Parameters
+		----------
+		- limit: `int` The amount of menu sessions allowed
+		- message: `str` Message that will be sent informing users about the menu limit when the limit is reached. Can be `None` for no message
+
+		Example
+		-------
+		>>> class Example(commands.Cog):
+			def __init__(self, bot):
+				self.bot = bot
+				ReactionMenu.set_sessions_limit(3, 'Sessions are limited')
+		 
+		Raises
+		------
+		- `ReactionMenuException`: Attempted to call method when there are menu sessions that are already active or attempted to set a limit of zero
+		"""
+		if len(cls._active_sessions) != 0:
+			# because of the created task(s) when making a session, the menu is still running in the background so manually stopping them is required to stop using resources
+			cls.cancel_all_sessions() 
+			raise ReactionMenuException('Method "set_sessions_limit" cannot be called when any other menus have started')
+
+		if not isinstance(limit, int):
+			raise ReactionMenuException(f'Limit type cannot be {limit.__class__.__name__}, int is required')
+		else:
+			if limit <= 0:
+				raise ReactionMenuException('The session limit must be greater than or equal to one')
+			cls._sessions_limit = limit
+			setattr(cls, 'limit_message', message)
+	
+	@classmethod
+	def cancel_all_sessions(cls):
+		"""This method immediately cancels all sessions that are currently running from the menu sessions task pool. Using this method does not allow the normal operations of :meth:`ReactionMenu.stop()`. This
+		stops all session processing with no regard to changing the status of :prop:`ReactionMenu.is_running` amongst other things.
+
+			.. Added v1.0.1
+		"""
+		for tsk_session in cls._task_sessions_pool:
+			tsk_session.cancel()
+		cls._active_sessions.clear()
+
+	@classmethod
+	def _is_currently_limited(cls) -> bool:
+		"""Check if there is a limit on reaction menus
+		
+			.. Added v1.0.1
+		"""
+		if cls._sessions_limit:
+			if len(cls._active_sessions) < cls._sessions_limit:
+				return False
+			else:
+				return True
+		else:
+			return False
+		
 	async def _execute_session(self, worker):
 		"""Begin the pagination process"""
 		while self._is_running:
@@ -673,6 +776,7 @@ class ReactionMenu:
 				reaction, user = await self._bot.wait_for('reaction_add', check=self._wait_check, timeout=self._timeout)
 			except asyncio.TimeoutError:
 				self._is_running = False
+				ReactionMenu._remove_session(self)
 				if self._clear_reactions_after:
 					await self._msg.clear_reactions()
 				return
@@ -707,19 +811,57 @@ class ReactionMenu:
 						await self._msg.edit(embed=worker[self._current_page])
 						await self._msg.remove_reaction(btn.emoji, self._ctx.author)
 						break
+
+					# go to page
+					elif str(reaction.emoji) == btn.emoji and btn.linked_to is ButtonType.GO_TO_PAGE:
+						"""Added v1.0.1"""
+						def check(m):
+							not_bot = False
+							author_pass = False
+							channel_pass = False
+
+							if not m.author.bot:
+								not_bot = True
+							if self._ctx.author.id == m.author.id:
+								author_pass = True
+							if self._ctx.channel.id == m.channel.id:
+								channel_pass = True
+							
+							if all((author_pass, channel_pass, not_bot)):
+								return True
+							return False
+
+						await self._msg.channel.send(f'{self._ctx.author.name}, what page would you like to go to?')
+						try:
+							msg = await self._bot.wait_for('message', check=check, timeout=self._timeout)
+						except asyncio.TimeoutError:
+							break
+						else:
+							try:
+								requested_page = int(msg.content)
+							except ValueError:
+								break
+							else:
+								if requested_page >= 1 and requested_page <= self.total_pages:
+									self._current_page = requested_page - 1
+									await self._msg.edit(embed=worker[self._current_page])
+									await self._msg.remove_reaction(btn.emoji, self._ctx.author)
+									break
 					
 					# custom buttons
 					elif str(reaction.emoji) == btn.emoji and btn.linked_to is ButtonType.CUSTOM_EMBED:
 						await self._msg.edit(embed=btn.custom_embed)
 						await self._msg.remove_reaction(btn.emoji, self._ctx.author)
 						break
-
+					
 					# end session
 					elif str(reaction.emoji) == btn.emoji and btn.linked_to is ButtonType.END_SESSION:
 						self._is_running = False
+						ReactionMenu._remove_session(self)
 						await self._msg.delete()
 						return
-	
+					
+
 	@ensure_not_primed
 	async def start(self):
 		"""|coro| Starts the reaction menu
@@ -729,6 +871,14 @@ class ReactionMenu:
 		- `MenuAlreadyRunning`: Attempted to call this method after the menu has started
 		- `MenuSettingsMismatch`: The wrong number was used in the "config" parameter. only 0 (`ReactionMenu.STATIC`) or 1 (`ReactionMenu.DYNAMIC`) are permitted
 		"""
+		if ReactionMenu._is_currently_limited():
+			maybe_limit_message = getattr(ReactionMenu, 'limit_message')
+			if maybe_limit_message:
+				await self._ctx.send(maybe_limit_message)
+			return
+		else:
+			ReactionMenu._active_sessions.append(self)
+		
 		if self._config == ReactionMenu.STATIC: 
 			worker = []
 			# no pages at all
@@ -785,7 +935,9 @@ class ReactionMenu:
 				await self._msg.add_reaction(end_session_btn.emoji)
 
 			self._is_running = True
-			self._loop.create_task(self._execute_session(worker))
+			static_task = self._loop.create_task(self._execute_session(worker), name='static_task')
+			ReactionMenu._task_sessions_pool.append(static_task)
+			
 		
 		elif self._config == ReactionMenu.DYNAMIC: 
 			# no data (rows) have been added and no main/last pages have been set
@@ -820,6 +972,8 @@ class ReactionMenu:
 					await self._msg.add_reaction(end_session_btn.emoji)
 
 				self._is_running = True
-				self._loop.create_task(self._execute_session(worker))
+				dynamic_task = self._loop.create_task(self._execute_session(worker), name='dynamic_task')
+				ReactionMenu._task_sessions_pool.append(dynamic_task)
+			
 		else:
 			raise MenuSettingsMismatch('The menu\'s setting for dynamic or static was not recognized')
