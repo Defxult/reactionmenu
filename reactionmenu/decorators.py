@@ -23,7 +23,7 @@ DEALINGS IN THE SOFTWARE.
 """
 import inspect
 from functools import wraps
-from .errors import *
+from .errors import MenuSettingsMismatch, MenuAlreadyRunning
 from . import core
 
 
