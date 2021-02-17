@@ -704,10 +704,8 @@ class ReactionMenu:
 		
 			.. Added v1.0.1
 		"""
-		for curr_menu in cls._active_sessions:
-			if curr_menu == menu:
-				cls._active_sessions.remove(menu)
-				return
+		if menu in cls._active_sessions:
+			cls._active_sessions.remove(menu)
 	
 	@classmethod
 	def set_sessions_limit(cls, limit: int, message: str='Too many active reaction menus. Wait for other menus to be finished.'):
