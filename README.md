@@ -34,6 +34,7 @@ menu = ReactionMenu(ctx, back_button='\U000027a1', next_button='\U00002b05', con
 | `name` | `str` | `None` | `STATIC and DYNAMIC` | name of the menu instance
 | `style` | `str` | `Page 1/X` | `STATIC and DYNAMIC` | custom page director style
 | `all_can_react` | `bool` | `False` | `STATIC and DYNAMIC` | if all members can navigate the menu or only the message author
+| `delete_interactions` | `bool` | `True` | `STATIC and DYNAMIC` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
 > NOTE: All kwargs can also be set using an instance of `ReactionMenu` **except** `rows_requested`
 ---
 ## ReactionMenu.STATIC vs ReactionMenu.DYNAMIC
@@ -165,6 +166,7 @@ If you did not make an instance of a Button object to access, you can still get 
 * Associated CLASS Methods
     * `ReactionMenu.set_sessions_limit(limit: int, message: str)` 
     * `ReactionMenu.cancel_all_sessions()`
+    * `ReactionMenu.get_sessions_count()`
 
 If you'd like, you can limit the amount of reaction menus that can be active at the same time. You can do this by using the class method above. Example:
 ```py
@@ -221,3 +223,4 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 | `ReactionMenu.custom_embed` | `discord.Embed` | embed object used for custom pages
 | `ReactionMenu.wrap_in_codeblock` | `str` | language identifier when wrapping your data in a discord codeblock
 | `ReactionMenu.total_pages` | `int` | total amount of built pages
+| `ReactionMenu.delete_interactions` | `bool` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`

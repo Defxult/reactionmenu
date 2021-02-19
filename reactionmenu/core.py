@@ -29,20 +29,24 @@ from typing import List, Union, Deque
 from discord import Embed
 from discord.ext.commands import Context
 
-from .decorators import *
+from .decorators import dynamic_only, static_only, ensure_not_primed
+from .errors import *
+
 
 class ButtonType(Enum):
-	"""A helper class for :class:`ReactionMenu`. Determines the generic action a button can take"""
+	"""A helper class for :class:`ReactionMenu`. Determines the generic action a button can take
+	
+		.. Changes :: v1.0.1
+			- Added ButtonType.GO_TO_PAGE
+	"""
 
 	NEXT_PAGE = auto()
 	PREVIOUS_PAGE = auto()
 	GO_TO_FIRST_PAGE = auto()
 	GO_TO_LAST_PAGE = auto()
+	GO_TO_PAGE = auto()
 	END_SESSION = auto()
 	CUSTOM_EMBED = auto()
-
-	"""Added v1.0.1"""
-	GO_TO_PAGE = auto()
 
 class Button:
 	"""A helper class for :class:`ReactionMenu`. Represents a reaction
@@ -102,7 +106,7 @@ class ReactionMenu:
 	- clear_reactions_after: `bool` When the menu ends, remove all reactions
 		- default True 
 
-	- timeout: Union[:class:`float`, `None`] Timer for when the menu should end. Can be None for no timeout 
+	- timeout: Union[:class:`float`, `None`] Timer for when the menu should end. Can be `None` for no timeout 
 		- default 60.0 
 
 	- show_page_director: `bool` Shown at the botttom of each embed page. "Page 1/20"
@@ -118,12 +122,23 @@ class ReactionMenu:
 
 	- all_can_react: `bool` Sets if everyone is allowed to control when pages are 'turned' when buttons are pressed
 		- default False
+	
+	- delete_interactions: `bool` Delete the prompt message by the bot and response message by the user when asked what page they would like to go to when using `ButtonType.GO_TO_PAGE`
+		- default True
+
+		.. Changes :: v1.0.1
+			- Added _active_sessions
+			- Added _sessions_limit
+			- Added _task_sessions_pool
+		
+		.. Changes :: v1.0.2
+			- Added _delete_interactions
+
 	"""
 
 	STATIC = 0
 	DYNAMIC = 1
 	
-	"""Added v1.0.1"""
 	_active_sessions = []
 	_sessions_limit = None
 	_task_sessions_pool: List[asyncio.Task] = []
@@ -162,6 +177,8 @@ class ReactionMenu:
 		self._name: str = options.get('name')
 		self._style: str = options.get('style')
 		self._all_can_react: bool = options.get('all_can_react', False)
+		self._delete_interactions: bool = options.get('delete_interactions', True)
+		
 
 	@property
 	def config(self) -> int:
@@ -223,6 +240,17 @@ class ReactionMenu:
 		return self._clear_reactions_after
 	@clear_reactions_after.setter
 	def clear_reactions_after(self, value):
+		"""A property getter/setter for kwarg "clear_reactions_after"
+		
+		Example
+		-------
+		```
+		menu = ReactionMenu(...)
+		menu.clear_reactions_after = True
+		>>> print(menu.clear_reactions_after)
+		True
+		```
+		"""
 		if isinstance(value, bool):
 			self._clear_reactions_after = value
 		else:
@@ -233,6 +261,17 @@ class ReactionMenu:
 		return self._timeout
 	@timeout.setter
 	def timeout(self, value):
+		"""A property getter/setter for kwarg "timeout"
+		
+		Example
+		-------
+		```
+		menu = ReactionMenu(...)
+		menu.timeout = 30.0
+		>>> print(menu.timeout)
+		30.0
+		```
+		"""
 		if isinstance(value, (int, float, type(None))):
 			self._timeout = value
 		else:
@@ -243,16 +282,61 @@ class ReactionMenu:
 		return self._show_page_director
 	@show_page_director.setter
 	def show_page_director(self, value):
+		"""A property getter/setter for kwarg "show_page_director"
+		
+		Example
+		-------
+		```
+		menu = ReactionMenu(...)
+		menu.show_page_director = True
+		>>> print(menu.show_page_director)
+		True
+		```
+		"""
 		if isinstance(value, bool):
 			self._show_page_director = value
 		else:
 			raise TypeError(f'"show_page_director" expected bool, got {value.__class__.__name__}')
 	
 	@property
+	def delete_interactions(self) -> bool:
+		""".. Added v1.0.2"""
+		return self._delete_interactions
+	@delete_interactions.setter
+	def delete_interactions(self, value):
+		"""A property getter/setter for kwarg "delete_interactions"
+		
+		Example
+		-------
+		```
+		menu = ReactionMenu(...)
+		menu.delete_interactions = True
+		>>> print(menu.delete_interactions)
+		True
+		```
+			.. Added v1.0.2
+		"""
+		if isinstance(value, bool):
+			self._delete_interactions = value
+		else:
+			raise TypeError(f'"delete_interactions" expected bool, got {value.__class__.__name__}')
+	
+	@property
 	def name(self) -> str:
 		return self._name
 	@name.setter
 	def name(self, value):
+		"""A property getter/setter for kwarg "name"
+		
+		Example
+		-------
+		```
+		menu = ReactionMenu(...)
+		menu.name = 'my menu'
+		>>> print(menu.name)
+		my menu
+		```
+		"""
 		self._name = str(value)
 
 	@property
@@ -260,6 +344,17 @@ class ReactionMenu:
 		return self._style
 	@style.setter
 	def style(self, value):
+		"""A property getter/setter for kwarg "style"
+		
+		Example
+		-------
+		```
+		menu = ReactionMenu(...)
+		menu.style = 'On $ out of &'
+		>>> print(menu.style)
+		On $ out of &
+		```
+		"""
 		self._style = str(value)
 	
 	@property
@@ -267,6 +362,17 @@ class ReactionMenu:
 		return self._all_can_react
 	@all_can_react.setter
 	def all_can_react(self, value):
+		"""A property getter/setter for kwarg "all_can_react"
+		
+		Example
+		-------
+		```
+		menu = ReactionMenu(...)
+		menu.all_can_react = True
+		>>> print(menu.all_can_react)
+		True
+		```
+		"""
 		if isinstance(value, bool):
 			self._all_can_react = value
 		else:
@@ -277,6 +383,15 @@ class ReactionMenu:
 		return self._custom_embed
 	@custom_embed.setter
 	def custom_embed(self, value):
+		"""A property getter/setter for kwarg "custom_embed"
+		
+		Example
+		-------
+		```
+		menu = ReactionMenu(...)
+		menu.custom_embed = discord.Embed(color=discord.Color.red())
+		```
+		"""
 		if isinstance(value, Embed):
 			self._custom_embed = value
 		else:
@@ -287,6 +402,17 @@ class ReactionMenu:
 		return self._wrap_in_codeblock
 	@wrap_in_codeblock.setter
 	def wrap_in_codeblock(self, value):
+		"""A property getter/setter for kwarg "wrap_in_codeblock"
+		
+		Example
+		-------
+		```
+		menu = ReactionMenu(...)
+		menu.wrap_in_codeblock = 'py'
+		>>> print(menu.wrap_in_codeblock)
+		py
+		```
+		"""
 		if isinstance(value, str):
 			self._wrap_in_codeblock = value
 		else:
@@ -708,8 +834,16 @@ class ReactionMenu:
 			cls._active_sessions.remove(menu)
 	
 	@classmethod
+	def get_sessions_count(cls) -> int:
+		"""A class method that returns the number of active sessions
+		
+			.. Added v1.0.2
+		"""
+		return len(cls._active_sessions)
+	
+	@classmethod
 	def set_sessions_limit(cls, limit: int, message: str='Too many active reaction menus. Wait for other menus to be finished.'):
-		"""Sets the amount of menu sessions that can be concurrently active. Should be set before any menus are started and cannot be called more than once
+		"""A class method that sets the amount of menu sessions that can be concurrently active. Should be set before any menus are started and cannot be called more than once
 			
 			.. Added v1.0.1
 
@@ -720,10 +854,12 @@ class ReactionMenu:
 
 		Example
 		-------
-		>>> class Example(commands.Cog):
+		```
+		class Example(commands.Cog):
 			def __init__(self, bot):
 				self.bot = bot
 				ReactionMenu.set_sessions_limit(3, 'Sessions are limited')
+		```
 		 
 		Raises
 		------
@@ -744,7 +880,7 @@ class ReactionMenu:
 	
 	@classmethod
 	def cancel_all_sessions(cls):
-		"""This method immediately cancels all sessions that are currently running from the menu sessions task pool. Using this method does not allow the normal operations of :meth:`ReactionMenu.stop()`. This
+		"""A class method that immediately cancels all sessions that are currently running from the menu sessions task pool. Using this method does not allow the normal operations of :meth:`ReactionMenu.stop()`. This
 		stops all session processing with no regard to changing the status of :prop:`ReactionMenu.is_running` amongst other things.
 
 			.. Added v1.0.1
@@ -768,7 +904,15 @@ class ReactionMenu:
 			return False
 		
 	async def _execute_session(self, worker):
-		"""Begin the pagination process"""
+		"""Begin the pagination process
+
+			.. Changes :: v1.0.1
+				- Added go to page functionality
+			
+			.. Changes :: v1.0.2
+				- Added optional delete prompt and message interactions
+				
+		"""
 		while self._is_running:
 			try:
 				reaction, user = await self._bot.wait_for('reaction_add', check=self._wait_check, timeout=self._timeout)
@@ -812,7 +956,6 @@ class ReactionMenu:
 
 					# go to page
 					elif str(reaction.emoji) == btn.emoji and btn.linked_to is ButtonType.GO_TO_PAGE:
-						"""Added v1.0.1"""
 						def check(m):
 							not_bot = False
 							author_pass = False
@@ -829,7 +972,7 @@ class ReactionMenu:
 								return True
 							return False
 
-						await self._msg.channel.send(f'{self._ctx.author.name}, what page would you like to go to?')
+						bot_prompt = await self._msg.channel.send(f'{self._ctx.author.name}, what page would you like to go to?')
 						try:
 							msg = await self._bot.wait_for('message', check=check, timeout=self._timeout)
 						except asyncio.TimeoutError:
@@ -844,6 +987,9 @@ class ReactionMenu:
 									self._current_page = requested_page - 1
 									await self._msg.edit(embed=worker[self._current_page])
 									await self._msg.remove_reaction(btn.emoji, self._ctx.author)
+									if self._delete_interactions:
+										await bot_prompt.delete()
+										await msg.delete()
 									break
 					
 					# custom buttons
