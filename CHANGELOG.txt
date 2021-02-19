@@ -6,6 +6,6 @@ v1.0.1  Feb. 16, 2021
     - Added class method ReactionMenu.set_sessions_limit()    
     - Added class method ReactionMenu.cancel_all_sessions()
 
-v1.0.2
+v1.0.2 Feb. 19, 2021
     - Added class method ReactionMenu.get_sessions_count()
     - Added the option to delete the messages sent when interacting with the menu via ButtonType.GO_TO_PAGE. Repeatedly using ButtonType.GO_TO_PAGE can sometimes make the chat look like spam
