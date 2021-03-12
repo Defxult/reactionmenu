@@ -8,7 +8,7 @@ pip install reactionmenu
 from reactionmenu import ReactionMenu, Button, ButtonType
 ```
 ## Showcase
-![demo](https://cdn.discordapp.com/attachments/655186216060321816/819880729809780746/demo.gif)
+![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
 
 This package comes with several methods and options in order to make a discord reaction menu simple. Once you have imported the proper classes, you will initialize the constructor like so:
 ```py
