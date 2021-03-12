@@ -1,3 +1,4 @@
+[![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/month)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/week)](https://pepy.tech/project/reactionmenu)
 ## How to install
 ```
 pip install reactionmenu
@@ -7,7 +8,7 @@ pip install reactionmenu
 from reactionmenu import ReactionMenu, Button, ButtonType
 ```
 ## Showcase
-![demo](https://cdn.discordapp.com/attachments/655186216060321816/788099328656801852/demo.gif)
+![demo](https://cdn.discordapp.com/attachments/655186216060321816/819880729809780746/demo.gif)
 
 This package comes with several methods and options in order to make a discord reaction menu simple. Once you have imported the proper classes, you will initialize the constructor like so:
 ```py
