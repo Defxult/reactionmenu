@@ -1,7 +1,10 @@
 ![logo](https://cdn.discordapp.com/attachments/655186216060321816/820162226316378162/discord.jpg)
 
 [![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/month)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/week)](https://pepy.tech/project/reactionmenu)
-
+## How to install
+```
+pip install reactionmenu
+```
 ## How to import
 ```py
 from reactionmenu import ReactionMenu, Button, ButtonType
