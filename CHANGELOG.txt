@@ -1,3 +1,13 @@
+v1.0.3  Mar. 13, 2021
+    - Added the ability for buttons to call functions
+    - Added new ButtonType (ButtonType.CALLER)
+    - Added class method ButtonType.caller_details()
+    - Fixed a bug where all exceptions were suppressed specifically inside the execution method
+
+v1.0.2  Feb. 19, 2021
+    - Added class method ReactionMenu.get_sessions_count()
+    - Added the option to delete the messages sent when interacting with the menu via ButtonType.GO_TO_PAGE. Repeatedly using ButtonType.GO_TO_PAGE can sometimes make the chat look like spam
+
 v1.0.1  Feb. 16, 2021
     - Added the ability to limit the amount of active menu sessions
     - Added new ButtonType (ButtonType.GO_TO_PAGE)
@@ -5,7 +15,3 @@ v1.0.1  Feb. 16, 2021
     - Added "total_pages" property
     - Added class method ReactionMenu.set_sessions_limit()    
     - Added class method ReactionMenu.cancel_all_sessions()
-
-v1.0.2 Feb. 19, 2021
-    - Added class method ReactionMenu.get_sessions_count()
-    - Added the option to delete the messages sent when interacting with the menu via ButtonType.GO_TO_PAGE. Repeatedly using ButtonType.GO_TO_PAGE can sometimes make the chat look like spam
