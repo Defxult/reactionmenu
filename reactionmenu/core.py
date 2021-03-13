@@ -55,7 +55,7 @@ class ButtonType(Enum):
 
 	@classmethod
 	def caller_details(cls, func, *args, **kwargs) -> tuple:
-		"""Registers the function to call as well as it's arguments. The 'func' parameter should NOT be a function that is a command ( `@client.command()` ) or event ( `@client.event` ). Only plain functions (including async) are to be used
+		"""Registers the function to call as well as it's arguments.
 
 		Parameter
 		---------
@@ -76,9 +76,11 @@ class ButtonType(Enum):
 		```
 
 			.. Added v1.0.3
+
+			.. Changes :: v1.0.4
+				- Support for commands to be used as functions to call
 		"""
-		if isinstance(func, Command):
-			raise ReactionMenuException(f'Function {func.callback.__name__!r} cannot be used with ButtonType.CALLER because it is registered as a command. Commands cannot be registered as callers. Only normal functions should be used')
+		func = func.callback if isinstance(func, Command) else func
 		return (func, args, kwargs)
 
 

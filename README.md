@@ -123,7 +123,7 @@ Buttons/button types are used when you want to add a reaction to the menu that d
 |------|------|---------------|----------
 | `name` | `str` |`None` | The name of the button object
 | `custom_embed` | `discord.Embed` | `None` | When the reaction is pressed, go to the specifed embed. 
-| `details` | `function` | `None` | Assigns the function and it's arguments to call when a `Button` with `ButtonType.CALLER is pressed`
+| `details` | `function` | `None` | Assigns the function and it's arguments to call when a `Button` with `ButtonType.CALLER` is pressed
 ---
 ## Button and ButtonType in detail
 * Associated methods
@@ -161,12 +161,13 @@ menu.add_button(close_menu_button)
 Remove all buttons with `menu.clear_all_buttons()`. You can also remove an individual button using its name if you have it set, or the button object itself with `menu.remove_button()`
 
 ##### ButtonType methods
-At the moment, there is only 1 method in the `ButtonType` class. Class method `caller_details`. This class method is used to setup functions and it's arguments that are later called when the button is pressed. `ButtonType.CALLER` buttons are used to implement your own functionality into the menu. Maybe you want to add a button that creates a text channel or add something to a database. Please note that functions that are registered as commands (`@client.command()`) are not allowed to be used as a caller button type. Only normal functions can be used with `ButtonType.CALLER`
+At the moment, there is only 1 method in the `ButtonType` class. Class method `caller_details`. This class method is used to setup functions and it's arguments that are later called when the button is pressed. `ButtonType.CALLER` buttons are used to implement your own functionality into the menu. Maybe you want to add a button that creates a text channel or add something to a database.
 
 >Example
 
 ```py
-async def add_to_database(name, discord_id, *, country):
+@client.command()
+async def add_to_database(ctx, name, discord_id, *, country):
     # . . .
 
 def car(make, year):
@@ -174,7 +175,7 @@ def car(make, year):
 
 menu = ReactionMenu(...)
 
-db_add = Button(emoji='\U000027a1', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(add_to_database, 'Defxult', 123456789, country='U.S'))
+db_add = Button(emoji='\U000027a1', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(add_to_database, ctx, 'Defxult', 123456789, country='U.S'))
 vehicle = Button(emoji='\U000023ea', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(car, 'Ford', 2021))
 
 menu.add_button(db_add)
