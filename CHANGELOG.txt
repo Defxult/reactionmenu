@@ -1,3 +1,6 @@
+v1.0.4  Mar. 13, 2021
+    - Small additional update for v1.0.3. Support for @client.command() functions to be used with ButtonType.CALLER
+
 v1.0.3  Mar. 13, 2021
     - Added the ability for buttons to call functions
     - Added new ButtonType (ButtonType.CALLER)
