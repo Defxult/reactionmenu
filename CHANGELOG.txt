@@ -3,7 +3,7 @@ v1.0.5  Mar.19, 2021
     - Added class variable ReactionMenu.FAST
     - Added ReactionMenu kwarg "navigation_speed". Used with either ReactionMenu.NORMAL or ReactionMenu.FAST
     - Fixed a bug where if multiple menu instances were created and stopped in a single execution, calling ReactionMenu.stop() could stop the wrong instance
-    - Fixed a bug where if an exception was to occur during the startup of a menu, exceptions such as discord.py's "missing permissons" exception would be suppressed and not be displayed 
+    - Fixed a bug where if an exception was to occur during the startup of a menu, exceptions such as discord.py's "missing permissions" exception would be suppressed and not be displayed 
     - Fixed a bug with Button objects where a duplicate name/emoji could be used
 
 v1.0.4  Mar. 13, 2021
