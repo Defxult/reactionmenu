@@ -21,10 +21,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 DEALINGS IN THE SOFTWARE.
 """
-import inspect
+import asyncio
 from functools import wraps
-from .errors import MenuSettingsMismatch, MenuAlreadyRunning
+
 from . import core
+from .errors import MenuSettingsMismatch, MenuAlreadyRunning
 
 
 def dynamic_only(func):
@@ -51,7 +52,7 @@ def static_only(func):
 
 def ensure_not_primed(func):
     """Check to make sure certain methods cannot be ran once the menu has been fully started"""
-    if inspect.iscoroutinefunction(func):
+    if asyncio.iscoroutinefunction(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             inst = args[0]

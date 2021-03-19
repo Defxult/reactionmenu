@@ -1,6 +1,9 @@
 ![logo](https://cdn.discordapp.com/attachments/655186216060321816/820162226316378162/discord.jpg)
+<div align="center">
 
 [![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/month)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/week)](https://pepy.tech/project/reactionmenu)
+</div>
+
 ## How to install
 ```
 pip install reactionmenu
@@ -22,23 +25,24 @@ menu = ReactionMenu(ctx, back_button='\U000027a1', next_button='\U00002b05', con
 * `back_button` Emoji used to go to the previous page. 
 * `next_button` Emoji used to go to the next page. 
 * `config` The config of the menu is important. You have two options when it comes to configuration. 
-    * `ReactionMenu.STATIC` (details below)
-    * `ReactionMenu.DYNAMIC` (details below)
+    * `ReactionMenu.STATIC` [more info](#reactionmenustatic-vs-reactionmenudynamic)
+    * `ReactionMenu.DYNAMIC` [more info](#reactionmenustatic-vs-reactionmenudynamic)
 ---
 ## Options of the ReactionMenu constructor [kwargs]
 | Name | Type | Default Value | Used for | Info
 |------|------|---------------|----------|-------
-| `rows_requested` | `int` |`None` | `ReactionMenu.DYNAMIC` | (details below) 
-| `custom_embed` | `discord.Embed` | `None` | `ReactionMenu.DYNAMIC` | (details below)
-| `wrap_in_codeblock` | `str` | `None` | `ReactionMenu.DYNAMIC` | (details below)
-| `clear_reactions_after` | `bool` | `True` | `STATIC and DYNAMIC` | delete all reactions after the menu ends
+| `rows_requested` | `int` |`None` | `ReactionMenu.DYNAMIC` | [more info](#dynamic)
+| `custom_embed` | `discord.Embed` | `None` | `ReactionMenu.DYNAMIC` | [more info](#dynamic)
+| `wrap_in_codeblock` | `str` | `None` | `ReactionMenu.DYNAMIC` | [more info](#dynamic)
+| `clear_reactions_after` | `bool` | `True` | `STATIC and DYNAMIC` | delete all reactions after the menu times out
 | `timeout` | `float` | `60.0` | `STATIC and DYNAMIC` | timer in seconds for when the menu ends
 | `show_page_director` | `bool` | `True` | `STATIC and DYNAMIC` | show/do not show the current page in the embed footer (Page 1/5)
 | `name` | `str` | `None` | `STATIC and DYNAMIC` | name of the menu instance
 | `style` | `str` | `Page 1/X` | `STATIC and DYNAMIC` | custom page director style
 | `all_can_react` | `bool` | `False` | `STATIC and DYNAMIC` | if all members can navigate the menu or only the message author
 | `delete_interactions` | `bool` | `True` | `STATIC and DYNAMIC` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
-> NOTE: All kwargs can also be set using an instance of `ReactionMenu` **except** `rows_requested`
+| `navigation_speed` | `str` | `ReactionMenu.NORMAL` | `STATIC and DYNAMIC` | sets if the user needs to wait for the reaction to be removed by the bot before "turning" the page. Setting the speed to `ReactionMenu.FAST` makes it so that there is no need to wait (reactions are not removed on each press) and can navigate lengthy menu's more quickly
+> NOTE: All `ReactionMenu` kwargs can also be set using an instance of `ReactionMenu` **except** `rows_requested`
 ---
 ## ReactionMenu.STATIC vs ReactionMenu.DYNAMIC
 ## Static 
@@ -61,10 +65,10 @@ for member_embed in member_details:
     menu.add_page(member_embed)
 ```
 ##### Deleting Pages
-You can delete a single page using `menu.remove_page(3)` or all pages with `menu.clear_all_pages()`. If you have any custom pages (more on that below), you can delete them all with `menu.clear_all_custom_pages()`
+You can delete a single page using `menu.remove_page()` or all pages with `menu.clear_all_pages()`. If you have any custom embed pages ( [more on that below](#all-buttontypes) ), you can delete them all with `menu.clear_all_custom_pages()`
 
 ## Dynamic
-A dynamic menu is used when you do not know how much information will be applied to the menu. For example, if you were to request information from a database, that information can always change. You query something and you might get 1,500 results back, and the next maybe only 800. A dynamic menu pieces all this information together for you and adds it to an embed page by rows of data. `.add_row()` is best used in some sort of `Iterable` where everything can be looped through, but only add the amount of data you want to the menu page
+A dynamic menu is used when you do not know how much information will be applied to the menu. For example, if you were to request information from a database, that information can always change. You query something and you might get 1,500 results back, and the next maybe only 800. A dynamic menu pieces all this information together for you and adds it to an embed page by rows of data. `.add_row()` is best used in some sort of `Iterable` where everything can be looped through, but only add the amount of data you want to the menu page.
 > NOTE: In a dynamic menu, all added data is placed in the description section of an embed. If you choose to use a `custom_embed`, all text in the description will be overriden with the data you add
 * Associated methods
     * `ReactionMenu.add_row(data: str)`
@@ -111,24 +115,17 @@ Buttons/button types are used when you want to add a reaction to the menu that d
 ##### Parameters of the Button constructor
 * `emoji` The emoji you would like to use as the reaction
 * `linked_to` When the reaction is clicked, this is what determines what it will do (`ButtonType`)
-> NOTE: The emoji parameter supports all forms of emojis. You can use the emoji itself, unicode (\U000027a1), or a guild emoji <:miscTwitter:705423192818450453>), etc..
-* There are 8 button types
-    * `ButtonType.NEXT_PAGE` 
-    * `ButtonType.PREVIOUS_PAGE`
-    * `ButtonType.GO_TO_FIRST_PAGE`
-    * `ButtonType.GO_TO_LAST_PAGE`
-    * `ButtonType.GO_TO_PAGE`
-    * `ButtonType.END_SESSION`
-    * `ButtonType.CUSTOM_EMBED`
-    * `ButtonType.CALLER`
+> NOTE: The emoji parameter supports all forms of emojis. You can use the emoji itself (:sunglasses:), unicode (\U000027a1), or a guild emoji (<:miscTwitter:705423192818450453>), etc..
+
 ##### Options of the Button constructor [kwargs]
 | Name | Type | Default Value | Used for
 |------|------|---------------|----------
 | `name` | `str` |`None` | The name of the button object
-| `custom_embed` | `discord.Embed` | `None` | When the reaction is pressed, go to the specifed embed. 
-| `details` | `function` | `None` | Assigns the function and it's arguments to call when a `Button` with `ButtonType.CALLER` is pressed
----
-## Button and ButtonType in detail
+| `embed` | `discord.Embed` | `None` | When the reaction is pressed, go to the specifed embed. 
+| `details` | [more info](#buttons-with-buttontypecaller) | `None` | Assigns the function and it's arguments to call when a `Button` with `ButtonType.CALLER` is pressed
+
+> NOTE: All `Button` kwargs can also be set using an instance of `Button`
+
 * Associated methods
     * `ReactionMenu.add_button(button: Button)`
     * `ReactionMenu.clear_all_buttons()`
@@ -137,8 +134,9 @@ Buttons/button types are used when you want to add a reaction to the menu that d
     * `ReactionMenu.get_button_by_name(name: str)`
     * `ReactionMenu.help_appear_order()`
     * `ButtonType.caller_details(func, *args, **kwargs)`
-##### Information on ButtonType
-| Types | Info |
+
+##### All ButtonTypes
+| Type | Info |
 |-------|------|
 | `ButtonType.NEXT_PAGE` | Go to the next page in the menu session
 | `ButtonType.PREVIOUS_PAGE` | Go to the previous page in the menu session
@@ -146,44 +144,60 @@ Buttons/button types are used when you want to add a reaction to the menu that d
 | `ButtonType.GO_TO_LAST_PAGE` | Go to the last page in the menu session
 | `ButtonType.GO_TO_PAGE` | Prompts you to type in the page you'd like to go to
 | `ButtonType.END_SESSION` | Terminates the session and deletes the menu message. This is not like `ReactionMenu.stop()`
-| `ButtonType.CUSTOM_EMBED` | Used for the aesthetic of a dynamic menu
-| `ButtonType.CALLER` | Used when specifying the function to call and it's arguments when the button is pressed
+| `ButtonType.CUSTOM_EMBED` | Used separately from the navigation buttons. Once clicked, go to the specified embed 
+| `ButtonType.CALLER` | Used when specifying the function to call and it's arguments when the button is pressed ( [more info](#buttons-with-buttontypecaller) )
 
 ##### Adding Buttons
-You can add buttons (reactions) to the menu using a `Button`. By default, 2 buttons have already been set in the `ReactionMenu` constructor. The `back_button` as `ButtonType.PREVIOUS_PAGE` and `next_button` as `ButtonType.NEXT_PAGE`. It's up to you if you would like additional buttons. 
-```py
-first_button = Button(emoji='\U000023ea', linked_to=ButtonType.GO_TO_FIRST_PAGE)
-server_details_button = Button(emoji='\N{winking face}', linked_to=ButtonType.CUSTOM_EMBED, embed=info_embed)
-close_menu_button = Button(emoji='<:miscRed:694466531098099753>', linked_to=ButtonType.END_SESSION, name='end')
+You can add buttons (reactions) to the menu using a `Button`. By default, two buttons have already been set in the `ReactionMenu` constructor. The `back_button` as `ButtonType.PREVIOUS_PAGE` and `next_button` as `ButtonType.NEXT_PAGE`. It's up to you if you would like additional buttons. Below are examples on how to implement each `ButtonType`. 
+> NOTE: Buttons with `ButtonType.CALLER` are a little different, so there is a dedicated section explaining how they work and how to implement them [here](#buttons-with-buttontypecaller)
 
-menu.add_button(first_button)
-menu.add_button(server_details_button)
-menu.add_button(close_menu_button)
+
+```py
+menu = ReactionMenu(...)
+
+# first and last pages
+fpb = Button(emoji='\U000023ea', linked_to=ButtonType.GO_TO_FIRST_PAGE)
+lpb = Button(emoji='\N{winking face}', linked_to=ButtonType.GO_TO_LAST_PAGE)
+
+# go to page
+gtpb = Button(emoji='<:miscRed:694466531098099753>', linked_to=ButtonType.GO_TO_PAGE)
+
+# end session
+esb = Button(emoji='\U000023ea', linked_to=ButtonType.END_SESSION)
+
+# custom embed
+ceb = Button(emoji='\N{winking face}', linked_to=ButtonType.CUSTOM_EMBED, embed=discord.Embed(title='Hello'))
+
+menu.add_button(fpb)
+menu.add_button(lpb)
+menu.add_button(gtpb)
+menu.add_button(esb)
+menu.add_button(ceb)
 ```
 ##### Deleting Buttons
 Remove all buttons with `menu.clear_all_buttons()`. You can also remove an individual button using its name if you have it set, or the button object itself with `menu.remove_button()`
 
-##### ButtonType methods
-At the moment, there is only 1 method in the `ButtonType` class. Class method `caller_details`. This class method is used to setup functions and it's arguments that are later called when the button is pressed. `ButtonType.CALLER` buttons are used to implement your own functionality into the menu. Maybe you want to add a button that creates a text channel or add something to a database.
+##### Buttons with ButtonType.CALLER
+`ButtonType.CALLER` buttons are used to implement your own functionality into the menu. Maybe you want to add a button that creates a text channel, sends a message, or add something to a database, whatever it may be. In order to work with `ButtonType.CALLER`, use the class method below.
 
->Example
+* `ButtonType.caller_details(func, *args, **kwargs)`
+  
+This class method is used to setup a function and it's arguments that are later called when the button is pressed. The `Button` constructor has the kwarg `details`, and that's what you'll use with `.caller_details` to assign the values needed. Some examples are below on how to properly implement `ButtonType.CALLER`
 
 ```py
 @client.command()
-async def add_to_database(ctx, name, discord_id, *, country):
-    # . . .
+async def user(ctx, name, *, message):
+    await ctx.send(f"Hi {name}! {message}. We're glad you're here!")
 
-def car(make, year):
-    # . . .
+def car(year, make, model):
+    print(f"I have a {year} {make} {model}")
 
-menu = ReactionMenu(...)
-
-db_add = Button(emoji='\U000027a1', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(add_to_database, ctx, 'Defxult', 123456789, country='U.S'))
-vehicle = Button(emoji='\U000023ea', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(car, 'Ford', 2021))
-
-menu.add_button(db_add)
-menu.add_button(vehicle)
+ub = Button(emoji='\U000027a1', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(user, ctx, 'Defxult', message='Welcome to the server'))
+cb = Button(emoji='\U000023ea', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(car, 2021, 'Ford', 'Mustang'))
 ```
+> NOTE: The function you pass in should not return anything. Calling functions with `ButtonType.CALLER` does not store or handle anything returned by that function
+
+---
 
 ##### Emoji Order
 It is possible to change the order the reactions appear in on the menu.
@@ -196,7 +210,7 @@ close_menu_button = Button(emoji='<:miscRed:694466531098099753>', linked_to=Butt
 
 menu.change_appear_order(first_button, menu.default_back_button, close_menu_button, menu.default_next_button)
 ```
-If you did not make an instance of a Button object to access, you can still get that button object by its name if it is set. Example: `menu.get_button_by_name('end')`. With the helper function `menu.help_appear_order()`, it simply prints out all active buttons to the console so you can copy and paste each emoji in the order you'd like.
+If you did not make an instance of a Button object to access, you can still get that button object by its name if it is set and has been added to the menu via `menu.add_button()`. Example: `menu.get_button_by_name('end')`. With the helper function `menu.help_appear_order()`, it simply prints out all active buttons to the console so you can copy and paste each emoji in the order you'd like.
 
 ---
 ## Setting Limits
@@ -239,18 +253,22 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 #### All Attributes
 | Attribute | Return Type | Info 
 |-----------|-------------|----------
-| `ReactionMenu.config` | `int` | menu config value. 0 = static, 1 = dynamic
+| `ReactionMenu.STATIC` | `int` | menu config value (class attribute)
+| `ReactionMenu.DYNAMIC` | `int` | menu config value (class attribute)  
+| `ReactionMenu.NORMAL` | `str` | menu kwarg value (class attribute)
+| `ReactionMenu.FAST` | `str` | menu kwarg value (class attribute)
+| `ReactionMenu.config` | `int` | menu config value (`STATIC` or `DYNAMIC`)
 | `ReactionMenu.is_running` | `bool` | if the menu is currently active
-| `ReactionMenu.default_next_button` | `Button` | default next button (in the constructor)
-| `ReactionMenu.default_back_button` | `Button` | default back button (in the constructor)
-| `ReactionMenu.next_buttons` | `List[Button]` | all active next buttons
-| `ReactionMenu.back_buttons` | `List[Button]` | all active back buttons
-| `ReactionMenu.first_page_buttons` | `List[Button]` | all active first page buttons
-| `ReactionMenu.last_page_buttons` | `List[Button]` | all active last pages buttons
-| `ReactionMenu.end_session_buttons` | `List[Button]` | all active end session buttons
-| `ReactionMenu.custom_embed_buttons` | `List[Button]` | all active custom embed buttons
-| `ReactionMenu.go_to_page_buttons` | `List[Button]` | all active go to page buttons
-| `ReactionMenu.caller_buttons` | `List[Button]` | all active caller buttons
+| `ReactionMenu.default_next_button` | `Button` | default next button (in the `ReactionMenu` constructor)
+| `ReactionMenu.default_back_button` | `Button` | default back button (in the `ReactionMenu` constructor)
+| `ReactionMenu.next_buttons` | `List[Button]` | all active `ButtonType.NEXT_PAGE` buttons
+| `ReactionMenu.back_buttons` | `List[Button]` | all active `ButtonType.PREVIOUS_PAGE` buttons
+| `ReactionMenu.first_page_buttons` | `List[Button]` | all active `ButtonType.GO_TO_FIRST_PAGE` buttons
+| `ReactionMenu.last_page_buttons` | `List[Button]` | all active `ButtonType.GO_TO_LAST_PAGE` buttons
+| `ReactionMenu.end_session_buttons` | `List[Button]` | all active `ButtonType.END_SESSION` buttons
+| `ReactionMenu.custom_embed_buttons` | `List[Button]` | all active `ButtonType.CUSTOM_EMBED` buttons
+| `ReactionMenu.go_to_page_buttons` | `List[Button]` | all active `ButtonType.GO_TO_PAGE` buttons
+| `ReactionMenu.caller_buttons` | `List[Button]` | all active `ButtonType.CALLER` buttons
 | `ReactionMenu.all_buttons` | `List[Button]` | all active buttons
 | `ReactionMenu.rows_requested` | `int` | the amount of rows you have set to request
 | `ReactionMenu.timeout` | `float` | value in seconds of when the menu ends
@@ -262,3 +280,4 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 | `ReactionMenu.wrap_in_codeblock` | `str` | language identifier when wrapping your data in a discord codeblock
 | `ReactionMenu.total_pages` | `int` | total amount of built pages
 | `ReactionMenu.delete_interactions` | `bool` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
+| `ReactionMenu.navigation_speed` | `str` | the current setting for the menu navigation speed

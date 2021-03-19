@@ -55,11 +55,12 @@ class ButtonType(Enum):
 
 	@classmethod
 	def caller_details(cls, func, *args, **kwargs) -> tuple:
-		"""Registers the function to call as well as it's arguments.
+		"""Registers the function to call as well as it's arguments. Please note that the function you set should not return anything.
+		Calling functions with :attr:`ButtonType.CALLER` does not store or handle anything returned by :param:`func`
 
 		Parameter
 		---------
-		- func: `object` The function object you want to call when the button is pressed
+		- func: `object` The function object you want to call when the button is pressed. 
 		
 		Info
 		----
@@ -128,7 +129,7 @@ class ReactionMenu:
 	- ctx: :class:`discord.ext.commands.Context` The Context object. You can get this using a command or if in `discord.on_message`
 	- back_button: :class:`str` Button used to go to the previous page of the menu
 	- next_button: :class:`str` Button used to go to the next page of the menu
-	- config: :class:`int` The menus core function to set. Class variables `ReactionMenu.STATIC` or `ReactionMenu.DYNAMIC`
+	- config: :class:`int` The menus core function to set. Class variables :attr:`ReactionMenu.STATIC` or :attr:`ReactionMenu.DYNAMIC`
 
 	Options [kwargs]
 	----------------
@@ -145,7 +146,7 @@ class ReactionMenu:
 		- default None 
 		>>> ReactionMenu(ctx, ..., wrap_in_codeblock='py') 
 
-	- clear_reactions_after: :class:`bool` When the menu ends, remove all reactions
+	- clear_reactions_after: :class:`bool` If the menu times out, remove all reactions
 		- default True 
 
 	- timeout: Union[:class:`float`, :class:`None`] Timer for when the menu should end. Can be :class:`None` for no timeout 
@@ -167,6 +168,10 @@ class ReactionMenu:
 	
 	- delete_interactions: :class:`bool` Delete the prompt message by the bot and response message by the user when asked what page they would like to go to when using `ButtonType.GO_TO_PAGE`
 		- default True
+	
+	- navigation_speed: :class:`str` Sets if the user needs to wait for the reaction to be removed by the bot before "turning" the page. Setting the speed to :attr:`ReactionMenu.FAST` makes it so
+	that there is no need to wait (reactions are not removed on each press) and can navigate lengthy menu's more quickly
+		- default ReactionMenu.NORMAL
 
 		.. Changes :: v1.0.1
 			- Added :attr:_active_sessions
@@ -175,11 +180,16 @@ class ReactionMenu:
 		
 		.. Changes :: v1.0.2
 			- Added :attr:_delete_interactions
-
+		
+		.. Changes :: v1.0.5
+			- Added :attr:_navigation_speed
+			- Added :attr:NORMAL
+			- Added :attr:FAST
 	"""
-
 	STATIC = 0
 	DYNAMIC = 1
+	NORMAL = 'NORMAL'
+	FAST = 'FAST'
 	
 	_active_sessions = []
 	_sessions_limit = None
@@ -220,6 +230,7 @@ class ReactionMenu:
 		self._style: str = options.get('style')
 		self._all_can_react: bool = options.get('all_can_react', False)
 		self._delete_interactions: bool = options.get('delete_interactions', True)
+		self._navigation_speed: str = options.get('navigation_speed', ReactionMenu.NORMAL)
 		
 	@property
 	def config(self) -> int:
@@ -295,6 +306,34 @@ class ReactionMenu:
 	@property
 	def rows_requested(self) -> int:
 		return self._rows_requested
+	
+	@property
+	def navigation_speed(self) -> str:
+		""".. Added v1.0.5"""
+		return self._navigation_speed
+	
+	@navigation_speed.setter
+	def navigation_speed(self, value):
+		"""A property getter/setter for kwarg "navigation_speed"
+		
+		Example
+		-------
+		```
+		menu = ReactionMenu(...)
+		menu.navigation_speed = ReactionMenu.NORMAL
+		>>> print(menu.navigation_speed)
+		NORMAL
+		```
+			.. Added v1.0.5
+		"""
+		if not self._is_running:
+			if value in (ReactionMenu.NORMAL, ReactionMenu.FAST):
+				self._navigation_speed = value
+			else:
+				raise ReactionMenuException(f'When setting the \'navigation_speed\' of a menu, {value!r} is not a valid value')
+		else:
+			ReactionMenu.cancel_all_sessions()
+			raise MenuAlreadyRunning(f'You cannot set the navigation speed when the menu is already running. Menu name: {self._name}')
 
 	@property
 	def clear_reactions_after(self) -> bool:
@@ -567,7 +606,7 @@ class ReactionMenu:
 		"""
 		pages_count = len(self._static_completed_pages)
 		if page_number <= 0 or page_number > pages_count:
-			raise InvalidPage(f'There are currently {pages_count} pages. You need to delete a page betweem 1-{pages_count}')
+			raise InvalidPage(f'There are currently {pages_count} pages. You need to delete a page between 1-{pages_count}')
 		else:
 			del self._static_completed_pages[page_number - 1]
 	
@@ -744,7 +783,7 @@ class ReactionMenu:
 
 			# if the Button has a name, make sure its not a dupliate name
 			if button.name in [btn.name for btn in self._all_buttons if btn.name]:
-				raise NameError('There cannot be duplicate names when setting the name for a Button')
+				raise ReactionMenuException('There cannot be duplicate names when setting the name for a Button')
 
 			if button.linked_to is ButtonType.CALLER and not button.details:
 				raise MissingSetting('When adding a button with the type "ButtonType.CALLER", the kwarg "details" must be set.')
@@ -819,7 +858,7 @@ class ReactionMenu:
 			self._all_buttons.sort(key=self._sort_key) 
 		else:
 			def _new_order_extracted():
-				"""If the item in emoji_or_button isinstance of Button, convert it to the emoji it represents, then add it to the list"""
+				"""If the item in :param:`emoji_or_button` isinstance of :class:`Button`, convert it to the emoji it represents, then add it to the list"""
 				new = []
 				for item in emoji_or_button:
 					if isinstance(item, str):
@@ -867,9 +906,22 @@ class ReactionMenu:
 
 		- clear_reactions: :class:`bool` (optional) Clear the reactions on the menu's message when stopped
 			default False
+
+			.. Changes :: v1.0.5
+				- Added ID handling for static/dynamic task names
 		"""
+		def get_proper_task() -> str:
+			"""Depending on the menu instance ID, return the task name equivalent with that ID
+				
+				.. Added v1.0.5
+			"""
+			if self._config == ReactionMenu.STATIC:
+				return 'static_task_%s' % id(self)
+			else:
+				return 'dynamic_task_%s' % id(self)
+
 		if self._is_running:
-			task = ReactionMenu._get_task('static_task' if self._config == ReactionMenu.STATIC else 'dynamic_task')
+			task = ReactionMenu._get_task(get_proper_task())
 			task.cancel()
 			self._is_running = False
 			ReactionMenu._remove_session(self)
@@ -915,7 +967,7 @@ class ReactionMenu:
 			.. Added v1.0.2
 		"""
 		return len(cls._active_sessions)
-	
+
 	@classmethod
 	def set_sessions_limit(cls, limit: int, message: str='Too many active reaction menus. Wait for other menus to be finished.'):
 		"""A class method that sets the amount of menu sessions that can be concurrently active. Should be set before any menus are started and cannot be called more than once
@@ -956,7 +1008,8 @@ class ReactionMenu:
 	@classmethod
 	def cancel_all_sessions(cls):
 		"""A class method that immediately cancels all sessions that are currently running from the menu sessions task pool. Using this method does not allow the normal operations of :meth:`ReactionMenu.stop()`. This
-		stops all session processing with no regard to changing the status of :attr:`ReactionMenu.is_running` amongst other things.
+		stops all session processing with no regard to changing the status of :attr:`ReactionMenu.is_running` amongst other things. Should only be used if you have an excess amount of menus running and it has an affect on 
+		your bots performance
 
 			.. Added v1.0.1
 		"""
@@ -977,15 +1030,85 @@ class ReactionMenu:
 				return True
 		else:
 			return False
-		
+	
 	def _asyncio_exception_callback(self, task: asyncio.Task):
-		"""Used for "handling" unhandled exceptions in :meth:`_execute_session`. Because that method is running in the background (asyncio.create_task), a callback is needed
+		"""Used for "handling" unhandled exceptions in :meth:`ReactionMenu._execute_session`. Because that method is running in the background (asyncio.create_task), a callback is needed
 		when an exception is raised or else all exceptions are suppressed/lost until the program terminates, which it won't because it's a bot. This re-raises those exceptions
-		if any so proper debugging can occur both on my end and the users end (using ButtonType.CALLER)
+		if any so proper debugging can occur both on my end and the users end (using :attr:`ButtonType.CALLER`)
 			
 			.. Added v1.0.3
+
+			.. Changes :: v1.0.5
+				- Added try/except to properly handle/display the appropriate tracebacks for when tasks are cancelled
 		"""
-		task.result()
+		# only catch this error because I want every other error in :meth:`ReactionMenu._execute_session` to be re-raised. i.e, missing add reactions perms, etc
+		try:
+			task.result()
+		except asyncio.CancelledError:
+			pass # ignore this exception so discord.py can reproduce the traceback properly
+	
+	async def _handle_fast_navigation(self):
+		"""If either of the below events are dispatched, return the result (reaction, user) of the coroutine object. Used in :meth:`ReactionMenu._execute_session` for :attr:`ReactionMenu.FAST`.
+		Can timeout, `.result()` raises :class:`asyncio.TimeoutError` but is caught in :meth:`ReactionMenu._execute_session` for proper cleanup. This is the core function as to how the 
+		navigation speed system works
+		
+			.. Added v1.0.5
+
+				.. Note :: Handling of aws's 
+					The additional time (+ 0.1) is needed because the items in :attr:`wait_for_aws` timeout at the exact same time. Meaning that there will never be an object in :attr:`pending` (which is what I want)
+					which renders the ~return_when param useless because the first event that was dispatched is stored in :attr:`done`. Since they timeout at the same time,
+					both aws are stored in :attr:`done` upon timeout. 
+					
+					The goal is to return the result of a single :meth:`discord.Client.wait_for`, the result is returned but the :class:`asyncio.TimeoutError`
+					exception that was raised in :meth:`asyncio.wait` (because of the timeout by the other aws) goes unhandled and the exception is raised. The additional time allows the 
+					cancellation of the task before the exception (Task exception was never retrieved) is raised 
+		"""
+		wait_for_aws = (
+			self._bot.wait_for('reaction_add', check=self._wait_check, timeout=self._timeout),
+			self._bot.wait_for('reaction_remove', check=self._wait_check, timeout=self._timeout + 0.1) 
+		)
+		done, pending = await asyncio.wait(wait_for_aws, return_when=asyncio.FIRST_COMPLETED)
+
+		temp_pending = list(pending)
+		temp_pending[0].cancel()
+
+		temp_done = list(done)
+		return temp_done[0].result()
+	
+	async def _execute_navigation_type(self, worker, emoji, **kwargs):
+		"""This controls whether the user has to wait until the emoji is removed from the message by the :class:`discord.Client` in order to continue 'turning' pages in the menu session. 
+		:attr:`ReactionMenu.NORMAL` indicates the user has to wait for the :class:`discord.Client` to remove the reaction. :attr:`ReactionMenu.FAST` indicates no wait is needed and is 
+		processed on each `reaction_add` and `reaction_remove`. In v1.0.0 - v1.0.4, the handling of each button press was processed in :meth:`ReactionMenu._execute_session`. This replaces that
+		so each button press is also handled through here now as :attr:`ReactionMenu.NORMAL`, as well as the handling of :attr:`ReactionMenu.FAST`
+
+		Kwargs
+		------
+		- from_custom_button: :class:`bool` Handles the editing process with interactions from :attr:`ButtonType.CUSTOM_EMBED`		
+		- from_caller_button: :class:`bool` Handles the editing process with interactions from :attr:`ButtonType.CALLER`
+			
+			.. Added v1.0.5
+		"""
+		from_custom_button = kwargs.get('from_custom_button', False)
+		from_caller_button = kwargs.get('from_caller_button', False)
+
+		if self._navigation_speed == ReactionMenu.NORMAL:
+			if from_custom_button:
+				await self._msg.edit(embed=worker)
+				await self._msg.remove_reaction(emoji, self._ctx.author)
+			elif from_caller_button:
+				await self._msg.remove_reaction(emoji, self._ctx.author)
+			else:
+				await self._msg.edit(embed=worker[self._current_page])
+				await self._msg.remove_reaction(emoji, self._ctx.author)
+		
+		elif self._navigation_speed == ReactionMenu.FAST:
+			if from_custom_button:
+				await self._msg.edit(embed=worker)
+			elif from_caller_button:
+				# dont do anything here because :meth:`ReactionMenu._execute_session` handles the actual calling. this just ensures theres no ~remove_reaction being done
+				pass
+			else:
+				await self._msg.edit(embed=worker[self._current_page])
 		
 	async def _execute_session(self, worker):
 		"""Begin the pagination process
@@ -997,12 +1120,19 @@ class ReactionMenu:
 				- Added optional delete prompt and message interactions
 
 			.. Changes :: v1.0.3
-				- Added ButtonType.CALLER functionality
-				
+				- Added ButtonType.CALLER functionality	
+			
+			.. Changes :: v1.0.5
+				- Moved the use of :meth:`_msg.edit` and :meth:`_msg.remove_reaction` to :meth:`ReactionMenu._execute_navigation_type`
 		"""
 		while self._is_running:
 			try:
-				reaction, user = await self._bot.wait_for('reaction_add', check=self._wait_check, timeout=self._timeout)
+				if self._navigation_speed == ReactionMenu.NORMAL:
+					reaction, user = await self._bot.wait_for('reaction_add', check=self._wait_check, timeout=self._timeout)
+				elif self._navigation_speed == ReactionMenu.FAST:
+					reaction, user = await self._handle_fast_navigation()
+				else:
+					raise ReactionMenuException(f'Navigation speed {self._navigation_speed!r} is not recognized')
 			except asyncio.TimeoutError:
 				self._is_running = False
 				ReactionMenu._remove_session(self)
@@ -1015,30 +1145,34 @@ class ReactionMenu:
 					if str(reaction.emoji) == btn.emoji and btn.linked_to is ButtonType.PREVIOUS_PAGE:
 						self._current_page -= 1
 						self._set_proper_page()
-						await self._msg.edit(embed=worker[self._current_page])
-						await self._msg.remove_reaction(btn.emoji, self._ctx.author) 
+						# await self._msg.edit(embed=worker[self._current_page])
+						# await self._msg.remove_reaction(btn.emoji, self._ctx.author) 
+						await self._execute_navigation_type(worker, btn.emoji)
 						break
 					
 					# next
 					elif str(reaction.emoji) == btn.emoji and btn.linked_to is ButtonType.NEXT_PAGE:
 						self._current_page += 1
 						self._set_proper_page()
-						await self._msg.edit(embed=worker[self._current_page])
-						await self._msg.remove_reaction(btn.emoji, self._ctx.author)
+						# await self._msg.edit(embed=worker[self._current_page])
+						# await self._msg.remove_reaction(btn.emoji, self._ctx.author)
+						await self._execute_navigation_type(worker, btn.emoji)
 						break
 					
 					# first page
 					elif str(reaction.emoji) == btn.emoji and btn.linked_to is ButtonType.GO_TO_FIRST_PAGE:
 						self._current_page = 0
-						await self._msg.edit(embed=worker[self._current_page])
-						await self._msg.remove_reaction(btn.emoji, self._ctx.author)
+						# await self._msg.edit(embed=worker[self._current_page])
+						# await self._msg.remove_reaction(btn.emoji, self._ctx.author)
+						await self._execute_navigation_type(worker, btn.emoji)
 						break
 
 					# last page
 					elif str(reaction.emoji) == btn.emoji and btn.linked_to is ButtonType.GO_TO_LAST_PAGE:
 						self._current_page = self._last_page
-						await self._msg.edit(embed=worker[self._current_page])
-						await self._msg.remove_reaction(btn.emoji, self._ctx.author)
+						# await self._msg.edit(embed=worker[self._current_page])
+						# await self._msg.remove_reaction(btn.emoji, self._ctx.author)
+						await self._execute_navigation_type(worker, btn.emoji)
 						break
 
 					# go to page
@@ -1054,10 +1188,7 @@ class ReactionMenu:
 								author_pass = True
 							if self._ctx.channel.id == m.channel.id:
 								channel_pass = True
-							
-							if all((author_pass, channel_pass, not_bot)):
-								return True
-							return False
+							return all((author_pass, channel_pass, not_bot))
 
 						bot_prompt = await self._msg.channel.send(f'{self._ctx.author.name}, what page would you like to go to?')
 						try:
@@ -1072,8 +1203,9 @@ class ReactionMenu:
 							else:
 								if requested_page >= 1 and requested_page <= self.total_pages:
 									self._current_page = requested_page - 1
-									await self._msg.edit(embed=worker[self._current_page])
-									await self._msg.remove_reaction(btn.emoji, self._ctx.author)
+									# await self._msg.edit(embed=worker[self._current_page])
+									# await self._msg.remove_reaction(btn.emoji, self._ctx.author)
+									await self._execute_navigation_type(worker, btn.emoji)
 									if self._delete_interactions:
 										await bot_prompt.delete()
 										await msg.delete()
@@ -1081,8 +1213,9 @@ class ReactionMenu:
 					
 					# custom buttons
 					elif str(reaction.emoji) == btn.emoji and btn.linked_to is ButtonType.CUSTOM_EMBED:
-						await self._msg.edit(embed=btn.custom_embed)
-						await self._msg.remove_reaction(btn.emoji, self._ctx.author)
+						# await self._msg.edit(embed=btn.custom_embed)
+						# await self._msg.remove_reaction(btn.emoji, self._ctx.author) 
+						await self._execute_navigation_type(btn.custom_embed, btn.emoji, from_custom_button=True)
 						break
 
 					# caller button
@@ -1101,7 +1234,8 @@ class ReactionMenu:
 								func(*args, **kwargs)
 							except TypeError as invalid_args:
 								raise ReactionMenuException(f'{ERROR_MESSAGE}: {invalid_args}')					
-						await self._msg.remove_reaction(btn.emoji, self._ctx.author) 
+						# await self._msg.remove_reaction(btn.emoji, self._ctx.author) 
+						await self._execute_navigation_type(None, btn.emoji, from_caller_button=True)
 						break
 
 					# end session
@@ -1110,7 +1244,27 @@ class ReactionMenu:
 						ReactionMenu._remove_session(self)
 						await self._msg.delete()
 						return
-					
+	
+	def _duplicate_emoji_check(self):
+		"""Since it's possible for the user to change the emoji of a :class:`Button` after an instance has been created and added to a :class:`ReactionMenu` instance. Before the menu starts, make sure there are no duplicates because if there are,
+		it essentially renders that :class:`Button` useless because discord only allows unique reactions to be added.
+		
+			.. Added v1.0.5
+		"""
+		counter = collections.Counter(self._extract_all_emojis())
+		if max(counter.values()) != 1:
+			raise ReactionMenuException('There cannot be duplicate emojis when using Buttons. All emojis must be unique')
+
+	def _duplicate_name_check(self):
+		"""Since it's possible for the user to change the name of a :class:`Button` after an instance has been created and added to a :class:`ReactionMenu` instance. Before the menu starts, make sure there are no duplicates because if there are,
+		methods such as :meth:`ReactionMenu.get_button_by_name` could return the wrong :class:`Button` object.
+		
+			.. Added v1.0.5
+		"""
+		counter = collections.Counter([btn.name.lower() for btn in self._all_buttons if btn.name is not None])
+		if max(counter.values()) != 1:
+			raise ReactionMenuException('There cannot be duplicate names when using Buttons. All names must be unique')
+	
 	@ensure_not_primed
 	async def start(self):
 		"""|coro| Starts the reaction menu
@@ -1122,7 +1276,16 @@ class ReactionMenu:
 
 			.. Changes :: v1.0.3
 				- Added task callbacks
+			
+			.. Changes :: v1.0.5
+				- Added unique ID's to task names so multiple sessions can be ran/stopped in a single execution. So if :meth:`ReactionMenu.stop` is called during that execution, it knows exactly which menu instance to stop.
+				Unlike before where the menu instance task name would be identified simply as static or dynamic, and with multiple instances ran from a single execution having the same task name, calling :meth:`ReactionMenu.stop`
+				could stop the wrong menu instance
+				- Added duplication check methods
 		"""
+		self._duplicate_emoji_check()
+		self._duplicate_name_check()
+		
 		if ReactionMenu._is_currently_limited():
 			maybe_limit_message = getattr(ReactionMenu, 'limit_message')
 			if maybe_limit_message:
@@ -1187,10 +1350,10 @@ class ReactionMenu:
 				await self._msg.add_reaction(end_session_btn.emoji)
 
 			self._is_running = True
-			static_task = self._loop.create_task(self._execute_session(worker), name='static_task')
+			unique_tsk_name = f'static_task_{id(self)}'
+			static_task = self._loop.create_task(self._execute_session(worker), name=unique_tsk_name)
 			static_task.add_done_callback(self._asyncio_exception_callback)
 			ReactionMenu._task_sessions_pool.append(static_task)
-			
 		
 		elif self._config == ReactionMenu.DYNAMIC: 
 			# no data (rows) have been added and no main/last pages have been set
@@ -1225,9 +1388,10 @@ class ReactionMenu:
 					await self._msg.add_reaction(end_session_btn.emoji)
 
 				self._is_running = True
-				dynamic_task = self._loop.create_task(self._execute_session(worker), name='dynamic_task')
+				unique_tsk_name = f'dynamic_task_{id(self)}'
+				dynamic_task = self._loop.create_task(self._execute_session(worker), name=unique_tsk_name)
 				dynamic_task.add_done_callback(self._asyncio_exception_callback)
 				ReactionMenu._task_sessions_pool.append(dynamic_task)
-			
+
 		else:
 			raise MenuSettingsMismatch('The menu\'s setting for dynamic or static was not recognized')
