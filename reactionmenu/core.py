@@ -185,6 +185,9 @@ class ReactionMenu:
 			- Added :attr:_navigation_speed
 			- Added :attr:NORMAL
 			- Added :attr:FAST
+		
+		.. Changes :: v1.0.6
+			- Added :attr:_custom_embed_set
 	"""
 	STATIC = 0
 	DYNAMIC = 1
@@ -214,6 +217,7 @@ class ReactionMenu:
 		self._dynamic_completed_pages: Deque[Embed] = collections.deque()
 		self._rows_requested: int = options.get('rows_requested')
 		self._custom_embed: Embed = options.get('custom_embed')
+		self._custom_embed_set: bool = False if self._custom_embed is None else True
 		self._wrap_in_codeblock = options.get('wrap_in_codeblock')
 		self._main_pages_already_set = False
 		self._last_pages_already_set = False
@@ -498,9 +502,12 @@ class ReactionMenu:
 		menu = ReactionMenu(...)
 		menu.custom_embed = discord.Embed(color=discord.Color.red())
 		```
+			.. Changes :: v1.0.6
+				- Added _custom_embed_set
 		"""
 		if isinstance(value, Embed):
 			self._custom_embed = value
+			self._custom_embed_set = True
 		else:
 			raise TypeError(f'"custom_embed" expected discord.Embed, got {value.__class__.__name__}')
 	
@@ -527,8 +534,12 @@ class ReactionMenu:
 			raise TypeError(f'"wrap_in_codeblock" expected str, got {value.__class__.__name__}')
 	
 	def _maybe_custom_embed(self) -> Embed:
-		"""If a custom embed is set, return it"""
-		if self._custom_embed:
+		"""If a custom embed is set, return it
+		
+			.. Changes :: v1.0.6
+				- Replaced the if statement. Caused an issue where if there was no title in the embed, other things such as the color, timestamp, thumbnail, etc. would not be displayed. 
+		"""
+		if self._custom_embed_set:
 			temp = self._custom_embed.copy()
 			temp.description = Embed.Empty
 			return temp
