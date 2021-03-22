@@ -27,7 +27,7 @@ import collections
 from enum import Enum, auto
 from typing import List, Union, Deque
 
-from discord import Embed
+from discord import Embed, TextChannel
 from discord.ext.commands import Context, Command
 
 from .decorators import dynamic_only, static_only, ensure_not_primed
@@ -188,6 +188,7 @@ class ReactionMenu:
 		
 		.. Changes :: v1.0.6
 			- Added :attr:_custom_embed_set
+			- Added :attr:_send_to_channel
 	"""
 	STATIC = 0
 	DYNAMIC = 1
@@ -200,6 +201,7 @@ class ReactionMenu:
 
 	def __init__(self, ctx: Context, *, back_button: str, next_button: str, config: int, **options): 
 		self._ctx = ctx
+		self._send_to_channel = None
 		self._config = config
 		self._bot = ctx.bot
 		self._loop = ctx.bot.loop
@@ -1276,9 +1278,71 @@ class ReactionMenu:
 		if max(counter.values()) != 1:
 			raise ReactionMenuException('There cannot be duplicate names when using Buttons. All names must be unique')
 	
+	def _determine_location(self, path):
+		"""Set the text channel where the menu should start
+
+			.. Added v1.0.6
+		"""
+		text_channels = self._ctx.guild.text_channels
+		# channel name
+		if isinstance(path, str):
+			path = path.lower()
+			channel = [ch for ch in text_channels if ch.name == path]
+			if len(channel) == 1:
+				self._send_to_channel = channel[0]
+			else:
+				NO_CHANNELS_ERROR = f'When using parameter "send_to" in ReactionMenu.start(), there were no channels with the name {path!r}'
+				MULTIPLE_CHANNELS_ERROR = f'When using parameter "send_to" in ReactionMenu.start(), there were {len(channel)} channels with the name {path!r}. With multiple channels having the same name, the intended channel is unknown' 
+				raise ReactionMenuException(NO_CHANNELS_ERROR if len(channel) == 0 else MULTIPLE_CHANNELS_ERROR)
+
+		# channel ID
+		elif isinstance(path, int):
+			channel = [ch for ch in text_channels if ch.id == path]
+			if len(channel) == 1:
+				guild = self._ctx.guild
+				channel = guild.get_channel(path)
+				self._send_to_channel = channel
+			else:
+				raise ReactionMenuException(f'When using parameter "send_to" in ReactionMenu.start(), the channel ID {path} was not found')
+
+		# channel object
+		elif isinstance(path, TextChannel):
+			# it's safe to just set it as the channel object because if the user was to use :meth:`discord.Guild.get_channel`, discord.py would return the obj or :class:`None`
+			# which if :class:`None` is sent to :meth:`ReactionMenu.start`, it would be handled in the the "default" elif below
+			self._send_to_channel = path
+
+		# default 
+		elif isinstance(path, type(None)):
+			pass
+
+		else:
+			raise TypeError(f'When setting the "send_to" in ReactionMenu.start(), the value must be the name of the channel (str), the channel ID (int), or the channel object (discord.TextChannel), got {path.__class__.__name__}') 
+	
 	@ensure_not_primed
-	async def start(self):
+	async def start(self, *, send_to: Union[str, int, TextChannel]=None):
 		"""|coro| Starts the reaction menu
+
+		Parameter
+		---------
+		send_to: Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`]
+			The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
+			method :meth:`discord.Client.get_channel`, that text channel should be in the same list as if you were to use `ctx.guild.text_channels`. This only works on a context guild text channel basis. That means a menu instance cannot be
+			created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to`
+		
+		Example for :param:`send_to`
+		-------------------
+		```
+		menu = ReactionMenu(...)
+		# channel name
+		await menu.start(send_to='bot-commands')
+
+		# channel ID
+		await menu.start(send_to=1234567890123456)
+
+		# channel object
+		channel = guild.get_channel(1234567890123456)
+		await menu.start(send_to=channel)
+		```
 		
 		Raises
 		------
@@ -1293,9 +1357,14 @@ class ReactionMenu:
 				Unlike before where the menu instance task name would be identified simply as static or dynamic, and with multiple instances ran from a single execution having the same task name, calling :meth:`ReactionMenu.stop`
 				could stop the wrong menu instance
 				- Added duplication check methods
+
+			.. Changes :: v1.0.6
+				- Added :param:`send_to`
+				- Added :meth:`ReactionMenu._determine_location` and if checks to determine if the menu should start in the same channel as :attr:`_ctx` or another channel (:attr:`self._send_to_channel`)
 		"""
 		self._duplicate_emoji_check()
 		self._duplicate_name_check()
+		self._determine_location(send_to)
 		
 		if ReactionMenu._is_currently_limited():
 			maybe_limit_message = getattr(ReactionMenu, 'limit_message')
@@ -1305,7 +1374,7 @@ class ReactionMenu:
 		else:
 			ReactionMenu._active_sessions.append(self)
 		
-		if self._config == ReactionMenu.STATIC: 
+		if self._config == ReactionMenu.STATIC:
 			worker = []
 			# no pages at all
 			if len(self._static_completed_pages) == 0 and not self._custom_linked_embeds():
@@ -1315,7 +1384,7 @@ class ReactionMenu:
 			if len(self._static_completed_pages) >= 2 and not self._custom_linked_embeds():
 				worker = self._static_completed_pages
 				self._refresh_page_director_info(worker)
-				self._msg = await self._ctx.send(embed=self._static_completed_pages[0]) 
+				self._msg = await self._ctx.send(embed=self._static_completed_pages[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=self._static_completed_pages[0])
 				for btn in self._regular_buttons():
 					await self._msg.add_reaction(btn.emoji)
 				self._last_page = len(worker) - 1
@@ -1324,7 +1393,7 @@ class ReactionMenu:
 			elif len(self._static_completed_pages) >= 2 and self._custom_linked_embeds():
 				worker = self._static_completed_pages 
 				self._refresh_page_director_info(worker)
-				self._msg = await self._ctx.send(embed=self._static_completed_pages[0]) 
+				self._msg = await self._ctx.send(embed=self._static_completed_pages[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=self._static_completed_pages[0])
 				for btn in self._extract_all_emojis():
 					await self._msg.add_reaction(btn)
 				self._last_page = len(worker) - 1
@@ -1333,7 +1402,7 @@ class ReactionMenu:
 			elif len(self._static_completed_pages) == 0 and self._custom_linked_embeds():
 				worker = self._actual_embeds()
 				#self._refresh_page_director_info(worker)
-				self._msg = await self._ctx.send(embed=worker[0])
+				self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
 				for btn in self._custom_linked_embeds():
 					await self._msg.add_reaction(btn.emoji)
 				self._last_page = len(worker) - 1
@@ -1342,7 +1411,7 @@ class ReactionMenu:
 			elif len(self._static_completed_pages) == 1 and self._custom_linked_embeds():
 				worker = self._static_completed_pages
 				self._refresh_page_director_info(worker)
-				self._msg = await self._ctx.send(embed=worker[0])
+				self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
 				for btn in self._custom_linked_embeds():
 					await self._msg.add_reaction(btn.emoji)
 				else:
@@ -1354,7 +1423,7 @@ class ReactionMenu:
 			elif len(self._static_completed_pages) == 1 and not self._custom_linked_embeds():
 				worker = self._static_completed_pages
 				self._refresh_page_director_info(worker)
-				self._msg = await self._ctx.send(embed=worker[0])
+				self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
 			
 			# initiaze end session buttons if any
 			for end_session_btn in self._all_end_sessions():
@@ -1385,14 +1454,13 @@ class ReactionMenu:
 				self._maybe_last_pages()
 				worker = self._dynamic_completed_pages
 				self._refresh_page_director_info(worker)
-
 				if len(worker) >= 2:
-					self._msg = await self._ctx.send(embed=worker[0])
+					self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
 					for btn in self._regular_buttons():
 						await self._msg.add_reaction(btn.emoji)
 					self._last_page = len(worker) - 1
 				else:
-					self._msg = await self._ctx.send(embed=worker[0])
+					self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
 				
 				# initiaze end session buttons if any
 				for end_session_btn in self._all_end_sessions():

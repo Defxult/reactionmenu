@@ -17,13 +17,13 @@ from reactionmenu import ReactionMenu, Button, ButtonType
 
 This package comes with several methods and options in order to make a discord reaction menu simple. Once you have imported the proper classes, you will initialize the constructor like so:
 ```py
-menu = ReactionMenu(ctx, back_button='\U000027a1', next_button='\U00002b05', config=ReactionMenu.STATIC) 
+menu = ReactionMenu(ctx, back_button='◀️', next_button='▶️', config=ReactionMenu.STATIC) 
 ```
 ---
 ## Parameters of the ReactionMenu constructor
 * `ctx` The `discord.ext.commands.Context` object
-* `back_button` Emoji used to go to the previous page. 
-* `next_button` Emoji used to go to the next page. 
+* `back_button` Emoji used to go to the previous page ([supported emojis](#supported-emojis))
+* `next_button` Emoji used to go to the next page ([supported emojis](#supported-emojis))
 * `config` The config of the menu is important. You have two options when it comes to configuration. 
     * `ReactionMenu.STATIC` [more info](#reactionmenustatic-vs-reactionmenudynamic)
     * `ReactionMenu.DYNAMIC` [more info](#reactionmenustatic-vs-reactionmenudynamic)
@@ -55,7 +55,7 @@ A static menu is used when you have a known amount of embed pages you would like
 
 ##### Adding Pages
 ```py
-menu = ReactionMenu(ctx, back_button='\U000027a1', next_button='\U00002b05', config=ReactionMenu.STATIC)
+menu = ReactionMenu(ctx, back_button='◀️', next_button='▶️', config=ReactionMenu.STATIC)
 menu.add_page(greeting_embed)
 menu.add_page(goodbye_embed)
 
@@ -85,7 +85,7 @@ A dynamic menu is used when you do not know how much information will be applied
 
 ##### Adding Rows/data
 ```py
-menu = ReactionMenu(ctx, back_button='\U000027a1', next_button='\U00002b05', config=ReactionMenu.DYNAMIC, rows_requested=2)
+menu = ReactionMenu(ctx, back_button='◀️', next_button='▶️', config=ReactionMenu.DYNAMIC, rows_requested=2)
 
 for my_data in database.request('SELECT * FROM customers'):
     menu.add_row(my_data)
@@ -112,10 +112,21 @@ menu.set_last_pages(additonal_info_embed)
 ---
 ## What are Buttons and ButtonTypes?
 Buttons/button types are used when you want to add a reaction to the menu that does a certain function. Buttons and button types work together to achieve the desired action.
+
 ##### Parameters of the Button constructor
 * `emoji` The emoji you would like to use as the reaction
 * `linked_to` When the reaction is clicked, this is what determines what it will do (`ButtonType`)
-> NOTE: The emoji parameter supports all forms of emojis. You can use the emoji itself (:sunglasses:), unicode (\U000027a1), or a guild emoji (<:miscTwitter:705423192818450453>), etc..
+
+##### Supported emojis
+The emoji parameter supports all forms of emojis. 
+```py
+Button(emoji='😄' , ...)
+Button(emoji='<:miscTwitter:705423192818450453>', ...)
+Button(emoji='\U000027a1', ...)
+Button(emoji='\N{winking face}', ...)
+
+# NOTE: These formats are applicable to the ReactionMenu back and next buttons
+```
 
 ##### Options of the Button constructor [kwargs]
 | Name | Type | Default Value | Used for
@@ -156,17 +167,17 @@ You can add buttons (reactions) to the menu using a `Button`. By default, two bu
 menu = ReactionMenu(...)
 
 # first and last pages
-fpb = Button(emoji='\U000023ea', linked_to=ButtonType.GO_TO_FIRST_PAGE)
-lpb = Button(emoji='\N{winking face}', linked_to=ButtonType.GO_TO_LAST_PAGE)
+fpb = Button(emoji='⏪', linked_to=ButtonType.GO_TO_FIRST_PAGE)
+lpb = Button(emoji='⏩', linked_to=ButtonType.GO_TO_LAST_PAGE)
 
 # go to page
-gtpb = Button(emoji='<:miscRed:694466531098099753>', linked_to=ButtonType.GO_TO_PAGE)
+gtpb = Button(emoji='🔢', linked_to=ButtonType.GO_TO_PAGE)
 
 # end session
-esb = Button(emoji='\U000023ea', linked_to=ButtonType.END_SESSION)
+esb = Button(emoji='❌', linked_to=ButtonType.END_SESSION)
 
 # custom embed
-ceb = Button(emoji='\N{winking face}', linked_to=ButtonType.CUSTOM_EMBED, embed=discord.Embed(title='Hello'))
+ceb = Button(emoji='😎', linked_to=ButtonType.CUSTOM_EMBED, embed=discord.Embed(title='Hello'))
 
 menu.add_button(fpb)
 menu.add_button(lpb)
@@ -192,8 +203,8 @@ async def user(ctx, name, *, message):
 def car(year, make, model):
     print(f"I have a {year} {make} {model}")
 
-ub = Button(emoji='\U000027a1', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(user, ctx, 'Defxult', message='Welcome to the server'))
-cb = Button(emoji='\U000023ea', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(car, 2021, 'Ford', 'Mustang'))
+ub = Button(emoji='👋', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(user, ctx, 'Defxult', message='Welcome to the server'))
+cb = Button(emoji='🚗', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(car, 2021, 'Ford', 'Mustang'))
 ```
 > NOTE: The function you pass in should not return anything. Calling functions with `ButtonType.CALLER` does not store or handle anything returned by that function
 
@@ -202,8 +213,8 @@ cb = Button(emoji='\U000023ea', linked_to=ButtonType.CALLER, details=ButtonType.
 ##### Emoji Order
 It is possible to change the order the reactions appear in on the menu.
 ```py
-first_button = Button(emoji='\U000023ea', linked_to=ButtonType.GO_TO_FIRST_PAGE)
-close_menu_button = Button(emoji='<:miscRed:694466531098099753>', linked_to=ButtonType.END_SESSION, name='end')
+first_button = Button(emoji='⏪', linked_to=ButtonType.GO_TO_FIRST_PAGE)
+close_menu_button = Button(emoji='❌', linked_to=ButtonType.END_SESSION, name='end')
 
 # NOTE 1: When changing the order, you need to include the default back and next buttons because they are there by default. Access the default back/next buttons with menu attributes
 # NOTE 2: You can use the emoji or button object 
@@ -244,8 +255,22 @@ async def killsessions(self, ctx):
 ---
 ## Starting/Stopping the Menu
 * Associated Methods
-    * `await ReactionMenu.start()`
+    * `await ReactionMenu.start(*, send_to=None)`
     * `await ReactionMenu.stop(*, delete_menu_message=False, clear_reactions=False)`
+
+When starting the menu, you have the option to send the menu to a certain channel. Parameter `send_to` is the channel you'd like to send the menu to. You can set `send_to` as the channel name (`str`), channel ID (`int`), or channel object (`discord.TextChannel`). Example:
+```py
+menu = ReactionMenu(...)
+# channel name
+await menu.start(send_to='bot-commands')
+
+# channel ID
+await menu.start(send_to=1234567890123456)
+
+# channel object
+channel = guild.get_channel(1234567890123456)
+await menu.start(send_to=channel)
+```
 
 When stopping the menu, you have two options. Delete the reaction menu by setting the first parameter to `True` or only remove all it's reactions, setting the second parameter to `True`
 
@@ -281,3 +306,13 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 | `ReactionMenu.total_pages` | `int` | total amount of built pages
 | `ReactionMenu.delete_interactions` | `bool` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
 | `ReactionMenu.navigation_speed` | `str` | the current setting for the menu navigation speed
+---
+#### Github Updates vs PyPI Updates
+Github updates are always pushed earlier than PyPI updates. If there's something that needs to be fixed in the PyPI version, you can always check the [Github version](https://github.com/Defxult/reactionmenu) to see if it's already been fixed. If so, you can download the Github version by doing:
+* `pip install git+https://github.com/Defxult/reactionmenu.git`
+
+You must have [Git](https://git-scm.com/) installed in order to do this
+
+<!-- ---
+#### Bug Reports & Suggestions
+If you find any bugs or have any suggestions for the package, please submit them on [Github](https://github.com/Defxult/reactionmenu/issues) =) -->

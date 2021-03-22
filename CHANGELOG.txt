@@ -1,3 +1,7 @@
+v1.0.6  Mar. 22, 2021
+    - Added the ability to start a menu in a specific channel
+    - Fixed a bug where custom embeds in a dynamic menu would not display all implemented values from that embed 
+
 v1.0.5  Mar.19, 2021
     - Added class variable ReactionMenu.NORMAL
     - Added class variable ReactionMenu.FAST

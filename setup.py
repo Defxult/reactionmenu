@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 def _get_readme():
-    with open('README.md') as fp:
+    with open('README.md', encoding='utf-8') as fp:
         return fp.read()
 
 classifiers = [
@@ -35,7 +35,7 @@ setup(
     author='Defxult#8269',
     name='reactionmenu',
     description='A package to create a discord.py reaction menu. If your discord.py version is 1.5.0+, intents are required',
-    version='1.0.5', 
+    version='1.0.6', 
     url='https://github.com/Defxult',
     project_urls=details,
     classifiers=classifiers,
