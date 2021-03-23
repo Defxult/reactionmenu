@@ -1075,10 +1075,25 @@ class ReactionMenu:
 					The goal is to return the result of a single :meth:`discord.Client.wait_for`, the result is returned but the :class:`asyncio.TimeoutError`
 					exception that was raised in :meth:`asyncio.wait` (because of the timeout by the other aws) goes unhandled and the exception is raised. The additional time allows the 
 					cancellation of the task before the exception (Task exception was never retrieved) is raised 
+			
+			.. Changes :: v1.0.7
+				- Added :func:`_proper_timeout` and replaced the `reaction_remove` ~timeout value to a function that handles cases where there is a timeout vs no timeout
 		"""
+		def _proper_timeout():
+			"""In ~wait_for_aws, if the menu does not have a timeout (`ReactionMenu.timeout = None`), :class:`None` + :class:`float`, the float being "`self._timeout + 0.1`" from v1.0.5, will fail for obvious reasons. This checks if there is no timeout, 
+			and instead of adding those two together, simply return :class:`None` to avoid :exc:`TypeError`. This would happen if the menu's :attr:`ReactionMenu.navigation_speed` was set to :attr:`ReactionMenu.FAST` and
+			the :attr:`ReactionMenu.timeout` was set to :class:`None`
+				
+				.. Added v1.0.7
+			"""
+			if self._timeout is not None:
+				return self._timeout + 0.1
+			else:
+				return None
+
 		wait_for_aws = (
 			self._bot.wait_for('reaction_add', check=self._wait_check, timeout=self._timeout),
-			self._bot.wait_for('reaction_remove', check=self._wait_check, timeout=self._timeout + 0.1) 
+			self._bot.wait_for('reaction_remove', check=self._wait_check, timeout=_proper_timeout()) 
 		)
 		done, pending = await asyncio.wait(wait_for_aws, return_when=asyncio.FIRST_COMPLETED)
 
