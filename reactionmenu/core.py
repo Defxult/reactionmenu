@@ -596,6 +596,7 @@ class ReactionMenu:
 		------
 		- `MissingSetting`: kwarg "rows_requested" was missing from the Button object
 		- `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+		- `MenuSettingsMismatch`: Tried to use method on a static menu
 		"""
 		if self._rows_requested:
 			self._dynamic_data_builder.append(str(data))
@@ -779,7 +780,7 @@ class ReactionMenu:
 		- `MissingSetting`: Set the Button :param:`linked_to` as `ButtonType.CUSTOM_EMBED` but did not assign the Button kwarg "embed" a value. 
 		- `DuplicateButton`: The emoji used is already registered as a button
 		- `TooManyButtons`: More than 20 buttons were added. Discord has a reaction limit of 20
-		- `NameError`: A name used for the Button is already registered
+		- `ReactionMenuException`: A name used for the Button is already registered
 
 			.. Changes :: v1.0.3
 				- Added check for ButtonType.CALLER
@@ -923,7 +924,7 @@ class ReactionMenu:
 			.. Changes :: v1.0.5
 				- Added ID handling for static/dynamic task names
 		"""
-		def get_proper_task() -> str:
+		def _get_proper_task() -> str:
 			"""Depending on the menu instance ID, return the task name equivalent with that ID
 				
 				.. Added v1.0.5
@@ -934,7 +935,7 @@ class ReactionMenu:
 				return 'dynamic_task_%s' % id(self)
 
 		if self._is_running:
-			task = ReactionMenu._get_task(get_proper_task())
+			task = ReactionMenu._get_task(_get_proper_task())
 			task.cancel()
 			self._is_running = False
 			ReactionMenu._remove_session(self)
@@ -1339,13 +1340,13 @@ class ReactionMenu:
 
 		Parameter
 		---------
-		send_to: Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`]
+		send_to: Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`] (optional)
 			The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
 			method :meth:`discord.Client.get_channel`, that text channel should be in the same list as if you were to use `ctx.guild.text_channels`. This only works on a context guild text channel basis. That means a menu instance cannot be
 			created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to`
 		
 		Example for :param:`send_to`
-		-------------------
+		---------------------------
 		```
 		menu = ReactionMenu(...)
 		# channel name
