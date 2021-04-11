@@ -60,7 +60,8 @@ class ButtonType(Enum):
 
 		Parameter
 		---------
-		- func: `object` The function object you want to call when the button is pressed. 
+		func: `object`
+			The function object you want to call when the button is pressed. 
 		
 		Info
 		----
@@ -90,14 +91,22 @@ class Button:
 	
 	Parameters
 	----------
-	- emoji: :class:`str` The discord reaction that will be used
-	- linked_to: :class:`ButtonType` A generic action a button can perform
+	emoji: :class:`str`
+		The discord reaction that will be used
+
+	linked_to: :class:`ButtonType`
+		A generic action a button can perform
 	
 	Options [kwargs]
 	----------------
-	- embed: :class:`discord.Embed` Only used when :param:`linked_to` is set as `ButtonType.CUSTOM_EMBED`. This is the embed that can be selected seperately from the reaction menu (static menu's only)
-	- name: :class:`str` An optional name for the button. Can be set to retrieve it later via :meth:`ReactionMenu.get_button_by_name()`
-	- details: :meth:`ButtonType.caller_details()` The class method used to set the function and it's arguments to be called when the button is pressed
+	embed: :class:`discord.Embed`
+		Only used when :param:`linked_to` is set as `ButtonType.CUSTOM_EMBED`. This is the embed that can be selected seperately from the reaction menu (static menu's only)
+
+	name: :class:`str`
+		An optional name for the button. Can be set to retrieve it later via :meth:`ReactionMenu.get_button_by_name()`
+
+	details: :meth:`ButtonType.caller_details()`
+		The class method used to set the function and it's arguments to be called when the button is pressed
 
 		.. Changes :: v1.0.3
 			- Added :attr:details
@@ -126,52 +135,53 @@ class ReactionMenu:
 	
 	Parameters
 	----------
-	- ctx: :class:`discord.ext.commands.Context` The Context object. You can get this using a command or if in `discord.on_message`
-	- back_button: :class:`str` Button used to go to the previous page of the menu
-	- next_button: :class:`str` Button used to go to the next page of the menu
-	- config: :class:`int` The menus core function to set. Class variables :attr:`ReactionMenu.STATIC` or :attr:`ReactionMenu.DYNAMIC`
+	ctx: :class:`discord.ext.commands.Context`
+		The Context object. You can get this using a command or if in `discord.on_message`
+
+	back_button: :class:`str`
+		Button used to go to the previous page of the menu
+
+	next_button: :class:`str`
+		Button used to go to the next page of the menu
+
+	config: :class:`int`
+		The menus core function to set. Class variables :attr:`ReactionMenu.STATIC` or :attr:`ReactionMenu.DYNAMIC`
 
 	Options [kwargs]
 	----------------
-	- rows_requested: :class:`int` The amount of information per :meth:`ReactionMenu.add_row()` you would like applied to each embed page
-		- dynamic only
-		- default None
+	rows_requested: :class:`int`
+		The amount of information per :meth:`ReactionMenu.add_row()` you would like applied to each embed page (dynamic only/defaults to :class:`None`)
 
-	- custom_embed: :class:`discord.Embed` Embed object to use when adding data with :meth:`ReactionMenu.add_row()`. Used for styling purposes
-		- dynamic only
-		- default None 
+	custom_embed: :class:`discord.Embed`
+		Embed object to use when adding data with :meth:`ReactionMenu.add_row()`. Used for styling purposes (dynamic only/defaults to :class:`None`)
 
-	- wrap_in_codeblock: :class:`str` The discord codeblock language identifier. Example below
-		- dynamic only
-		- default None 
-		>>> ReactionMenu(ctx, ..., wrap_in_codeblock='py') 
+	wrap_in_codeblock: :class:`str`
+		The discord codeblock language identifier (dynamic only/defaults to :class:`None`). Example: `ReactionMenu(ctx, ..., wrap_in_codeblock='py')`
 
-	- clear_reactions_after: :class:`bool` If the menu times out, remove all reactions
-		- default True 
+	clear_reactions_after: :class:`bool`
+		If the menu times out, remove all reactions (defaults to `True`)
 
-	- timeout: Union[:class:`float`, :class:`None`] Timer for when the menu should end. Can be :class:`None` for no timeout 
-		- default 60.0 
+	timeout: Union[:class:`float`, :class:`None`]
+		Timer for when the menu should end. Can be :class:`None` for no timeout (defaults to 60.0)
 
-	- show_page_director: :class:`bool` Shown at the botttom of each embed page. "Page 1/20"
-		- default True
+	show_page_director: :class:`bool`
+		Shown at the botttom of each embed page. "Page 1/20" (defaults to `True`)
 
-	- name: :class:`str` A name you can set for the menu
-		- default None
+	name: :class:`str`
+		A name you can set for the menu (defaults to :class:`None`)
 
-	- style: :class:`str` A custom page director style you can select. "$" represents the current page, "&" represents the total amount of pages. 
-		- default "Page $/&"
-		>>> ReactionMenu(ctx, ..., style='On $ out of &')
-		'On 1 out of 5'
+	style: :class:`str`
+		A custom page director style you can select. "$" represents the current page, "&" represents the total amount of pages (defaults to "Page $/&") Example: `ReactionMenu(ctx, ..., style='On $ out of &')`
 
-	- all_can_react: :class:`bool` Sets if everyone is allowed to control when pages are 'turned' when buttons are pressed
-		- default False
-	
-	- delete_interactions: :class:`bool` Delete the prompt message by the bot and response message by the user when asked what page they would like to go to when using `ButtonType.GO_TO_PAGE`
-		- default True
-	
-	- navigation_speed: :class:`str` Sets if the user needs to wait for the reaction to be removed by the bot before "turning" the page. Setting the speed to :attr:`ReactionMenu.FAST` makes it so
-	that there is no need to wait (reactions are not removed on each press) and can navigate lengthy menu's more quickly
-		- default ReactionMenu.NORMAL
+	all_can_react: :class:`bool`
+		Sets if everyone is allowed to control when pages are 'turned' when buttons are pressed (defaults to `False`)
+
+	delete_interactions: :class:`bool`
+		Delete the prompt message by the bot and response message by the user when asked what page they would like to go to when using `ButtonType.GO_TO_PAGE` (defaults to `True`)
+
+	navigation_speed: :class:`str`
+		Sets if the user needs to wait for the reaction to be removed by the bot before "turning" the page. Setting the speed to :attr:`ReactionMenu.FAST` makes it so that there is no need to wait (reactions are not removed on each press) and can
+		navigate lengthy menu's more quickly (defaults to `ReactionMenu.NORMAL`)
 
 		.. Changes :: v1.0.1
 			- Added :attr:_active_sessions
@@ -590,7 +600,8 @@ class ReactionMenu:
 
 		Parameter
 		---------
-		data: :class:`str` The information to add to the menu 
+		data: :class:`str`
+			The information to add to the menu 
 		
 		Raises
 		------
@@ -610,7 +621,8 @@ class ReactionMenu:
 		
 		Parameter
 		---------
-		page_number: :class:`int` The page to remove
+		page_number: :class:`int`
+			The page to remove
 		
 		Raises
 		------
@@ -631,7 +643,8 @@ class ReactionMenu:
 		
 		Parameter
 		---------
-		embeds: :class:`discord.Embed` Embed objects
+		embeds: :class:`discord.Embed`
+			Embed objects
 		
 		Raises
 		------
@@ -654,7 +667,8 @@ class ReactionMenu:
 		
 		Parameter
 		---------
-		embeds: :class:`discord.Embed` Embed objects
+		embeds: :class:`discord.Embed`
+			Embed objects
 		
 		Raises
 		------
@@ -701,7 +715,8 @@ class ReactionMenu:
 		
 		Parameter
 		---------
-		embed: :class:`discord.Embed` An Embed object
+		embed: :class:`discord.Embed`
+			An Embed object
 		
 		Raises
 		------
@@ -719,7 +734,8 @@ class ReactionMenu:
 		
 		Parameter
 		---------
-		name: :class:`str` The Button name
+		name: :class:`str`
+			The Button name
 		"""
 		name = str(name).lower()
 		for btn in self._all_buttons:
@@ -733,7 +749,7 @@ class ReactionMenu:
 		
 		Raises
 		------
-		`MenuAlreadyRunning`: Attempted to call method after the menu has already started
+		- `MenuAlreadyRunning`: Attempted to call method after the menu has already started
 		"""
 		self._all_buttons.clear()
 	
@@ -743,11 +759,12 @@ class ReactionMenu:
 		
 		Parameter
 		---------
-		identity: Union[:class:`str`, :class:`Button`] Name of the button or the button object itself
+		identity: Union[:class:`str`, :class:`Button`]
+			Name of the button or the button object itself
 
 		Raises
 		------
-		`ButtonNotFound` - Button with given identity was not found
+		- `ButtonNotFound` - Button with given identity was not found
 		"""
 		if isinstance(identity, str):
 			btn_name = identity.lower()
@@ -772,7 +789,8 @@ class ReactionMenu:
 		
 		Parameter
 		---------
-		button: :class:`Button` The button to instantiate.
+		button: :class:`Button`
+			The button to instantiate.
 		
 		Raises
 		------
@@ -849,7 +867,8 @@ class ReactionMenu:
 		
 		Parameter
 		---------
-		emoji_or_button: Union[:class:`str`, :class:`Button`] The emoji itself or Button object
+		emoji_or_button: Union[:class:`str`, :class:`Button`]
+			The emoji itself or Button object
 		
 		Raises
 		------
@@ -915,11 +934,11 @@ class ReactionMenu:
 		
 		Parameters
 		----------
-		- delete_menu_message: :class:`bool` (optional) Delete the menu message when stopped
-			default False
+		delete_menu_message: :class:`bool`
+			(optional) Delete the menu message when stopped (defaults to `False`)
 
-		- clear_reactions: :class:`bool` (optional) Clear the reactions on the menu's message when stopped
-			default False
+		clear_reactions: :class:`bool`
+			(optional) Clear the reactions on the menu's message when stopped (defaults to `False`)
 
 			.. Changes :: v1.0.5
 				- Added ID handling for static/dynamic task names
@@ -990,8 +1009,11 @@ class ReactionMenu:
 
 		Parameters
 		----------
-		- limit: :class:`int` The amount of menu sessions allowed
-		- message: :class:`str` Message that will be sent informing users about the menu limit when the limit is reached. Can be :class:`None` for no message
+		limit: :class:`int`
+			The amount of menu sessions allowed
+		
+		message: :class:`str`
+			(optional) Message that will be sent informing users about the menu limit when the limit is reached. Can be :class:`None` for no message
 
 		Example
 		-------
@@ -1340,10 +1362,10 @@ class ReactionMenu:
 
 		Parameter
 		---------
-		send_to: Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`] (optional)
-			The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
+		send_to: Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`]
+			(optional) The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
 			method :meth:`discord.Client.get_channel`, that text channel should be in the same list as if you were to use `ctx.guild.text_channels`. This only works on a context guild text channel basis. That means a menu instance cannot be
-			created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to`
+			created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to` (defaults to :class:`None`)
 		
 		Example for :param:`send_to`
 		---------------------------
