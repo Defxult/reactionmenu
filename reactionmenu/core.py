@@ -39,7 +39,6 @@ class ButtonType(Enum):
 	
 		.. Changes :: v1.0.1
 			- Added :attr:ButtonType.GO_TO_PAGE
-		
 		.. Changes :: v1.0.3
 			- Added :attr:ButtonType.CALLER
 			- Added :meth:caller_details
@@ -190,19 +189,15 @@ class ReactionMenu:
 			- Added :attr:_active_sessions
 			- Added :attr:_sessions_limit
 			- Added :attr:_task_sessions_pool
-		
 		.. Changes :: v1.0.2
 			- Added :attr:_delete_interactions
-		
 		.. Changes :: v1.0.5
 			- Added :attr:_navigation_speed
 			- Added :attr:NORMAL
 			- Added :attr:FAST
-		
 		.. Changes :: v1.0.6
 			- Added :attr:_custom_embed_set
 			- Added :attr:_send_to_channel
-		
 		.. Changes :: v1.0.8
 			- Added :attr:_delete_on_timeout
 	"""
@@ -1197,15 +1192,14 @@ class ReactionMenu:
 
 			.. Changes :: v1.0.1
 				- Added go to page functionality
-			
 			.. Changes :: v1.0.2
 				- Added optional delete prompt and message interactions
-
 			.. Changes :: v1.0.3
 				- Added ButtonType.CALLER functionality	
-			
 			.. Changes :: v1.0.5
 				- Moved the use of :meth:`_msg.edit` and :meth:`_msg.remove_reaction` to :meth:`ReactionMenu._execute_navigation_type`
+			.. Changes :: v1.0.8
+				- Added _delete_on_timeout functionality
 		"""
 		while self._is_running:
 			try:
@@ -1423,13 +1417,11 @@ class ReactionMenu:
 
 			.. Changes :: v1.0.3
 				- Added task callbacks
-			
 			.. Changes :: v1.0.5
 				- Added unique ID's to task names so multiple sessions can be ran/stopped in a single execution. So if :meth:`ReactionMenu.stop` is called during that execution, it knows exactly which menu instance to stop.
 				Unlike before where the menu instance task name would be identified simply as static or dynamic, and with multiple instances ran from a single execution having the same task name, calling :meth:`ReactionMenu.stop`
 				could stop the wrong menu instance
 				- Added duplication check methods
-
 			.. Changes :: v1.0.6
 				- Added :param:`send_to`
 				- Added :meth:`ReactionMenu._determine_location` and if checks to determine if the menu should start in the same channel as :attr:`_ctx` or another channel (:attr:`self._send_to_channel`)
