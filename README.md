@@ -42,6 +42,7 @@ menu = ReactionMenu(ctx, back_button='◀️', next_button='▶️', config=Reac
 | `all_can_react` | `bool` | `False` | `STATIC and DYNAMIC` | if all members can navigate the menu or only the message author
 | `delete_interactions` | `bool` | `True` | `STATIC and DYNAMIC` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
 | `navigation_speed` | `str` | `ReactionMenu.NORMAL` | `STATIC and DYNAMIC` | sets if the user needs to wait for the reaction to be removed by the bot before "turning" the page. Setting the speed to `ReactionMenu.FAST` makes it so that there is no need to wait (reactions are not removed on each press) and can navigate lengthy menu's more quickly
+| `delete_on_timeout` | `bool` | `False` | `STATIC and DYNAMIC` | When the menu times out, delete the menu message. This overrides `clear_reactions_after`
 > NOTE: All `ReactionMenu` kwargs can also be set using an instance of `ReactionMenu` **except** `rows_requested`
 ---
 ## ReactionMenu.STATIC vs ReactionMenu.DYNAMIC
@@ -306,6 +307,7 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 | `ReactionMenu.total_pages` | `int` | total amount of built pages
 | `ReactionMenu.delete_interactions` | `bool` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
 | `ReactionMenu.navigation_speed` | `str` | the current setting for the menu navigation speed
+| `ReactionMenu.delete_on_timeout` | `bool` | if the menu message will delete upon timeout
 ---
 #### Github Updates vs PyPI Updates
 Github updates are always pushed earlier than PyPI updates. If there's something that needs to be fixed in the PyPI version, you can always check the [Github version](https://github.com/Defxult/reactionmenu) to see if it's already been fixed. If so, you can download the Github version by doing:
