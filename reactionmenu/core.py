@@ -182,6 +182,9 @@ class ReactionMenu:
 	navigation_speed: :class:`str`
 		Sets if the user needs to wait for the reaction to be removed by the bot before "turning" the page. Setting the speed to :attr:`ReactionMenu.FAST` makes it so that there is no need to wait (reactions are not removed on each press) and can
 		navigate lengthy menu's more quickly (defaults to `ReactionMenu.NORMAL`)
+	
+	delete_on_timeout: :class:`bool`
+		When the menu times out, delete the menu message. This overrides :attr:`clear_reactions_after`
 
 		.. Changes :: v1.0.1
 			- Added :attr:_active_sessions
@@ -199,6 +202,9 @@ class ReactionMenu:
 		.. Changes :: v1.0.6
 			- Added :attr:_custom_embed_set
 			- Added :attr:_send_to_channel
+		
+		.. Changes :: v1.0.8
+			- Added :attr:_delete_on_timeout
 	"""
 	STATIC = 0
 	DYNAMIC = 1
@@ -247,6 +253,7 @@ class ReactionMenu:
 		self._all_can_react: bool = options.get('all_can_react', False)
 		self._delete_interactions: bool = options.get('delete_interactions', True)
 		self._navigation_speed: str = options.get('navigation_speed', ReactionMenu.NORMAL)
+		self._delete_on_timeout: bool = options.get('delete_on_timeout', False)
 		
 	@property
 	def config(self) -> int:
@@ -545,6 +552,30 @@ class ReactionMenu:
 		else:
 			raise TypeError(f'"wrap_in_codeblock" expected str, got {value.__class__.__name__}')
 	
+	@property
+	def delete_on_timeout(self) -> bool:
+		""".. Added v1.0.8"""
+		return self._delete_on_timeout
+	
+	@delete_on_timeout.setter
+	def delete_on_timeout(self, value):
+		"""A property getter/setter for kwarg "delete_on_timeout"
+		
+		Example
+		-------
+		```
+		menu = ReactionMenu(...)
+		menu.delete_on_timeout = True
+		>>> print(menu.delete_on_timeout)
+		True
+		```
+			.. Added v1.0.8
+		"""
+		if isinstance(value, bool):
+			self._delete_on_timeout = value
+		else:
+			raise TypeError(f'"delete_on_timeout" expected bool, got {value.__class__.__name__}')
+
 	def _maybe_custom_embed(self) -> Embed:
 		"""If a custom embed is set, return it
 		
@@ -1187,6 +1218,9 @@ class ReactionMenu:
 			except asyncio.TimeoutError:
 				self._is_running = False
 				ReactionMenu._remove_session(self)
+				if self._delete_on_timeout:
+					await self._msg.delete()
+					return
 				if self._clear_reactions_after:
 					await self._msg.clear_reactions()
 				return
