@@ -4,6 +4,14 @@
 [![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/month)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/week)](https://pepy.tech/project/reactionmenu)
 </div>
 
+## Github Updates vs PyPI Updates
+The Github version of this package will always have the latest changes, fixes, and additions before the [PyPI](https://pypi.org/project/reactionmenu/) version. You can install the Github version by doing:
+```
+pip install git+https://github.com/Defxult/reactionmenu.git
+```
+You must have [Git](https://git-scm.com/) installed in order to do this
+
+---
 ## How to install
 ```
 pip install reactionmenu
@@ -308,12 +316,6 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 | `ReactionMenu.delete_interactions` | `bool` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
 | `ReactionMenu.navigation_speed` | `str` | the current setting for the menu navigation speed
 | `ReactionMenu.delete_on_timeout` | `bool` | if the menu message will delete upon timeout
----
-#### Github Updates vs PyPI Updates
-Github updates are always pushed earlier than PyPI updates. If there's something that needs to be fixed in the PyPI version, you can always check the [Github version](https://github.com/Defxult/reactionmenu) to see if it's already been fixed. If so, you can download the Github version by doing:
-* `pip install git+https://github.com/Defxult/reactionmenu.git`
-
-You must have [Git](https://git-scm.com/) installed in order to do this
 
 <!-- ---
 #### Bug Reports & Suggestions
