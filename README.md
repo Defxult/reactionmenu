@@ -316,7 +316,3 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 | `ReactionMenu.delete_interactions` | `bool` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
 | `ReactionMenu.navigation_speed` | `str` | the current setting for the menu navigation speed
 | `ReactionMenu.delete_on_timeout` | `bool` | if the menu message will delete upon timeout
-
-<!-- ---
-#### Bug Reports & Suggestions
-If you find any bugs or have any suggestions for the package, please submit them on [Github](https://github.com/Defxult/reactionmenu/issues) =) -->
