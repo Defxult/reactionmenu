@@ -28,7 +28,8 @@ tags = [
 
 details = {
     'Github Repo' : 'https://github.com/Defxult/reactionmenu',
-    'Github Issues' : 'https://github.com/Defxult/reactionmenu/issues'
+    'Github Issues' : 'https://github.com/Defxult/reactionmenu/issues',
+    'Changelog' : 'https://github.com/Defxult/reactionmenu/blob/main/CHANGELOG.md'
 }
 
 setup(
