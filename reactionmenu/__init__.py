@@ -1,2 +1,4 @@
-from .core import ReactionMenu, Button, ButtonType
-__version__ = '1.0.8'
+from .core import ReactionMenu
+from .buttons import Button, ButtonType
+from .text import TextMenu
+__version__ = '1.0.9'
