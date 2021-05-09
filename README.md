@@ -9,19 +9,23 @@ The Github version of this package will always have the latest changes, fixes, a
 ```
 pip install git+https://github.com/Defxult/reactionmenu.git
 ```
-You must have [Git](https://git-scm.com/) installed in order to do this
+You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the Github version of this package. If you are using the PyPI version of this package, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
+
+* `Github: v1.0.9`
+* `PyPI: v1.0.8`
 
 ---
 ## How to install
 ```
 pip install reactionmenu
 ```
+## Showcase
+![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
+
 ## How to import
 ```py
 from reactionmenu import ReactionMenu, Button, ButtonType
 ```
-## Showcase
-![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
 
 This package comes with several methods and options in order to make a discord reaction menu simple. Once you have imported the proper classes, you will initialize the constructor like so:
 ```py
@@ -119,23 +123,35 @@ menu.set_last_pages(additonal_info_embed)
 # NOTE: setting main/last pages can be set in any order
 ```
 ---
+## Supported Emojis
+In a menu, the places you use emojis are either in the `ReactionMenu`/`TextMenu` constructors with `back_button` and `next_button`. As well as the emoji parameter of `Button`. The format you use can vary:
+
+```py
+Button(emoji='😄' , ...)
+Button(emoji='<:miscTwitter:705423192818450453>', ...)
+Button(emoji='\U000027a1', ...)
+Button(emoji='\N{winking face}', ...)
+```
+> NOTE: These formats are applicable to the `ReactionMenu`/`TextMenu` back and next buttons
+
+Each menu class provides a set of basic emojis (class attributes) to use as your `back_button` and `next_button` for your convenience. As well as additional emojis to use for a `Button`
+```py
+menu = ReactionMenu(ctx, back_button=ReactionMenu.EMOJI_BACK_BUTTON, next_button=ReactionMenu.EMOJI_NEXT_BUTTON, ...)
+```
+
+* ▶️ as `ReactionMenu.EMOJI_NEXT_BUTTON`
+* ◀️ as `ReactionMenu.EMOJI_BACK_BUTTON`
+* ⏪ as `ReactionMenu.EMOJI_FIRST_PAGE `
+* ⏩ as `ReactionMenu.EMOJI_LAST_PAGE`
+* 🔢 as `ReactionMenu.EMOJI_GO_TO_PAGE`
+* ❌ as `ReactionMenu.EMOJI_END_SESSION`
+---
 ## What are Buttons and ButtonTypes?
 Buttons/button types are used when you want to add a reaction to the menu that does a certain function. Buttons and button types work together to achieve the desired action.
 
 ##### Parameters of the Button constructor
 * `emoji` The emoji you would like to use as the reaction
 * `linked_to` When the reaction is clicked, this is what determines what it will do (`ButtonType`)
-
-##### Supported emojis
-The emoji parameter supports all forms of emojis. 
-```py
-Button(emoji='😄' , ...)
-Button(emoji='<:miscTwitter:705423192818450453>', ...)
-Button(emoji='\U000027a1', ...)
-Button(emoji='\N{winking face}', ...)
-
-# NOTE: These formats are applicable to the ReactionMenu back and next buttons
-```
 
 ##### Options of the Button constructor [kwargs]
 | Name | Type | Default Value | Used for
@@ -262,7 +278,7 @@ async def killsessions(self, ctx):
 ```
 
 ---
-## Starting/Stopping the Menu
+## Starting/Stopping the ReactionMenu
 * Associated Methods
     * `await ReactionMenu.start(*, send_to=None)`
     * `await ReactionMenu.stop(*, delete_menu_message=False, clear_reactions=False)`
@@ -284,13 +300,22 @@ await menu.start(send_to=channel)
 When stopping the menu, you have two options. Delete the reaction menu by setting the first parameter to `True` or only remove all it's reactions, setting the second parameter to `True`
 
 ---
-#### All Attributes
+## All attributes for ReactionMenu
+<details>
+    <summary>Click to show all attributes</summary>
+
 | Attribute | Return Type | Info 
 |-----------|-------------|----------
 | `ReactionMenu.STATIC` | `int` | menu config value (class attribute)
 | `ReactionMenu.DYNAMIC` | `int` | menu config value (class attribute)  
 | `ReactionMenu.NORMAL` | `str` | menu kwarg value (class attribute)
 | `ReactionMenu.FAST` | `str` | menu kwarg value (class attribute)
+| `ReactionMenu.EMOJI_NEXT_BUTTON` | `str` | basic next button emoji (class attribute)
+| `ReactionMenu.EMOJI_BACK_BUTTON` | `str` | basic back button emoji (class attribute)
+| `ReactionMenu.EMOJI_FIRST_PAGE` | `str` | basic first page button emoji (class attribute)
+| `ReactionMenu.EMOJI_LAST_PAGE` | `str` | basic last page button emoji (class attribute)
+| `ReactionMenu.EMOJI_GO_TO_PAGE` | `str` | basic go-to-page button emoji (class attribute)
+| `ReactionMenu.EMOJI_END_SESSION` | `str` | basic end session button emoji (class attribute)
 | `ReactionMenu.config` | `int` | menu config value (`STATIC` or `DYNAMIC`)
 | `ReactionMenu.is_running` | `bool` | if the menu is currently active
 | `ReactionMenu.default_next_button` | `Button` | default next button (in the `ReactionMenu` constructor)
@@ -316,3 +341,139 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 | `ReactionMenu.delete_interactions` | `bool` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
 | `ReactionMenu.navigation_speed` | `str` | the current setting for the menu navigation speed
 | `ReactionMenu.delete_on_timeout` | `bool` | if the menu message will delete upon timeout
+</details>
+
+## All methods for ReactionMenu
+<details>
+    <summary>Click to show all methods</summary>
+
+* `ReactionMenu.add_button(button: Button)`
+  * Adds a button to the menu. Buttons can also be linked to custom embeds. So when you click the emoji you've assigned, it goes to that page and is seperate from the normal menu
+---
+* `ReactionMenu.add_page(embed: Embed)`
+  * On a static menu, add a page
+---
+* `ReactionMenu.add_row(data: str)`
+  * Used when the menu is set to dynamic. Apply the data recieved to a row in the embed page
+---
+* `ReactionMenu.cancel_all_sessions()`
+  * *class method* Immediately cancel all sessions that are currently running from the menu sessions task pool. Using this method does not allow the normal operations of `ReactionMenu.stop()`. This stops all session processing with no regard to changing the status of `ReactionMenu.is_running` amongst other things. Should only be used if you have an excess amount of menus running and it has an affect on your bots performance
+---
+* `ReactionMenu.change_appear_order(*emoji_or_button: Union[str, Button])`
+  * Change the order of the reactions you want them to appear in on the menu
+---
+* `ReactionMenu.clear_all_buttons()`
+  * Delete all buttons that have been added
+---
+* `ReactionMenu.clear_all_custom_pages()`
+  * On a static menu, delete all custom pages that have been added
+---
+* `ReactionMenu.clear_all_pages()`
+  * On a static menu, delete all pages that have been added
+---
+* `ReactionMenu.clear_all_row_data()`
+  * Delete all the data thats been added using `ReactionMenu.add_row()`
+---
+* `ReactionMenu.get_button_by_name(name: str) -> Button`
+  * Retrieve a `Button` object by its name if the kwarg "name" for that `Button` was set
+---
+* `ReactionMenu.get_sessions_count() -> int`
+  * *class method* Returns the number of active sessions
+---
+* `ReactionMenu.help_appear_order()`
+  * Prints all button emojis you've added before this method was called to the console for easy copy and pasting of the desired order. Note: If using Visual Studio Code, if you see a question mark as the emoji, you need to resize the console in order for it to show up.
+---
+* `ReactionMenu.remove_button(identity: Union[str, Button])`
+  * Remove a button by its name or its object
+---
+* `ReactionMenu.remove_page(page_number: int)`
+  * On a static menu, delete a certain page that has been added
+---
+* `ReactionMenu.set_last_pages(*embeds: Embed)`
+  * On a dynamic menu, set the pages you would like to show last. These embeds will be shown after the embeds that contain your data
+---
+* `ReactionMenu.set_main_pages(*embeds: Embed)`
+  * On a dynamic menu, set the pages you would like to show first. These embeds will be shown before the embeds that contain your data
+---
+* `ReactionMenu.set_sessions_limit(limit: int, message='Too many active reaction menus. Wait for other menus to be finished.')`
+  * *class method* Sets the amount of menu sessions that can be concurrently active. Should be set before any menus are started and cannot be called more than once
+---
+* `await ReactionMenu.start(*, send_to=None)`
+  * Starts the reaction menu
+---
+* `await ReactionMenu.stop(*, delete_menu_message=False, clear_reactions=False)`
+  * Stops the process of the reaction menu with the option of deleting the menu's message or clearing reactions upon stop
+
+</details>
+
+---
+---
+## TextMenu
+A `TextMenu` is a text based version of `ReactionMenu`. No embeds are involved in the pagination process, only plain text is used. Has limited capabilites compared to `ReactionMenu`. One of the limitations of a `TextMenu` is the `ButtonType` that can be used when adding a `Button`. `ButtonType.CUSTOM_EMBED` is not valid for a `TextMenu`
+```py
+txt = TextMenu(ctx, back_button='◀️', next_button='▶️') 
+```
+
+## Showcase
+![showcase-text](https://cdn.discordapp.com/attachments/655186216060321816/840161666108620800/text_showcase.gif)
+
+## How to import
+```py
+from reactionmenu import TextMenu
+```
+
+---
+## Parameters of the TextMenu constructor
+* `ctx` The `discord.ext.commands.Context` object
+* `back_button` Emoji used to go to the previous page ([supported emojis](#supported-emojis))
+* `next_button` Emoji used to go to the next page ([supported emojis](#supported-emojis))
+---
+
+## Options of the TextMenu constructor [kwargs]
+The kwargs for `TextMenu` are the same as [ReactionMenu kwargs](#options-of-the-reactionmenu-constructor-kwargs) **except**:
+* `rows_requested`
+* `custom_embed`
+* `wrap_in_codeblock`
+
+Those kwargs are **NOT** valid for a `TextMenu`
+
+---
+## TextMenu Specifics
+##### Methods
+There are only a few methods that are specifc to a `TextMenu`
+* `TextMenu.add_content(content: str)`
+  * This is similiar to adding a page to a `ReactionMenu`, but each addition is text
+* `TextMenu.clear_all_contents()`
+  * Delete everything that has been added to the list of contents
+
+In addition to those methods, `TextMenu` also has the same methods as [ReactionMenu methods](#all-methods-for-reactionmenu) **except**:
+* `clear_all_row_data()`
+* `add_row()`
+* `remove_page()`
+* `set_main_pages()`
+* `set_last_pages()`
+* `clear_all_pages()`
+* `clear_all_custom_pages()`
+* `add_page()`
+
+Those methods are **NOT** valid for a `TextMenu`
+
+##### Attributes
+* `TextMenu.contents` (`List[str]`)
+
+`TextMenu` has the same attributes as [ReactionMenu attributes](#all-attributes-for-reactionmenu) **except**:
+
+* `STATIC`
+* `DYNAMIC`
+* `config`
+* `custom_embed_buttons`
+* `custom_embed`
+* `wrap_in_codeblock`
+
+Those attributes are **NOT** valid for a `TextMenu`
+
+---
+## Starting/Stopping the TextMenu
+
+Starting/stopping the menu is the same as `ReactionMenu`. See the [Starting/Stopping the ReactionMenu](#startingstopping-the-reactionmenu) documentation. Of course you will need to use an instance of `TextMenu` instead.
+
