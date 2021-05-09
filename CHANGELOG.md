@@ -1,3 +1,14 @@
+### v1.0.9 - Upcoming release
+* Added new type of reaction menu (`TextMenu`). Just like the normal reaction menu but no embeds are involved, only plain text is used. `TextMenu` has limited options compared to `ReactionMenu`
+* Added basic emojis (class variables). Used as in-house helper variables to set your `back_button`/`next_button` parameters in `ReactionMenu`/`TextMenu` as well as the `emoji` parameter in `Button` 
+  * `ReactionMenu.EMOJI_NEXT_BUTTON`
+  * `ReactionMenu.EMOJI_BACK_BUTTON`
+  * `ReactionMenu.EMOJI_FIRST_PAGE`
+  * `ReactionMenu.EMOJI_LAST_PAGE`
+  * `ReactionMenu.EMOJI_GO_TO_PAGE`
+  * `ReactionMenu.EMOJI_END_SESSION`
+* Fixed an issue where it was possible to call `ReactionMenu.set_main_pages()` and `ReactionMenu.set_last_pages()` without actually implementing the necessary parameters
+
 ### v1.0.8 - May 4, 2021
 * Added `ReactionMenu.delete_on_timeout`
 
