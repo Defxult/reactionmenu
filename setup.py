@@ -36,7 +36,7 @@ setup(
     author='Defxult#8269',
     name='reactionmenu',
     description='A package to create a discord.py reaction menu. If your discord.py version is 1.5.0+, intents are required',
-    version='1.0.8', 
+    version='1.0.9', 
     url='https://github.com/Defxult',
     project_urls=details,
     classifiers=classifiers,
