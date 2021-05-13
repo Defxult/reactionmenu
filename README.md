@@ -11,7 +11,7 @@ pip install git+https://github.com/Defxult/reactionmenu.git
 ```
 You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the Github version of this package. If you are using the PyPI version of this package, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
 
-* `Github: v1.0.9`
+* `Github: v1.0.9.dev`
 * `PyPI: v1.0.8`
 
 ---
@@ -55,6 +55,7 @@ menu = ReactionMenu(ctx, back_button='◀️', next_button='▶️', config=Reac
 | `delete_interactions` | `bool` | `True` | `STATIC and DYNAMIC` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
 | `navigation_speed` | `str` | `ReactionMenu.NORMAL` | `STATIC and DYNAMIC` | sets if the user needs to wait for the reaction to be removed by the bot before "turning" the page. Setting the speed to `ReactionMenu.FAST` makes it so that there is no need to wait (reactions are not removed on each press) and can navigate lengthy menu's more quickly
 | `delete_on_timeout` | `bool` | `False` | `STATIC and DYNAMIC` | When the menu times out, delete the menu message. This overrides `clear_reactions_after`
+| `only_roles` | `List[discord.Role]` | `None` | `STATIC and DYNAMIC` | sets it so that only the members with any of the provided roles can control the menu. The menu owner can always control the menu. This overrides `all_can_react`
 > NOTE: All `ReactionMenu` kwargs can also be set using an instance of `ReactionMenu` **except** `rows_requested`
 ---
 ## ReactionMenu.STATIC vs ReactionMenu.DYNAMIC
@@ -249,13 +250,43 @@ menu.change_appear_order(first_button, menu.default_back_button, close_menu_butt
 If you did not make an instance of a Button object to access, you can still get that button object by its name if it is set and has been added to the menu via `menu.add_button()`. Example: `menu.get_button_by_name('end')`. With the helper function `menu.help_appear_order()`, it simply prints out all active buttons to the console so you can copy and paste each emoji in the order you'd like.
 
 ---
+## Auto-pagination
+
+An auto-pagination menu is a menu that doesn't need a reaction press to go to the next page. It turns pages on it's own every x amount of seconds. This can be useful if you'd like to have a continuous display of information to your server. That information might be server stats, upcoming events, etc. Below is an example of an auto-pagination menu.
+
+![auto-pagin-showcase](https://cdn.discordapp.com/attachments/655186216060321816/842352164713791508/auto-pagin-reduced.gif)
+
+* Associated methods
+  * `ReactionMenu.set_as_auto_paginator(turn_every: Union[int, float])`
+  * `ReactionMenu.update_turn_every(turn_every: Union[int, float])`
+  * `ReactionMenu.refresh_auto_pagination_data(*embeds: Embed)`
+  * `ReactionMenu.update_all_turn_every(turn_every: Union[int, float])` (class method)
+  * `ReactionMenu.stop_all_auto_sessions()` (class method)
+  * `ReactionMenu.auto_turn_every` (property)
+  * `ReactionMenu.auto_paginator` (property)
+
+> NOTE: When you only want to create a auto-pagination menu, there's no need to set the `back_button` or `next_button` with an emoji. Simply set them to `None`
+
+Example:
+```py
+menu = ReactionMenu(ctx, back_button=None, next_button=None, config=ReactionMenu.STATIC)
+
+menu.add_page(server_info_embed)
+menu.add_page(social_media_embed)
+menu.add_page(games_embed)
+
+menu.set_as_auto_paginator(turn_every=120)
+await menu.start()
+```
+---
 ## Setting Limits
+If you'd like, you can limit the amount of reaction menus that can be active at the same time. You can do this by using the class method above. 
 * Associated CLASS Methods
     * `ReactionMenu.set_sessions_limit(limit: int, message: str)` 
-    * `ReactionMenu.cancel_all_sessions()`
     * `ReactionMenu.get_sessions_count()`
+    * `await ReactionMenu.stop_all_sessions()`
 
-If you'd like, you can limit the amount of reaction menus that can be active at the same time. You can do this by using the class method above. Example:
+Example:
 ```py
 from discord.ext import commands
 from reactionmenu import ReactionMenu, Button, ButtonType
@@ -268,15 +299,13 @@ class Example(commands.Cog):
 
 With the above example, only 3 menus can be active at once, and if someone tries to create more before other menus are finished, they will get an error message saying "Sessions are limited".
 
-Depending on where you host your bot, having an excess amount of menus running can possibly have an impact on your bots performance. It is possible to cancel all sessions. Example:
+If you have an excess amount of menu's running, it is possible to stop all sessions. Example:
 ```py
 @commands.command()
 @commands.has_role('Admin')
-async def killsessions(self, ctx):
-    # ...
-    ReactionMenu.cancel_all_sessions()
+async def stop(self, ctx):
+    await ReactionMenu.stop_all_sessions()
 ```
-
 ---
 ## Starting/Stopping the ReactionMenu
 * Associated Methods
@@ -341,6 +370,9 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 | `ReactionMenu.delete_interactions` | `bool` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
 | `ReactionMenu.navigation_speed` | `str` | the current setting for the menu navigation speed
 | `ReactionMenu.delete_on_timeout` | `bool` | if the menu message will delete upon timeout
+| `ReactionMenu.only_roles` | `List[discord.Role]` | the members with those role are the only ones allowed to control the menu. the menu owner can always control the menu
+| `ReactionMenu.run_time` | `int` | the amount of time in seconds the menu has been active
+| `ReactionMenu.auto_turn_every` | `int` | how frequently an auto-pagination menu should change the page
 </details>
 
 ## All methods for ReactionMenu
@@ -355,9 +387,6 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 ---
 * `ReactionMenu.add_row(data: str)`
   * Used when the menu is set to dynamic. Apply the data recieved to a row in the embed page
----
-* `ReactionMenu.cancel_all_sessions()`
-  * *class method* Immediately cancel all sessions that are currently running from the menu sessions task pool. Using this method does not allow the normal operations of `ReactionMenu.stop()`. This stops all session processing with no regard to changing the status of `ReactionMenu.is_running` amongst other things. Should only be used if you have an excess amount of menus running and it has an affect on your bots performance
 ---
 * `ReactionMenu.change_appear_order(*emoji_or_button: Union[str, Button])`
   * Change the order of the reactions you want them to appear in on the menu
@@ -383,11 +412,17 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 * `ReactionMenu.help_appear_order()`
   * Prints all button emojis you've added before this method was called to the console for easy copy and pasting of the desired order. Note: If using Visual Studio Code, if you see a question mark as the emoji, you need to resize the console in order for it to show up.
 ---
+* `ReactionMenu.refresh_auto_pagination_data(*embeds: Embed)`
+  * Update the embeds displayed in the auto-pagination menu
+---
 * `ReactionMenu.remove_button(identity: Union[str, Button])`
   * Remove a button by its name or its object
 ---
 * `ReactionMenu.remove_page(page_number: int)`
   * On a static menu, delete a certain page that has been added
+---
+* `ReactionMenu.set_as_auto_paginator(turn_every: Union[int, float])`
+  * Set the menu to turn pages on it's own every x seconds. If this is set, reactions will not be applied to the menu
 ---
 * `ReactionMenu.set_last_pages(*embeds: Embed)`
   * On a dynamic menu, set the pages you would like to show last. These embeds will be shown after the embeds that contain your data
@@ -403,6 +438,21 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 ---
 * `await ReactionMenu.stop(*, delete_menu_message=False, clear_reactions=False)`
   * Stops the process of the reaction menu with the option of deleting the menu's message or clearing reactions upon stop
+---
+* `await ReactionMenu.stop_all_auto_sessions()`
+  * *class method* Stops all auto-paginated sessions that are currently running
+---
+* `await ReactionMenu.stop_all_sessions()`
+  * *class method* Gracefully stops all sessions that are currently running
+---
+* `await ReactionMenu.stop_session(name: str)`
+  * *class method* Stop a specific menu by it's name
+---
+* `ReactionMenu.update_all_turn_every(turn_every: Union[int, float])`
+  * *class method* Update the amount of seconds to wait before going to the next page for all active auto-paginated sessions
+---
+* `ReactionMenu.update_turn_every(turn_every: Union[int, float])`
+  * Change the amount of seconds to wait before going to the next page
 
 </details>
 
