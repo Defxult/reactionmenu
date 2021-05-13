@@ -14,6 +14,8 @@ You must have [Git](https://git-scm.com/) installed in order to do this. With th
 * `Github: v1.0.9.dev`
 * `PyPI: v1.0.8`
 
+If you are using `v1.0.9.dev` and discover any bugs, please don't hesitate to put them in [issues](https://github.com/Defxult/reactionmenu/issues) so they can be fixed before release 😀
+
 ---
 ## How to install
 ```
