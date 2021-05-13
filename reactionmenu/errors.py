@@ -27,6 +27,14 @@ class ReactionMenuException(Exception):
 	"""Base Reaction Menu exception"""
 	pass
 
+class IncorrectType(ReactionMenuException):
+	"""Raised when the expected type was not given
+	
+		.. added:: v1.0.9
+	"""
+	def __init__(self, message: str):
+		super().__init__(message)
+
 class InvalidPage(ReactionMenuException):
 	"""Raised when the page selected to remove does not exist"""
 	pass
