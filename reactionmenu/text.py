@@ -24,15 +24,16 @@ DEALINGS IN THE SOFTWARE.
 
 import asyncio
 import inspect
+import itertools
 from typing import List, Union
 
-from discord import TextChannel
+from discord import TextChannel, Member, Role
 from discord.ext.commands import Context
 
 from .abc import Menu
 from .buttons import Button, ButtonType
 from .decorators import ensure_not_primed
-from .errors import ReactionMenuException, TooManyButtons, DuplicateButton, MenuAlreadyRunning, MissingSetting
+from .errors import ReactionMenuException, TooManyButtons, DuplicateButton, MenuAlreadyRunning, MissingSetting, IncorrectType
 
 class TextMenu(Menu):
     """A text based version of :class:`ReactionMenu`. No embeds are involved in the pagination process, only plain text is used. Has limited capabilites compared to :class:`ReactionMenu`.
@@ -77,10 +78,13 @@ class TextMenu(Menu):
 
     delete_on_timeout: :class:`bool`
         When the menu times out, delete the menu message. This overrides :attr:`clear_reactions_after`
+    
+    only_roles: List[:class:`discord.Role`]
+        Members with any of the provided roles are the only ones allowed to control the menu. The member who started the menu will always be able to control it. This overrides :attr:`all_can_react`
 
         .. added:: v1.0.9
     """
-    _active_sessions = []
+    _active_sessions: List['TextMenu'] = []
     _sessions_limit = None
     _task_sessions_pool: List[asyncio.Task] = []
     _limit_message: str = ''
@@ -88,19 +92,26 @@ class TextMenu(Menu):
     def __init__(self, ctx: Context, *, back_button: str, next_button: str, **options):
         self._ctx = ctx
         self._bot = ctx.bot
-        self._all_buttons: List[Button] = [
-            Button(emoji=back_button, linked_to=ButtonType.PREVIOUS_PAGE),
-            Button(emoji=next_button, linked_to=ButtonType.NEXT_PAGE)
-        ]
+        self._default_back_button: Button = Button(emoji=back_button, linked_to=ButtonType.PREVIOUS_PAGE, name='default back button')
+        self._default_next_button: Button = Button(emoji=next_button, linked_to=ButtonType.NEXT_PAGE, name='default next button')
+        self._all_buttons: List[Button] = [self._default_back_button, self._default_next_button]
         self._contents: List[str] = []
         self._loop = ctx.bot.loop
         self._send_to_channel = None
         self._msg = None
         self._is_running = False
         self._page_number = 0
-        self._session_task: asyncio.Task = None
+        self._main_session_task: asyncio.Task = None
+        self._menu_owner = None
+        self._auto_paginator = False
+        self._auto_turn_every = None
+        self._auto_worker = None
+        self._run_time = 0
+        self._countdown_tasks: List[asyncio.Task] = []
+        self._runtime_tracking_tasks: List[asyncio.Task] = []
 
         # basic options (also ABC properties)
+        self._only_roles: List[Role] = options.get('only_roles')
         self._style: str = options.get('style')
         self._clear_reactions_after: bool = options.get('clear_reactions_after', True)
         self._timeout: Union[float, None] = options.get('timeout', 60.0)
@@ -114,50 +125,26 @@ class TextMenu(Menu):
     @property
     def total_pages(self) -> int:
         """
-        .. note::
-            ABC prop
+        Returns
+        -------
+        :class:`int`:
+            The amount of pages on the menu
+
+            .. note::
+                ABC prop
         """
         return len(self._contents)
 
     @property
     def contents(self) -> List[str]:
-        return self._contents
-    
-    @property
-    def navigation_speed(self) -> str:
-        """ .. added:: v1.0.5
-
-            .. note::
-                ABC prop
         """
-        return self._navigation_speed
-
-    @navigation_speed.setter
-    def navigation_speed(self, value):
-        """A property getter/setter for kwarg "navigation_speed"
-        
-        Example
+        Returns
         -------
-        ```
-        menu = TextMenu(...)
-        menu.navigation_speed = TextMenu.NORMAL
-        >>> print(menu.navigation_speed)
-        NORMAL
-        ```
-            .. added:: v1.0.5
-
-            .. note::
-                ABC prop
+        List[:class:`str`]:
+            All the contents of a text menu. Can be :class:`None` if no content has been added
         """
-        if not self._is_running:
-            if value in (TextMenu.NORMAL, TextMenu.FAST):
-                self._navigation_speed = value
-            else:
-                raise ReactionMenuException(f'When setting the \'navigation_speed\' of a menu, {value!r} is not a valid value')
-        else:
-            TextMenu.cancel_all_sessions()
-            raise MenuAlreadyRunning(f'You cannot set the navigation speed when the menu is already running. Menu name: {self._name}')
-    
+        return self._contents if self._contents else None
+
     @ensure_not_primed
     def clear_all_contents(self):
         """Delete everything that has been added to the list of contents
@@ -242,12 +229,6 @@ class TextMenu(Menu):
         else:
             raise DuplicateButton(f'The emoji {tuple(button.emoji)} has already been registered as a button')
 
-    def _session_callback(self, task):
-        try:
-            task.result()
-        except asyncio.CancelledError:
-            pass
-    
     def _page_control(self, action) -> int:
         """When the menu is in an active session, this protects the menu pagination index from going out of bounds (IndexError)"""
         if action == '+':   self._page_number += 1
@@ -308,12 +289,45 @@ class TextMenu(Menu):
                 return
             await self._msg.edit(content=worker)
 
+    def refresh_auto_pagination_data(self, *contents: str):
+        """Update the content displayed in the auto-pagination menu
+
+        Parameters
+        ----------
+        *content: :class:`str`
+            An argument list of :class:`str` values
+        
+        Raises
+        ------
+        - `ReactionMenuException`: The menu was not set as an auto-paginator menu
+        - `IncorrectType`: All values in the argument list were not of type :class:`str`
+        """
+        if self._auto_paginator:
+            if all([isinstance(item, str) for item in contents]):
+                self._auto_worker = itertools.cycle(contents)
+            else:
+                raise IncorrectType('Parameter "contents" expected only str values. One or more values were not of type str')
+        else:
+            raise ReactionMenuException('Menu is not set as auto-paginator')
+    
+    async def _execute_auto_session(self):
+        """|abc coro| Begin the auto-pagination process"""
+        self._auto_worker = itertools.cycle(self._contents)
+        next(self._auto_worker)
+        self._all_buttons.clear()
+        countdown_tsk = self._loop.create_task(self._auto_countdown())
+        self._countdown_tasks.append(countdown_tsk)
+        while self._is_running:
+            await asyncio.sleep(self._auto_turn_every)
+            await self._msg.edit(content=next(self._auto_worker))
+    
     async def _execute_session(self):
         """|coro| Begin the pagination process
         
             .. note::
                 ABC meth
         """
+        self._menu_owner = self._ctx.author
         while self._is_running:
             try:
                 if self._navigation_speed == TextMenu.NORMAL:
@@ -323,14 +337,7 @@ class TextMenu(Menu):
                 else:
                     raise ReactionMenuException(f'Navigation speed {self._navigation_speed!r} is not recognized')
             except asyncio.TimeoutError:
-                self._is_running = False
-                TextMenu._remove_session(self)
-                if self._delete_on_timeout:
-                    await self._msg.delete()
-                    return
-                if self._clear_reactions_after:
-                    await self._msg.clear_reactions()
-                return
+                await self.stop(delete_menu_message=self._delete_on_timeout, clear_reactions=self._clear_reactions_after)
             else:
                 emoji = str(reaction.emoji)
 
@@ -419,18 +426,7 @@ class TextMenu(Menu):
                     
                     # end session
                     elif emoji == btn.emoji and btn.linked_to is ButtonType.END_SESSION:
-                        self._is_running = False
-                        TextMenu._remove_session(self)
-                        await self._msg.delete()
-                        return
-    
-    def _start_setup(self):
-        """Set the initial settings needed in order for the menu to work properly"""
-        TextMenu._active_sessions.append(self)
-        self._is_running = True
-        self._session_task = self._loop.create_task(self._execute_session())
-        TextMenu._task_sessions_pool.append(self._session_task)
-        self._session_task.add_done_callback(self._session_callback)
+                        await self.stop(delete_menu_message=True)
 
     @ensure_not_primed
     async def start(self, *, send_to: Union[str, int, TextChannel]=None):
@@ -466,8 +462,10 @@ class TextMenu(Menu):
             .. note::
                 ABC meth
         """
-        self._duplicate_emoji_check()
-        self._duplicate_name_check()
+        # theres no need to do button duplicate checks for an auto-pagination menu because no buttons will be used
+        if not self._auto_paginator:
+            self._duplicate_emoji_check()
+            self._duplicate_name_check()
 
         # check if the menu is limited
         if TextMenu._is_currently_limited():
@@ -490,7 +488,6 @@ class TextMenu(Menu):
             else:
                 self._msg = await self._send_to_channel.send(self._contents[0])
             
-            self._start_setup()
         else:
             self._mark_pages()
             if self._send_to_channel is None:
@@ -498,31 +495,20 @@ class TextMenu(Menu):
             else:
                 self._msg = await self._send_to_channel.send(self._contents[0])
             
-            for btn in self.all_buttons:
-                await self._msg.add_reaction(btn.emoji)
+            if not self._auto_paginator:
+                for btn in self.all_buttons:
+                    await self._msg.add_reaction(btn.emoji)
             
-            self._start_setup()
+        TextMenu._active_sessions.append(self)
+        self._is_running = True
 
-    async def stop(self, *, delete_menu_message=False, clear_reactions=False):
-        """|coro| Stops the process of the text menu with the option of deleting the menu's message or clearing reactions upon stop
-        
-		Parameters
-		----------
-		delete_menu_message: :class:`bool`
-			(optional) Delete the menu message when stopped (defaults to `False`)
+        if self._auto_paginator:
+            self._main_session_task = self._loop.create_task(self._execute_auto_session())
+        else:
+            self._main_session_task = self._loop.create_task(self._execute_session())
 
-		clear_reactions: :class:`bool`
-			(optional) Clear the reactions on the menu's message when stopped (defaults to `False`)
-        
-                .. note::
-                    ABC meth
-        """
-        if self._is_running:
-            self._session_task.cancel()
-            self._is_running = False
-            TextMenu._remove_session(self)
-            if delete_menu_message:
-                await self._msg.delete()
-                return
-            if clear_reactions:
-                await self._msg.clear_reactions()
+        TextMenu._task_sessions_pool.append(self._main_session_task)
+        self._main_session_task.add_done_callback(self._main_session_callback)
+
+        runtime_tsk = self._loop.create_task(self._track_runtime())
+        self._runtime_tracking_tasks.append(runtime_tsk)

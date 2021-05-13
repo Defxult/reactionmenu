@@ -25,9 +25,10 @@ DEALINGS IN THE SOFTWARE.
 import asyncio
 import collections
 from enum import Enum, auto
+import itertools
 from typing import List, Union, Deque
 
-from discord import Embed, TextChannel
+from discord import Embed, TextChannel, Member, Role
 from discord.ext.commands import Context
 
 from .abc import Menu
@@ -90,6 +91,9 @@ class ReactionMenu(Menu):
 	
 	delete_on_timeout: :class:`bool`
 		When the menu times out, delete the menu message. This overrides :attr:`clear_reactions_after`
+	
+	only_roles: List[:class:`discord.Role`]
+        Members with any of the provided roles are the only ones allowed to control the menu. The member who started the menu will always be able to control it. This overrides :attr:`all_can_react`
 
 		.. changes::
 			v1.0.1
@@ -108,15 +112,25 @@ class ReactionMenu(Menu):
 			v1.0.8
 				Added :attr:_delete_on_timeout
 			v1.0.9
+				Added :attr:_only_roles
+				Added :attr:_menu_owner
+				Added :attr:_auto_paginator
+				Added :attr:_auto_turn_every
+				Added :attr:_main_session_task
+				Added :attr:_limit_message
+				Added :attr:_default_back_button
+				Added :attr:_default_next_button
+
+				
 				This class now inherits from :abc:`Menu`
 				
-				A sizeable amount of methods and properties were moved from here to abc.py to support :class:`TextMenu`.
-				No breaking changes occured with this update
+				A sizeable amount of methods and properties were moved from here to abc.py to support :class:`TextMenu`
+
 	"""
 	STATIC = 0
 	DYNAMIC = 1
 	
-	_active_sessions = []
+	_active_sessions: List['ReactionMenu'] = []
 	_sessions_limit = None
 	_task_sessions_pool: List[asyncio.Task] = []
 	_limit_message: str = ''
@@ -129,12 +143,19 @@ class ReactionMenu(Menu):
 		self._loop = ctx.bot.loop
 		self._msg = None
 		self._is_running = False
-		self._all_buttons: List[Button] = [
-			Button(emoji=back_button, linked_to=ButtonType.PREVIOUS_PAGE, name='default back button'),
-			Button(emoji=next_button, linked_to=ButtonType.NEXT_PAGE, name='default next button'),
-		]
+		self._default_back_button: Button = Button(emoji=back_button, linked_to=ButtonType.PREVIOUS_PAGE, name='default back button')
+		self._default_next_button: Button = Button(emoji=next_button, linked_to=ButtonType.NEXT_PAGE, name='default next button')
+		self._all_buttons: List[Button] = [self._default_back_button, self._default_next_button]
 		self._current_page = 0
 		self._last_page = 0
+		self._menu_owner = None
+		self._auto_paginator = False
+		self._auto_turn_every = None
+		self._auto_worker = None
+		self._run_time = 0
+		self._countdown_tasks: List[asyncio.Task] = []
+		self._runtime_tracking_tasks: List[asyncio.Task] = []
+		self._main_session_task: asyncio.Task = None
 		
 		# dynamic session
 		self._dynamic_data_builder: List[str] = []
@@ -151,6 +172,7 @@ class ReactionMenu(Menu):
 		self._static_completed_pages: List[Embed] = []
 	
 		# misc options
+		self._only_roles: List[Role] = options.get('only_roles')
 		self._clear_reactions_after: bool = options.get('clear_reactions_after', True)
 		self._timeout: Union[float, None] = options.get('timeout', 60.0)
 		self._show_page_director: bool = options.get('show_page_director', True)
@@ -163,17 +185,34 @@ class ReactionMenu(Menu):
 		
 	@property
 	def config(self) -> int:
+		"""
+		Returns
+		-------
+		:class:`int`:
+			The config of the menu is either `ReactionMenu.STATIC` (a value of 0), or `ReactionMenu.DYNAMIC` (a value of 1)
+		"""
 		return self._config
 
 	@property
 	def custom_embed_buttons(self) -> List[Button]:
+		"""
+		Returns
+		-------
+		List[:class:`Button`]:
+			Can return :class:`None` if no custom embed buttons have been set
+		"""
 		temp = self._custom_linked_embeds()
 		return temp if temp else None
 
 	@property
 	def total_pages(self) -> int:
 		"""With a dynamic menu, the total pages isn't known until AFTER the menu has started
-			
+
+		Returns
+		-------
+		:class:`int`:
+			The amount of pages on the menu
+
 			.. added:: v1.0.1
 
 			.. changes::
@@ -187,46 +226,14 @@ class ReactionMenu(Menu):
 
 	@property
 	def rows_requested(self) -> int:
+		"""
+		Returns
+		-------
+		:class:`int`:
+			The amount of rows that was set for a dynamic menu
+		"""
 		return self._rows_requested
 	
-	@property
-	def navigation_speed(self) -> str:
-		"""
-		.. added:: v1.0.5
-
-		.. changes::
-			v1.0.9
-				Moved to ABC
-		"""
-		return self._navigation_speed
-	
-	@navigation_speed.setter
-	def navigation_speed(self, value):
-		"""A property getter/setter for kwarg "navigation_speed"
-		
-		Example
-		-------
-		```
-		menu = ReactionMenu(...)
-		menu.navigation_speed = ReactionMenu.NORMAL
-		>>> print(menu.navigation_speed)
-		NORMAL
-		```
-			.. added:: v1.0.5
-
-			.. changes::
-				v1.0.9
-					Moved to ABC
-		"""
-		if not self._is_running:
-			if value in (ReactionMenu.NORMAL, ReactionMenu.FAST):
-				self._navigation_speed = value
-			else:
-				raise ReactionMenuException(f'When setting the \'navigation_speed\' of a menu, {value!r} is not a valid value')
-		else:
-			ReactionMenu.cancel_all_sessions()
-			raise MenuAlreadyRunning(f'You cannot set the navigation speed when the menu is already running. Menu name: {self._name}')
-
 	@property
 	def custom_embed(self) -> Embed:
 		return self._custom_embed
@@ -241,6 +248,11 @@ class ReactionMenu(Menu):
 		menu = ReactionMenu(...)
 		menu.custom_embed = discord.Embed(color=discord.Color.red())
 		```
+		Returns
+		-------
+		:class:`discord.Embed`:
+			If not set, defaults to :class:`None`
+
 			.. changes::
 				v1.0.6
 					Added :attr:_custom_embed_set
@@ -249,7 +261,7 @@ class ReactionMenu(Menu):
 			self._custom_embed = value
 			self._custom_embed_set = True
 		else:
-			raise TypeError(f'"custom_embed" expected discord.Embed, got {value.__class__.__name__}')
+			raise IncorrectType(f'"custom_embed" expected discord.Embed, got {value.__class__.__name__}')
 	
 	@property
 	def wrap_in_codeblock(self) -> str:
@@ -267,11 +279,15 @@ class ReactionMenu(Menu):
 		>>> print(menu.wrap_in_codeblock)
 		py
 		```
+		Returns
+		-------
+		:class:`str`:
+			If not set, defaults to :class:`None`
 		"""
 		if isinstance(value, str):
 			self._wrap_in_codeblock = value
 		else:
-			raise TypeError(f'"wrap_in_codeblock" expected str, got {value.__class__.__name__}')
+			raise IncorrectType(f'"wrap_in_codeblock" expected str, got {value.__class__.__name__}')
 
 	def _maybe_custom_embed(self) -> Embed:
 		"""If a custom embed is set, return it
@@ -512,7 +528,7 @@ class ReactionMenu(Menu):
 		return [button for button in self._all_buttons if button.linked_to is ButtonType.CUSTOM_EMBED]
 	
 	def _regular_buttons(self) -> List[Button]:
-		"""Returns a list of :class:`Button` that do not have the type ButtonType.CUSTOM_EMBED"""
+		"""Returns a list of :class:`Button` that do not have the type `ButtonType.CUSTOM_EMBED`"""
 		return [button for button in self._all_buttons if button.linked_to is not ButtonType.CUSTOM_EMBED]
 	
 	def _actual_embeds(self) -> List[Embed]:
@@ -542,22 +558,6 @@ class ReactionMenu(Menu):
 			if task.get_name() == name:
 				return task
 
-	def _asyncio_exception_callback(self, task: asyncio.Task):
-		"""Used for "handling" unhandled exceptions in :meth:`ReactionMenu._execute_session`. Because that method is running in the background (asyncio.create_task), a callback is needed
-		when an exception is raised or else all exceptions are suppressed/lost until the program terminates, which it won't because it's a bot. This re-raises those exceptions
-		if any so proper debugging can occur both on my end and the users end (using :attr:`ButtonType.CALLER`)
-			
-			.. added:: v1.0.3
-
-			.. changes::
-				v1.0.5
-					Added try/except to properly handle/display the appropriate tracebacks for when tasks are cancelled
-		"""
-		try:
-			task.result()
-		except asyncio.CancelledError:
-			pass
-	
 	async def _execute_navigation_type(self, worker, emoji, **kwargs):
 		"""|abc coro| This controls whether the user has to wait until the emoji is removed from the message by the :class:`discord.Client` in order to continue 'turning' pages in the menu session. 
 		:attr:`ReactionMenu.NORMAL` indicates the user has to wait for the :class:`discord.Client` to remove the reaction. :attr:`ReactionMenu.FAST` indicates no wait is needed and is 
@@ -597,6 +597,62 @@ class ReactionMenu(Menu):
 				pass
 			else:
 				await self._msg.edit(embed=worker[self._current_page])
+	
+	def refresh_auto_pagination_data(self, *embeds: Embed):
+		"""Update the embeds displayed in the auto-pagination menu
+
+		Parameters
+		----------
+		*embeds: :class:`discord.Embed`
+			An argument list of :class:`discord.Embed` objects
+		
+		Raises
+		------
+		- `ReactionMenuException`: The menu was not set as an auto-paginator menu
+		- `IncorrectType`: All values in the argument list were not of type :class:`discord.Embed`
+
+			.. added:: v1.0.9
+		"""
+		if self._auto_paginator:
+			if all([isinstance(e, Embed) for e in embeds]):
+				self._auto_worker = itertools.cycle(embeds)
+			else:
+				raise IncorrectType('Parameter "embeds" expected only discord.Embed values. One or more values were not of type discord.Embed')
+		else:
+			raise ReactionMenuException('Menu is not set as auto-paginator')
+	
+	async def _execute_auto_session(self, worker: list):
+		"""|abc coro| Begin the auto-pagination process. This also starts the background task for the countdown to timeout
+		
+			.. added:: v1.0.9
+		"""
+		if self._config == ReactionMenu.STATIC:
+			embed_buttons = self.custom_embed_buttons
+			if embed_buttons:
+				embeds = [btn.custom_embed for btn in embed_buttons]
+				worker.extends(embeds)
+			
+			worker = itertools.cycle(worker)
+		
+		elif self._config == ReactionMenu.DYNAMIC:
+			worker = itertools.cycle(self._dynamic_completed_pages)
+
+		self._auto_worker = worker
+
+		# when the initial message is sent, the user already sees the first page. doing a single next()
+		# before the auto-pagination process begins allows the menu to display the second page after waiting on 
+		# :attr:`ReactionMenu._auto_turn_every`
+		next(self._auto_worker)
+
+		# since reactions will not be used during the auto-pagination process, there's no reason to have :class:`Button` objects in the list
+		self._all_buttons.clear()
+
+		countdown_tsk = self._loop.create_task(self._auto_countdown())
+		self._countdown_tasks.append(countdown_tsk)
+
+		while self._is_running:
+			await asyncio.sleep(self._auto_turn_every)
+			await self._msg.edit(embed=next(self._auto_worker))
 		
 	async def _execute_session(self, worker):
 		"""|abc coro| Begin the pagination process
@@ -611,11 +667,14 @@ class ReactionMenu(Menu):
 				v1.0.5
 					Moved the use of :meth:`_msg.edit` and :meth:`_msg.remove_reaction` to :meth:`ReactionMenu._execute_navigation_type`
 				v1.0.8
-					Added _delete_on_timeout functionality
+					Added :attr:`ReactionMenu._delete_on_timeout` functionality
 				v1.0.9
+					- Added the initialization of :attr:`ReactionMenu._menu_owner` for proper handling in :meth:`Menu._wait_check`
+					- Replaced the end session and timeout actions to :meth:`ReactionMenu.stop`. Stop does all the necessary things needed to properly stop a menu
 					- Instead of calling str() everytime on every button emoji check, just store it in a variable to access and check later
 					- Moved to ABC
 		"""
+		self._menu_owner = self._ctx.author
 		while self._is_running:
 			try:
 				if self._navigation_speed == ReactionMenu.NORMAL:
@@ -625,14 +684,7 @@ class ReactionMenu(Menu):
 				else:
 					raise ReactionMenuException(f'Navigation speed {self._navigation_speed!r} is not recognized')
 			except asyncio.TimeoutError:
-				self._is_running = False
-				ReactionMenu._remove_session(self)
-				if self._delete_on_timeout:
-					await self._msg.delete()
-					return
-				if self._clear_reactions_after:
-					await self._msg.clear_reactions()
-				return
+				await self.stop(delete_menu_message=self._delete_on_timeout, clear_reactions=self._clear_reactions_after)
 			else:
 				emoji = str(reaction.emoji)
 
@@ -725,47 +777,7 @@ class ReactionMenu(Menu):
 
 					# end session
 					elif emoji == btn.emoji and btn.linked_to is ButtonType.END_SESSION:
-						self._is_running = False
-						ReactionMenu._remove_session(self)
-						await self._msg.delete()
-						return
-	
-	async def stop(self, *, delete_menu_message=False, clear_reactions=False):
-		"""|coro| Stops the process of the reaction menu with the option of deleting the menu's message or clearing reactions upon stop
-		
-		Parameters
-		----------
-		delete_menu_message: :class:`bool`
-			(optional) Delete the menu message when stopped (defaults to `False`)
-
-		clear_reactions: :class:`bool`
-			(optional) Clear the reactions on the menu's message when stopped (defaults to `False`)
-
-			.. changes::
-				v1.0.5
-					Added ID handling for static/dynamic task names
-		"""
-		def _get_proper_task() -> str:
-			"""Depending on the menu instance ID, return the task name equivalent with that ID
-				
-				.. added:: v1.0.5
-			"""
-			if self._config == ReactionMenu.STATIC:
-				return 'static_task_%s' % id(self)
-			else:
-				return 'dynamic_task_%s' % id(self)
-
-		if self._is_running:
-			task = ReactionMenu._get_task(_get_proper_task())
-			task.cancel()
-			self._is_running = False
-			ReactionMenu._remove_session(self)
-			if delete_menu_message:
-				await self._msg.delete()
-				return
-			
-			if clear_reactions:
-				await self._msg.clear_reactions()
+						await self.stop(delete_menu_message=True)
 
 	@ensure_not_primed
 	async def start(self, *, send_to: Union[str, int, TextChannel]=None):
@@ -809,20 +821,31 @@ class ReactionMenu(Menu):
 					could stop the wrong menu instance
 				v1.0.6
 					Added :param:`send_to`
-					Added :meth:`ReactionMenu._determine_location` and if checks to determine if the menu should start in the same channel as :attr:`_ctx` or another channel (:attr:`self._send_to_channel`)
+					Added :meth:`ReactionMenu._determine_location` and if checks to determine if the menu should start in the same channel as :attr:`ReactionMenu._ctx` or another channel (:attr:`ReactionMenu._send_to_channel`)
 				v1.0.9
-					Moved to ABC
+					- Added handling for :attr:`ReactionMenu._auto_paginator` to determine when to, and when not to apply reactions
+					- Added handling for :attr:`ReactionMenu._auto_paginator` to determine when to check for duplicate emojis/names
+					- Moved to ABC
+					- Removed [else] from ReactionMenu.STATIC/DYNAMIC check. Replaced with [if self._config] check at the top
+					- Moved #[core menu initialization] from both STATIC and DYNAMIC if checks to only one at the bottom. Having both was redundant because regardless of configuration both have the same #[core menu initialization]
 		"""
-		self._duplicate_emoji_check()
-		self._duplicate_name_check()
-		self._determine_location(send_to)
+		if self._config not in (ReactionMenu.STATIC, ReactionMenu.DYNAMIC):
+			raise MenuSettingsMismatch("The menu's setting for dynamic or static was not recognized")
 		
+		# theres no need to do button duplicate checks for an auto-pagination menu because no buttons will be used
+		if not self._auto_paginator:
+			self._duplicate_emoji_check()
+			self._duplicate_name_check()
+
+		# check if the menu is limited
 		if ReactionMenu._is_currently_limited():
 			if ReactionMenu._limit_message:
 				await self._ctx.send(ReactionMenu._limit_message)
 			return
-		else:
-			ReactionMenu._active_sessions.append(self)
+		
+		# determine the channel to send the channel to (if any)
+		if send_to:
+			self._determine_location(send_to)
 		
 		if self._config == ReactionMenu.STATIC:
 			worker = []
@@ -835,8 +858,11 @@ class ReactionMenu(Menu):
 				worker = self._static_completed_pages
 				self._refresh_page_director_info(worker)
 				self._msg = await self._ctx.send(embed=self._static_completed_pages[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=self._static_completed_pages[0])
-				for btn in self._regular_buttons():
-					await self._msg.add_reaction(btn.emoji)
+				
+				if not self._auto_paginator:
+					for btn in self._regular_buttons():
+						await self._msg.add_reaction(btn.emoji)
+
 				self._last_page = len(worker) - 1
 
 			# normal pages w/ custom pages
@@ -844,8 +870,11 @@ class ReactionMenu(Menu):
 				worker = self._static_completed_pages 
 				self._refresh_page_director_info(worker)
 				self._msg = await self._ctx.send(embed=self._static_completed_pages[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=self._static_completed_pages[0])
-				for btn in self._extract_all_emojis():
-					await self._msg.add_reaction(btn)
+				
+				if not self._auto_paginator:
+					for btn in self._extract_all_emojis():
+						await self._msg.add_reaction(btn)
+				
 				self._last_page = len(worker) - 1
 
 			# no normal pages w/ custom pages (only custom pages)
@@ -853,8 +882,11 @@ class ReactionMenu(Menu):
 				worker = self._actual_embeds()
 				#self._refresh_page_director_info(worker)
 				self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
-				for btn in self._custom_linked_embeds():
-					await self._msg.add_reaction(btn.emoji)
+				
+				if not self._auto_paginator:
+					for btn in self._custom_linked_embeds():
+						await self._msg.add_reaction(btn.emoji)
+				
 				self._last_page = len(worker) - 1
 			
 			# only 1 page w/ custom pages
@@ -862,12 +894,14 @@ class ReactionMenu(Menu):
 				worker = self._static_completed_pages
 				self._refresh_page_director_info(worker)
 				self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
-				for btn in self._custom_linked_embeds():
-					await self._msg.add_reaction(btn.emoji)
-				else:
-					# even though theres no need for directional buttons (only 1 page), add the back button anyway
-					# so the user can navigate back to that single page
-					await self._msg.add_reaction(self.default_back_button.emoji)
+				
+				if not self._auto_paginator:
+					for btn in self._custom_linked_embeds():
+						await self._msg.add_reaction(btn.emoji)
+					else:
+						# even though theres no need for directional buttons (only 1 page), add the back button anyway
+						# so the user can navigate back to that single page
+						await self._msg.add_reaction(self.default_back_button.emoji)
 			
 			# only 1 page and no custom pages
 			elif len(self._static_completed_pages) == 1 and not self._custom_linked_embeds():
@@ -875,19 +909,14 @@ class ReactionMenu(Menu):
 				self._refresh_page_director_info(worker)
 				self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
 			
-			# initiaze end session buttons if any
-			end_buttons = self.end_session_buttons
-			if end_buttons:
-				for end_session_btn in end_buttons:
-					await self._msg.add_reaction(end_session_btn.emoji)
+			if not self._auto_paginator:
+				# initiaze end session buttons if any
+				end_buttons = self.end_session_buttons
+				if end_buttons:
+					for end_session_btn in end_buttons:
+						await self._msg.add_reaction(end_session_btn.emoji)
 
-			self._is_running = True
-			unique_tsk_name = f'static_task_{id(self)}'
-			static_task = self._loop.create_task(self._execute_session(worker), name=unique_tsk_name)
-			static_task.add_done_callback(self._asyncio_exception_callback)
-			ReactionMenu._task_sessions_pool.append(static_task)
-		
-		elif self._config == ReactionMenu.DYNAMIC: 
+		elif self._config == ReactionMenu.DYNAMIC:
 			# no data (rows) have been added and no main/last pages have been set
 			if len(self._dynamic_data_builder) == 0 and len(self._dynamic_completed_pages) == 0:
 				raise NoPages
@@ -908,23 +937,34 @@ class ReactionMenu(Menu):
 				self._refresh_page_director_info(worker)
 				if len(worker) >= 2:
 					self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
-					for btn in self._regular_buttons():
-						await self._msg.add_reaction(btn.emoji)
+					
+					if not self._auto_paginator:
+						# only add regular buttons (non ButtonType.CUSTOM_EMBEDS) because the dynamic equivalent to that is main_pages and last_pages
+						for btn in self._regular_buttons():
+							await self._msg.add_reaction(btn.emoji)
+					
 					self._last_page = len(worker) - 1
 				else:
 					self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
 				
-				# initiaze end session buttons if any
-				end_buttons = self.end_session_buttons
-				if end_buttons:
-					for end_session_btn in end_buttons:
-						await self._msg.add_reaction(end_session_btn.emoji)
+				if not self._auto_paginator:
+					# initiaze end session buttons if any
+					end_buttons = self.end_session_buttons
+					if end_buttons:
+						for end_session_btn in end_buttons:
+							await self._msg.add_reaction(end_session_btn.emoji)
+		
+		# core menu initialization
+		ReactionMenu._active_sessions.append(self)
+		self._is_running = True
 
-				self._is_running = True
-				unique_tsk_name = f'dynamic_task_{id(self)}'
-				dynamic_task = self._loop.create_task(self._execute_session(worker), name=unique_tsk_name)
-				dynamic_task.add_done_callback(self._asyncio_exception_callback)
-				ReactionMenu._task_sessions_pool.append(dynamic_task)
-
+		if self._auto_paginator:
+			self._main_session_task = self._loop.create_task(self._execute_auto_session(worker))
 		else:
-			raise MenuSettingsMismatch('The menu\'s setting for dynamic or static was not recognized')
+			self._main_session_task = self._loop.create_task(self._execute_session(worker))
+		
+		self._main_session_task.add_done_callback(self._main_session_callback)
+		ReactionMenu._task_sessions_pool.append(self._main_session_task)
+
+		runtime_tsk = self._loop.create_task(self._track_runtime())
+		self._runtime_tracking_tasks.append(runtime_tsk)
