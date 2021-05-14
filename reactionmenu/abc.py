@@ -58,7 +58,7 @@ class Menu(metaclass=abc.ABCMeta):
         class_name = self.__class__.__name__
         menu_name = f'{self._name!r}' if self._name else None
 
-        return f'<{class_name} name={menu_name} is_running={self._is_running} run_time={self._run_time}> timeout={self._timeout} auto_paginator={self._auto_paginator}'
+        return f'<{class_name} name={menu_name} is_running={self._is_running} run_time={self._run_time} timeout={self._timeout} auto_paginator={self._auto_paginator}>'
 
     @property
     @abc.abstractmethod
@@ -269,6 +269,7 @@ class Menu(metaclass=abc.ABCMeta):
             .. changes::
                 v1.0.9
                     Moved to ABC
+                    Replaced now removed class :meth:`ReactionMenu.cancel_all_sessions()` with class :meth:`Menu._force_stop`
         """
         cls = self.__class__
         if not self._is_running:
@@ -314,9 +315,9 @@ class Menu(metaclass=abc.ABCMeta):
             if all([isinstance(i, discord.Role) for i in value]):
                 self._only_roles = value
             else:
-                raise ReactionMenuException('"only_roles" expected a list of discord.Role. All values were not of type discord.Role')
+                raise IncorrectType('"only_roles" expected a list of discord.Role. All values were not of type discord.Role')
         else:
-            raise ReactionMenuException(f'"only_roles" expected a list, got {value.__class__.__name__}')
+            raise IncorrectType(f'"only_roles" expected a list, got {value.__class__.__name__}')
 
     @property
     def style(self) -> str:
@@ -536,6 +537,7 @@ class Menu(metaclass=abc.ABCMeta):
 
             .. changes::
                 v1.0.9
+                    Added :param:`task`
                     Added removal of task from the task sessions pool upon completion
         """
         if menu in cls._active_sessions:
@@ -559,7 +561,8 @@ class Menu(metaclass=abc.ABCMeta):
     
     @classmethod
     def update_all_turn_every(cls, turn_every: Union[int, float]):
-        """|class method| Update the amount of seconds to wait before going to the next page for all active auto-paginated sessions
+        """|class method| Update the amount of seconds to wait before going to the next page for all active auto-paginated sessions. When updated, the new value doesn't go into effect until the last
+        round of waiting (:param:`turn_every`) completes for each menu
 
         Warning
         -------
@@ -803,33 +806,20 @@ class Menu(metaclass=abc.ABCMeta):
         it essentially renders that :class:`Button` useless because discord only allows unique reactions to be added.
         
             .. added:: v1.0.5
-
-            .. changes::
-                v1.0.9
-                    Added if check for :var:`values`. if the sequence does not contains items, :exc:`ValueError` is raised on empty sequence
         """
         counter = collections.Counter(self._extract_all_emojis())
-        values = counter.values() 
-        # if this results to `False`, that means the user probaly used :meth:`clear_all_buttons`, and if thats the case, another error will arise before executing
-        if values: 
-            if max(values) != 1:
-                raise ReactionMenuException('There cannot be duplicate emojis when using Buttons. All emojis must be unique')
+        if max(counter.values()) != 1:
+            raise ReactionMenuException('There cannot be duplicate emojis when using Buttons. All emojis must be unique')
 
     def _duplicate_name_check(self):
         """Since it's possible for the user to change the name of a :class:`Button` after an instance has been created and added to a :class:`Menu` instance. Before the menu starts, make sure there are no duplicates because if there are,
         methods such as :meth:`Menu.get_button_by_name` could return the wrong :class:`Button` object.
         
             .. added:: v1.0.5
-
-            .. changes::
-                v1.0.9
-                    Added if check for :var:`values`. if the sequence does not contains items, :exc:`ValueError` is raised on empty sequence
         """
         counter = collections.Counter([btn.name.lower() for btn in self._all_buttons if btn.name is not None])
-        values = counter.values()
-        if values:
-            if max(values) != 1:
-                raise ReactionMenuException('There cannot be duplicate names when using Buttons. All names must be unique')
+        if max(counter.values()) != 1:
+            raise ReactionMenuException('There cannot be duplicate names when using Buttons. All names must be unique')
 
     def _maybe_new_style(self, counter, total_pages) -> str: 
         """Sets custom page director styles"""
@@ -1014,7 +1004,7 @@ class Menu(metaclass=abc.ABCMeta):
             raise ReactionMenuException('Parameter "turn_every" must be greater than or equal to one')
             
     def update_turn_every(self, turn_every: Union[int, float]):
-        """Change the amount of seconds to wait before going to the next page
+        """Change the amount of seconds to wait before going to the next page. When updated, the new value doesn't go into effect until the last round of waiting (:param:`turn_every`) completes
 
         Warning
         -------
