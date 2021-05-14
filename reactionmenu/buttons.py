@@ -119,4 +119,10 @@ class Button:
 		return self.emoji
 	
 	def __repr__(self):
-		return "<Button emoji='%s' linked_to=%s custom_embed=%s details=%s name=%s>" % (self.emoji, self.linked_to, self.custom_embed, self.details, self.name)
+		"""
+			.. changes::
+				v1.0.9
+					Replaced old string formatting (%s) with fstring
+		"""
+		name = f'{self.name!r}' if self.name else None
+		return f'<Button emoji={self.emoji!r} linked_to={self.linked_to} custom_embed={self.custom_embed} details={self.details} name={name}>'
