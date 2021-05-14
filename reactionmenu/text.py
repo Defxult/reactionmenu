@@ -294,7 +294,7 @@ class TextMenu(Menu):
 
         Parameters
         ----------
-        *content: :class:`str`
+        *contents: :class:`str`
             An argument list of :class:`str` values
         
         Raises

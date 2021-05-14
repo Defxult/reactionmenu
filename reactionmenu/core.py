@@ -375,8 +375,8 @@ class ReactionMenu(Menu):
 		
 		Parameter
 		---------
-		embeds: :class:`discord.Embed`
-			Embed objects
+		*embeds: :class:`discord.Embed`
+			An argument list of :class:`discord.Embed` objects
 		
 		Raises
 		------
@@ -407,8 +407,8 @@ class ReactionMenu(Menu):
 		
 		Parameter
 		---------
-		embeds: :class:`discord.Embed`
-			Embed objects
+		*embeds: :class:`discord.Embed`
+			An argument list of :class:`discord.Embed` objects
 		
 		Raises
 		------
@@ -429,7 +429,7 @@ class ReactionMenu(Menu):
 			self._last_page_contents = embeds
 			self._last_pages_already_set = True
 		else:
-			raise SingleUseOnly('Once you\'ve set last pages, you cannot set more')
+			raise SingleUseOnly("Once you've set last pages, you cannot set more")
 
 	@static_only
 	@ensure_not_primed
@@ -551,13 +551,6 @@ class ReactionMenu(Menu):
 		elif self._current_page > self._last_page:
 			self._current_page = 0
 	
-	@classmethod
-	def _get_task(cls, name: str):
-		"""|class method| Return the static/dynamic task object"""
-		for task in cls._task_sessions_pool:
-			if task.get_name() == name:
-				return task
-
 	async def _execute_navigation_type(self, worker, emoji, **kwargs):
 		"""|abc coro| This controls whether the user has to wait until the emoji is removed from the message by the :class:`discord.Client` in order to continue 'turning' pages in the menu session. 
 		:attr:`ReactionMenu.NORMAL` indicates the user has to wait for the :class:`discord.Client` to remove the reaction. :attr:`ReactionMenu.FAST` indicates no wait is needed and is 
