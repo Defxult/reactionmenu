@@ -184,7 +184,7 @@ Buttons/button types are used when you want to add a reaction to the menu that d
 | `ButtonType.GO_TO_FIRST_PAGE` | Go to the first page in the menu session
 | `ButtonType.GO_TO_LAST_PAGE` | Go to the last page in the menu session
 | `ButtonType.GO_TO_PAGE` | Prompts you to type in the page you'd like to go to
-| `ButtonType.END_SESSION` | Terminates the session and deletes the menu message. This is not like `ReactionMenu.stop()`
+| `ButtonType.END_SESSION` | Stops the session and deletes the menu message
 | `ButtonType.CUSTOM_EMBED` | Used separately from the navigation buttons. Once clicked, go to the specified embed 
 | `ButtonType.CALLER` | Used when specifying the function to call and it's arguments when the button is pressed ( [more info](#buttons-with-buttontypecaller) )
 
@@ -284,7 +284,7 @@ await menu.start()
 ```
 ---
 ## Setting Limits
-If you'd like, you can limit the amount of reaction menus that can be active at the same time. You can do this by using the class method above. 
+If you'd like, you can limit the amount of reaction menus that can be active at the same time. 
 * Associated CLASS Methods
     * `ReactionMenu.set_sessions_limit(limit: int, message: str)` 
     * `ReactionMenu.get_sessions_count()`
