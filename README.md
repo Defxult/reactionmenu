@@ -21,6 +21,8 @@ If you are using `v1.0.9.dev` and discover any bugs, please don't hesitate to pu
 ```
 pip install reactionmenu
 ```
+#### Python 3.8 or higher is required
+---
 ## Showcase
 ![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
 
