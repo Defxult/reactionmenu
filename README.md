@@ -453,10 +453,10 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
   * *class method* Stop a specific menu by it's name
 ---
 * `ReactionMenu.update_all_turn_every(turn_every: Union[int, float])`
-  * *class method* Update the amount of seconds to wait before going to the next page for all active auto-paginated sessions
+  * *class method* Update the amount of seconds to wait before going to the next page for all active auto-paginated sessions. When updated, the new value doesn't go into effect until the last round of waiting (`turn_every`) completes for each menu
 ---
 * `ReactionMenu.update_turn_every(turn_every: Union[int, float])`
-  * Change the amount of seconds to wait before going to the next page
+  * Change the amount of seconds to wait before going to the next page. When updated, the new value doesn't go into effect until the last round of waiting (`turn_every`) completes
 
 </details>
 
