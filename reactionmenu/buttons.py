@@ -124,5 +124,4 @@ class Button:
 				v1.0.9
 					Replaced old string formatting (%s) with fstring
 		"""
-		name = f'{self.name!r}' if self.name else None
-		return f'<Button emoji={self.emoji!r} linked_to={self.linked_to} custom_embed={self.custom_embed} details={self.details} name={name}>'
+		return f'<Button emoji={self.emoji!r} linked_to={self.linked_to} custom_embed={self.custom_embed} details={self.details} name={self.name!r}>'

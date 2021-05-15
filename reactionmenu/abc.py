@@ -56,9 +56,7 @@ class Menu(metaclass=abc.ABCMeta):
     def __repr__(self):
         """ .. added:: v1.0.9"""
         class_name = self.__class__.__name__
-        menu_name = f'{self._name!r}' if self._name else None
-
-        return f'<{class_name} name={menu_name} is_running={self._is_running} run_time={self._run_time} timeout={self._timeout} auto_paginator={self._auto_paginator}>'
+        return f'<{class_name} name={self._name!r} is_running={self._is_running} run_time={self._run_time} timeout={self._timeout} auto_paginator={self._auto_paginator}>'
 
     @property
     @abc.abstractmethod
