@@ -407,8 +407,14 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 * `ReactionMenu.clear_all_row_data()`
   * Delete all the data thats been added using `ReactionMenu.add_row()`
 ---
-* `ReactionMenu.get_button_by_name(name: str) -> Button`
+* `ReactionMenu.get_all_sessions()`
+  * *class method* Returns all active menu sessions
+---
+* `ReactionMenu.get_button_by_name(name: str)`
   * Retrieve a `Button` object by its name if the kwarg "name" for that `Button` was set
+---
+* `ReactionMenu.get_session(name: str)`
+  * *class method* Return a menu instance by it's name. Can return a `list` of menu instances if multiple instances of the menu with the supplied name are running. Can also return `None` if the menu with the supplied name was not found in the list of active sessions
 ---
 * `ReactionMenu.get_sessions_count() -> int`
   * *class method* Returns the number of active sessions
@@ -417,7 +423,7 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
   * Prints all button emojis you've added before this method was called to the console for easy copy and pasting of the desired order. Note: If using Visual Studio Code, if you see a question mark as the emoji, you need to resize the console in order for it to show up.
 ---
 * `ReactionMenu.refresh_auto_pagination_data(*embeds: Embed)`
-  * Update the embeds displayed in the auto-pagination menu
+  * Update the embeds displayed in the auto-pagination menu. When refreshed, the new embeds don't go into effect until the last round of waiting (what you set for `turn_every`) completes
 ---
 * `ReactionMenu.remove_button(identity: Union[str, Button])`
   * Remove a button by its name or its object
@@ -449,7 +455,7 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 * `await ReactionMenu.stop_all_sessions()`
   * *class method* Gracefully stops all sessions that are currently running
 ---
-* `await ReactionMenu.stop_session(name: str)`
+* `await ReactionMenu.stop_session(name: str, include_all=False)`
   * *class method* Stop a specific menu by it's name
 ---
 * `ReactionMenu.update_all_turn_every(turn_every: Union[int, float])`
