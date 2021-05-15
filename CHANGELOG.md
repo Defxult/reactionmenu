@@ -23,7 +23,7 @@
 * Added the ability to gracefully stop all running menu's ([docs](https://github.com/Defxult/reactionmenu#setting-limits))
   * `ReactionMenu.stop_all_sessions()`
 * Added the ability to stop a specific menu by it's name ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
-  * `ReactionMenu.stop_session(name: str)`
+  * `ReactionMenu.stop_session(name: str, include_all=False)`
 * Added the ability to get a session by it's name ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
   * `ReactionMenu.get_session(name: str)`
 * Added the ability to get all active sessions ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
