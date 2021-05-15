@@ -290,7 +290,7 @@ class TextMenu(Menu):
             await self._msg.edit(content=worker)
 
     def refresh_auto_pagination_data(self, *contents: str):
-        """Update the content displayed in the auto-pagination menu
+        """Update the contents displayed in the auto-pagination menu. When refreshed, the new contents don't go into effect until the last round of waiting (what you set for `turn_every`) completes
 
         Parameters
         ----------

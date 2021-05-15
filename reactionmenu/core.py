@@ -592,7 +592,7 @@ class ReactionMenu(Menu):
 				await self._msg.edit(embed=worker[self._current_page])
 	
 	def refresh_auto_pagination_data(self, *embeds: Embed):
-		"""Update the embeds displayed in the auto-pagination menu
+		"""Update the embeds displayed in the auto-pagination menu. When refreshed, the new embeds don't go into effect until the last round of waiting (what you set for `turn_every`) completes
 
 		Parameters
 		----------
