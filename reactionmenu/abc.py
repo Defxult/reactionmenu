@@ -600,7 +600,8 @@ class Menu(metaclass=abc.ABCMeta):
     
     @classmethod
     def get_session(cls, name: str):
-        """|class method| Return a menu instance by it's name. Can return :class:`None` if the menu with the supplied name was not found in the list of active sessions
+        """|class method| Return a menu instance by it's name. Can return a :class:`list` of menu instances if multiple instances of the menu with the supplied name are running. 
+        Can also return :class:`None` if the menu with the supplied name was not found in the list of active sessions
         
         Parameter
         ---------
@@ -613,10 +614,14 @@ class Menu(metaclass=abc.ABCMeta):
                 Dont add a `Returns` since this is an abc. The main description above provides enough context
         """
         name = str(name)
-        for session in cls._active_sessions:
-            if name == session.name:
-                return session
-        return None
+        sessions = [session for session in cls._active_sessions if session.name == name]
+        if sessions:
+            if len(sessions) == 1:
+                return sessions[0]
+            else:
+                return sessions
+        else:
+            return None
     
     @classmethod
     def get_sessions_count(cls) -> int:
@@ -714,13 +719,16 @@ class Menu(metaclass=abc.ABCMeta):
             cls._task_sessions_pool.clear()
 
     @classmethod
-    async def stop_session(cls, name: str):
-        """|coro class method| Stop a specific menu by it's name
+    async def stop_session(cls, name: str, include_all: bool=False):
+        """|coro class method| Stop a specific menu with the supplied name
         
-        Parameter
-        ---------
+        Parameters
+        ----------
         name: :class:`str`
             The menus name
+        
+        include_all: :class:`bool`
+            (optional) If set to `True`, it stops all menu sessions with the supplied name. If `False`, stops only the most recently started menu with the supplied name (defaults to `False`)
         
         Raises
         ------
@@ -729,11 +737,15 @@ class Menu(metaclass=abc.ABCMeta):
             .. added:: v1.0.9
         """
         name = str(name)
-        for session in cls._active_sessions:
-            if name == session.name:
-                await session.stop()
-                return
-        raise ReactionMenuException(f'Menu with name {name!r} was not found in the list of active menu sessions')
+        matched_sessions = [session for session in cls._active_sessions if name == session.name]
+        if matched_sessions:
+            if include_all:
+                for session in matched_sessions:
+                    await session.stop()
+            else:
+                await matched_sessions[-1].stop()
+        else:
+            raise ReactionMenuException(f'Menu with name {name!r} was not found in the list of active menu sessions')
     
     @classmethod
     async def stop_all_auto_sessions(cls):
