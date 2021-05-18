@@ -528,7 +528,7 @@ class Menu(metaclass=abc.ABCMeta):
 
     @classmethod
     def _remove_session(cls, menu, task):
-        """|class method| Upon session completion whether by timeout or call to :meth:`Menu.stop`, remove it from the list of active sessions as well
+        """|class method| Upon session completion whether by timeout, call to :meth:`Menu.stop`, or exception in the main session task, remove it from the list of active sessions as well
         as the task from the task pool
         
             .. added:: v1.0.1
@@ -884,16 +884,13 @@ class Menu(metaclass=abc.ABCMeta):
             correct_msg = True
 
         if self._only_roles:
-            if self._all_can_react: self._all_can_react = False
-            
-            # if the pagination process is in a DM, they wont have an roles because discord.User has no .roles attribute
-            # so process them only as a member (controlling menu from guild)
-            if isinstance(user, discord.Member):
-                for role in self._only_roles:
-                    if role in user.roles:
-                        self._ctx.author = user
-                        correct_user = True
-                        break
+            if self._all_can_react:
+                self._all_can_react = False
+            for role in self._only_roles:
+                if role in user.roles:
+                    self._ctx.author = user
+                    correct_user = True
+                    break
 
         if self._all_can_react:
             self._ctx.author = user
@@ -914,6 +911,33 @@ class Menu(metaclass=abc.ABCMeta):
         idx = self._emoji_new_order.index(item.emoji)
         return idx
         
+    def _handle_dm_usage(self):
+        """|abc| If the session is going to start in a DM, override the attributes with the necessary values in order for the menu to function properly in a DM environment
+            
+            .. added:: v1.0.9
+        """
+        # disable everything that is related to removing reactions. bots cannot remove reactions from users in DMs
+        self._clear_reactions_after = False
+        self._navigation_speed = Menu.FAST
+        self._delete_interactions = False
+
+        # in a DM, users don't have roles
+        self._only_roles = None
+
+        # if the :attr:`Menu._timeout` is :class:`None`, set it back to the default value. there's simply no need for a menu created in a DM to be
+        # running indefinitely. more than likely, the user will be accessing the menu for a short duration of time. afterwards, its safe to assume they
+        # could close the DM. if they close the DM and have no intention of coming back to it, that particular menu instance will be stuck in the `discord.Client.wait_for` state.
+        # with nothing to wait for and the menu running indefinitely, the menu instance becomes literally useless
+        if self._timeout is None:
+            self._timeout = 60.0
+
+        # if the :attr:`Menu._auto_paginator` is `True`, set it back to the default value. DM use of an auto-pagination menu is not what it is intended for,
+        # but most importantly, is risky. i want all auto-pagination menus to be created, controlled, and be known to the user. if a member of a guild was to spam
+        # DM the users bot and start numerous amounts of auto-pagination menus in a single DM channel, the user could end up abusing the API because there would be multiple messages being
+        # edited in rapid succession in the same channel. to avoid this all together, just disable auto-pagination menus in DMs
+        if self._auto_paginator:
+            self._auto_paginator = False
+    
     def _determine_location(self, path):
         """Set the text channel where the menu should start
             
@@ -973,18 +997,17 @@ class Menu(metaclass=abc.ABCMeta):
         except asyncio.CancelledError:
             pass
         finally:
-            # the background tasks [runtime tracking] and [countdown] rely on :attr:`Menu._is_running` to determine if the background loop should continue or stop.
-            # if an exception occurs in the main processing of a menu (:meth:`Menu._execute_session` or :meth:`Menu._execute_auto_session`) that attr will never be changed.
-            # if :attr:`_is_running` is left unchanged (left as `True`), the background tasks will continue to loop for an x amount of seconds until timeout, or even worse, indefinitely
-            # if the menu had a timeout of :class:`None`. to make sure that doesn't happen, cancel all background tasks in the tracking and countdown lists upon main session task exception.
-            # if not from an exception, meaning it ended by timeout or by a users call to :meth:`Menu.stop`, still stop those tasks because they are no longer needed
-            for runtime_tsk in self._runtime_tracking_tasks:
-                runtime_tsk.cancel()
-                self._runtime_tracking_tasks.remove(runtime_tsk)
-            
-            for countdown_tsk in self._countdown_tasks:
-                countdown_tsk.cancel()
-                self._countdown_tasks.remove(countdown_tsk)
+            # if this executes, the main session task ended because of an exception
+            if not task.cancelled():
+                # 1 - set the true state of `_is_running`
+                # 2 - setting this to `False` stops the run time tracking task
+                # 3 - if its an auto-pagination menu, setting this to `False` stops the auto countdown task
+                self._is_running = False
+                
+                # removing the session/session task from the list of active sessions/task pool is needed here because the menu did not end gracefully.
+                # meaning a call to :meth:`Menu.stop` was not made so the task and sessions are still in their associated lists
+                cls = self.__class__
+                cls._remove_session(self, task)
     
     @ensure_not_primed
     def set_as_auto_paginator(self, turn_every: Union[int, float]):
