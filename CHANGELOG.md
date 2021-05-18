@@ -16,6 +16,13 @@
   * `ReactionMenu.EMOJI_LAST_PAGE`
   * `ReactionMenu.EMOJI_GO_TO_PAGE`
   * `ReactionMenu.EMOJI_END_SESSION`
+* Added the ability for a menu to be interacted with in direct messages. If a menu session is in a direct message, the following settings are disabled/changed because of discord limitations and resource/safety reasons:
+  * `ReactionMenu.clear_reactions_after` (set to `False`)
+  * `ReactionMenu.navigation_speed` (set to `ReactionMenu.FAST`)
+  * `ReactionMenu.delete_interactions` (set to `False`)
+  * `ReactionMenu.only_roles` (set to `None`)
+  * `ReactionMenu.timeout` (set to `60.0` if set to `None`)
+  * `ReactionMenu.auto_paginator` (set to `False`)
 * Added the ability to track how long a menu session has been active ([docs](https://github.com/Defxult/reactionmenu#all-attributes-for-reactionmenu))
   * `ReactionMenu.run_time`
 * Added the ability to set if only members with certain roles can control the menu ([docs](https://github.com/Defxult/reactionmenu#options-of-the-reactionmenu-constructor-kwargs))
@@ -36,6 +43,8 @@
 * Fixed an issue where it was possible to call `ReactionMenu.set_main_pages()` and `ReactionMenu.set_last_pages()` without actually implementing the necessary parameters
 
 * Fixed an issue where if `ReactionMenu.clear_all_buttons()` was called and an attempt to access properties `ReactionMenu.default_back_button` or `ReactionMenu.default_next_button`, an error would occur. In addition, if other buttons were added to the menu after `ReactionMenu.clear_all_buttons()` was called and the default back/next properties were accessed, it would not return the true default back/next buttons. It would return the most recently added button after `ReactionMenu.clear_all_buttons()` was called. Accessing `ReactionMenu.default_back_button` or `ReactionMenu.default_next_button` now returns the true default back/next buttons (the buttons set in the `ReactionMenu` constructor), even if all buttons were cleared
+
+* Fixed an issue where if a menu was sent to a channel other than the one it was triggered in using the `send_to` kwarg in method `ReactionMenu.start()`. Using a `Button` with `ButtonType.GO_TO_PAGE`, the prompt would ask what page you'd like to go to but wouldn't respond when a message was sent in the channel where the prompt was
 
 #### Breaking Change
   * *removed* `ReactionMenu.cancel_all_sessions()`
