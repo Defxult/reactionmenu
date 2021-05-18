@@ -117,6 +117,8 @@ class ReactionMenu(Menu):
 				Added :attr:_auto_paginator
 				Added :attr:_auto_turn_every
 				Added :attr:_main_session_task
+				Added :attr:_runtime_tracking_task
+				Added :attr:_countdown_task
 				Added :attr:_limit_message
 				Added :attr:_default_back_button
 				Added :attr:_default_next_button
@@ -148,14 +150,18 @@ class ReactionMenu(Menu):
 		self._all_buttons: List[Button] = [self._default_back_button, self._default_next_button]
 		self._current_page = 0
 		self._last_page = 0
+		self._run_time = 0
+
+		# auto-pagination
 		self._menu_owner = None
 		self._auto_paginator = False
 		self._auto_turn_every = None
 		self._auto_worker = None
-		self._run_time = 0
-		self._countdown_tasks: List[asyncio.Task] = []
-		self._runtime_tracking_tasks: List[asyncio.Task] = []
+
+		# tasks
 		self._main_session_task: asyncio.Task = None
+		self._runtime_tracking_task: asyncio.Task = None
+		self._countdown_task: asyncio.Task = None
 		
 		# dynamic session
 		self._dynamic_data_builder: List[str] = []
@@ -614,16 +620,19 @@ class ReactionMenu(Menu):
 		else:
 			raise ReactionMenuException('Menu is not set as auto-paginator')
 	
-	async def _execute_auto_session(self, worker: list):
+	async def _execute_auto_session(self, worker):
 		"""|abc coro| Begin the auto-pagination process. This also starts the background task for the countdown to timeout
 		
 			.. added:: v1.0.9
 		"""
+		# convert it from a :class:`collections.deque` to a :class:`list`
+		worker = list(worker)
+
 		if self._config == ReactionMenu.STATIC:
 			embed_buttons = self.custom_embed_buttons
 			if embed_buttons:
 				embeds = [btn.custom_embed for btn in embed_buttons]
-				worker.extends(embeds)
+				worker.extend(embeds)
 			
 			worker = itertools.cycle(worker)
 		
@@ -640,9 +649,8 @@ class ReactionMenu(Menu):
 		# since reactions will not be used during the auto-pagination process, there's no reason to have :class:`Button` objects in the list
 		self._all_buttons.clear()
 
-		countdown_tsk = self._loop.create_task(self._auto_countdown())
-		self._countdown_tasks.append(countdown_tsk)
-
+		self._countdown_task = self._loop.create_task(self._auto_countdown())
+		
 		while self._is_running:
 			await asyncio.sleep(self._auto_turn_every)
 			await self._msg.edit(embed=next(self._auto_worker))
@@ -666,6 +674,7 @@ class ReactionMenu(Menu):
 					- Replaced the end session and timeout actions to :meth:`ReactionMenu.stop`. Stop does all the necessary things needed to properly stop a menu
 					- Instead of calling str() everytime on every button emoji check, just store it in a variable to access and check later
 					- Moved to ABC
+					- Fixed issue associated with `ButtonType.GO_TO_PAGE` and kwarg `send_to` in :meth:`ReactionMenu.start`
 		"""
 		self._menu_owner = self._ctx.author
 		while self._is_running:
@@ -719,8 +728,14 @@ class ReactionMenu(Menu):
 								not_bot = True
 							if self._ctx.author.id == m.author.id:
 								author_pass = True
-							if self._ctx.channel.id == m.channel.id:
-								channel_pass = True
+							
+							if self._send_to_channel is None:
+								if self._ctx.channel.id == m.channel.id:
+									channel_pass = True
+							else:
+								if self._send_to_channel.id == m.channel.id:
+									channel_pass = True
+							
 							return all((author_pass, channel_pass, not_bot))
 
 						bot_prompt = await self._msg.channel.send(f'{self._ctx.author.name}, what page would you like to go to?')
@@ -818,6 +833,7 @@ class ReactionMenu(Menu):
 				v1.0.9
 					- Added handling for :attr:`ReactionMenu._auto_paginator` to determine when to, and when not to apply reactions
 					- Added handling for :attr:`ReactionMenu._auto_paginator` to determine when to check for duplicate emojis/names
+					- Added handling for menus started in DMs
 					- Moved to ABC
 					- Removed [else] from ReactionMenu.STATIC/DYNAMIC check. Replaced with [if self._config] check at the top
 					- Moved #[core menu initialization] from both STATIC and DYNAMIC if checks to only one at the bottom. Having both was redundant because regardless of configuration both have the same #[core menu initialization]
@@ -825,6 +841,14 @@ class ReactionMenu(Menu):
 		if self._config not in (ReactionMenu.STATIC, ReactionMenu.DYNAMIC):
 			raise MenuSettingsMismatch("The menu's setting for dynamic or static was not recognized")
 		
+		# check if its a DM session
+		if self._ctx.guild is None:
+			self._handle_dm_usage()
+			
+			# :param:`send_to` implies the menu was created in a guild. if theres no guild object (because its a DM), :param:`send_to` components cannot function
+			if send_to is not None:
+				send_to = None
+	
 		# theres no need to do button duplicate checks for an auto-pagination menu because no buttons will be used
 		if not self._auto_paginator:
 			self._duplicate_emoji_check()
@@ -959,5 +983,4 @@ class ReactionMenu(Menu):
 		self._main_session_task.add_done_callback(self._main_session_callback)
 		ReactionMenu._task_sessions_pool.append(self._main_session_task)
 
-		runtime_tsk = self._loop.create_task(self._track_runtime())
-		self._runtime_tracking_tasks.append(runtime_tsk)
+		self._runtime_tracking_task = self._loop.create_task(self._track_runtime())

@@ -101,14 +101,18 @@ class TextMenu(Menu):
         self._msg = None
         self._is_running = False
         self._page_number = 0
-        self._main_session_task: asyncio.Task = None
+        self._run_time = 0
+        
+        # auto-pagination
         self._menu_owner = None
         self._auto_paginator = False
         self._auto_turn_every = None
         self._auto_worker = None
-        self._run_time = 0
-        self._countdown_tasks: List[asyncio.Task] = []
-        self._runtime_tracking_tasks: List[asyncio.Task] = []
+
+        # tasks
+        self._main_session_task: asyncio.Task = None
+        self._runtime_tracking_task: asyncio.Task = None
+        self._countdown_task: asyncio.Task = None
 
         # basic options (also ABC properties)
         self._only_roles: List[Role] = options.get('only_roles')
@@ -258,7 +262,7 @@ class TextMenu(Menu):
                 page_count += 1
     
     async def _execute_navigation_type(self, worker, emoji, **kwargs):
-        """|coro| This controls whether the user has to wait until the emoji is removed from the message by the :class:`discord.Client` in order to continue 'turning' pages in the menu session. 
+        """|abc coro| This controls whether the user has to wait until the emoji is removed from the message by the :class:`discord.Client` in order to continue 'turning' pages in the menu session. 
         :attr:`TextMenu.NORMAL` indicates the user has to wait for the :class:`discord.Client` to remove the reaction. :attr:`TextMenu.FAST` indicates no wait is needed and is 
         processed on each `reaction_add` and `reaction_remove`. In v1.0.0 - v1.0.4, the handling of each button press was processed in :meth:`TextMenu._execute_session`. This replaces that
         so each button press is also handled through here now as :attr:`TextMenu.NORMAL`, as well as the handling of :attr:`TextMenu.FAST`
@@ -268,9 +272,6 @@ class TextMenu(Menu):
         - from_caller_button: :class:`bool` Handles the editing process with interactions from :attr:`ButtonType.CALLER`
             
             .. added:: v1.0.5
-
-            .. note::
-                ABC meth
         """
         from_caller_button = kwargs.get('from_caller_button', False)
 
@@ -296,6 +297,9 @@ class TextMenu(Menu):
         ----------
         *contents: :class:`str`
             An argument list of :class:`str` values
+
+            .. note::
+                ABC meth
         
         Raises
         ------
@@ -315,18 +319,13 @@ class TextMenu(Menu):
         self._auto_worker = itertools.cycle(self._contents)
         next(self._auto_worker)
         self._all_buttons.clear()
-        countdown_tsk = self._loop.create_task(self._auto_countdown())
-        self._countdown_tasks.append(countdown_tsk)
+        self._countdown_task = self._loop.create_task(self._auto_countdown())
         while self._is_running:
             await asyncio.sleep(self._auto_turn_every)
             await self._msg.edit(content=next(self._auto_worker))
     
     async def _execute_session(self):
-        """|coro| Begin the pagination process
-        
-            .. note::
-                ABC meth
-        """
+        """|abc coro| Begin the pagination process"""
         self._menu_owner = self._ctx.author
         while self._is_running:
             try:
@@ -379,8 +378,14 @@ class TextMenu(Menu):
                                 not_bot = True
                             if self._ctx.author.id == m.author.id:
                                 author_pass = True
-                            if self._ctx.channel.id == m.channel.id:
-                                channel_pass = True
+
+                            if self._send_to_channel is None:
+                                if self._ctx.channel.id == m.channel.id:
+                                    channel_pass = True
+                            else:
+                                if self._send_to_channel.id == m.channel.id:
+                                    channel_pass = True
+                            
                             return all((author_pass, channel_pass, not_bot))
 
                         bot_prompt = await self._msg.channel.send(f'{self._ctx.author.name}, what page would you like to go to?')
@@ -462,6 +467,14 @@ class TextMenu(Menu):
             .. note::
                 ABC meth
         """
+        # check if its a DM session
+        if self._ctx.guild is None:
+            self._handle_dm_usage()
+            
+            # :param:`send_to` implies the menu was created in a guild. if theres no guild object (because its a DM), :param:`send_to` components cannot function
+            if send_to is not None:
+                send_to = None
+        
         # theres no need to do button duplicate checks for an auto-pagination menu because no buttons will be used
         if not self._auto_paginator:
             self._duplicate_emoji_check()
@@ -478,7 +491,7 @@ class TextMenu(Menu):
             self._determine_location(send_to)
 
         if len(self._contents) == 0:
-            raise ReactionMenuException('The length of "contents" must be greater than zero')
+            raise ReactionMenuException("You cannot start a TextMenu when you haven't added any content")
         
         # the only difference between this and else is since its only 1 page, theres no need to add reactions to the message
         elif len(self._contents) == 1:
@@ -510,5 +523,4 @@ class TextMenu(Menu):
         TextMenu._task_sessions_pool.append(self._main_session_task)
         self._main_session_task.add_done_callback(self._main_session_callback)
 
-        runtime_tsk = self._loop.create_task(self._track_runtime())
-        self._runtime_tracking_tasks.append(runtime_tsk)
+        self._runtime_tracking_task = self._loop.create_task(self._track_runtime())
