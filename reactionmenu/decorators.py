@@ -26,8 +26,40 @@ import asyncio
 from functools import wraps
 
 from . import core
-from .errors import MenuSettingsMismatch, MenuAlreadyRunning
+from .errors import MenuSettingsMismatch, MenuAlreadyRunning, ReactionMenuException, NoButtons
 
+__all__ = ('menu_verification', 'dynamic_only', 'static_only', 'ensure_not_primed')
+
+
+def menu_verification(func):
+    """Checks if the basic settings of :class:`ReactionMenu` and :class:`TextMenu` are in compliance with how the menu functions.
+    Specifics to each menu are not done here. Those are done in their own classes
+    
+        .. added:: v1.0.9
+    """
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        inst = args[0]
+
+        if isinstance(inst, core.ReactionMenu):
+            if inst._config not in (core.ReactionMenu.STATIC, core.ReactionMenu.DYNAMIC):
+                raise MenuSettingsMismatch("The menu's setting for dynamic or static was not recognized")
+
+        if inst._all_buttons_removed:
+            raise NoButtons
+
+        # first, check if the user is requesting a DM session. this needs to be done first because if it is a DM session,
+        # there are a lot of attr values that will be overridden
+        is_using_send_to = True if kwargs else False
+        inst._verify_dm_usage(is_using_send_to)
+
+        # theres no need to do button duplicate checks for an auto-pagination menu because no buttons will be used
+        if not inst._auto_paginator:
+            inst._duplicate_emoji_check()
+            inst._duplicate_name_check()
+
+        return await func(*args, **kwargs)
+    return wrapper
 
 def dynamic_only(func):
     """Check to make sure the method ran matched the dynamic config of the menu"""
