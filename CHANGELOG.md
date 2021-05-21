@@ -35,9 +35,11 @@
   * `ReactionMenu.get_session(name: str)`
 * Added the ability to get all active sessions ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
   * `ReactionMenu.get_all_sessions()`
+* Added the ability for a menu reaction press to call other functions with the information of who pressed the reaction, what reaction was pressed, the time it was pressed, and the menu's message object ([docs](https://github.com/Defxult/reactionmenu#relays))
+  * `ReactionMenu.set_relay(func)`
 * Added `__repr__` for `ReactionMenu`
 * Added documentation (doc strings) to a lot more properties/methods to easily see what it does and what the return type is
-* Added new error type: `IncorrectType`. Mainly raised when using a property setter and the supplied value type was not what was expected
+* Added new error types: `IncorrectType`, mainly raised when using a property setter and the supplied value type was not what was expected. `NoButtons`, raised when the menu was started but there were no buttons registered
 
 #### Bug Fixes
 * Fixed an issue where it was possible to call `ReactionMenu.set_main_pages()` and `ReactionMenu.set_last_pages()` without actually implementing the necessary parameters
@@ -45,6 +47,10 @@
 * Fixed an issue where if `ReactionMenu.clear_all_buttons()` was called and an attempt to access properties `ReactionMenu.default_back_button` or `ReactionMenu.default_next_button`, an error would occur. In addition, if other buttons were added to the menu after `ReactionMenu.clear_all_buttons()` was called and the default back/next properties were accessed, it would not return the true default back/next buttons. It would return the most recently added button after `ReactionMenu.clear_all_buttons()` was called. Accessing `ReactionMenu.default_back_button` or `ReactionMenu.default_next_button` now returns the true default back/next buttons (the buttons set in the `ReactionMenu` constructor), even if all buttons were cleared
 
 * Fixed an issue where if a menu was sent to a channel other than the one it was triggered in using the `send_to` kwarg in method `ReactionMenu.start()`. Using a `Button` with `ButtonType.GO_TO_PAGE`, the prompt would ask what page you'd like to go to but wouldn't respond when a message was sent in the channel where the prompt was
+
+* Fixed an issue where if the menu was started with no buttons registered, an error would occur that was not informative. If there's an attempt to start the menu when no buttons are registered, an informative error (exception `NoButtons`) is now raised 
+
+* Fixed an issue where if buttons were added after all buttons were removed and those buttons did not have their `name` kwarg set, an error would occur. The menu will now run as expected if buttons were added after all buttons were removed from the menu regardless of if a buttons optional kwarg was not set
 
 #### Breaking Change
   * *removed* `ReactionMenu.cancel_all_sessions()`
