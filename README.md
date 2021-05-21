@@ -25,6 +25,40 @@ pip install reactionmenu
 ---
 ## Showcase
 ![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
+---
+## Index
+* [How to Import](#how-to-import)
+* [Parameters of the ReactionMenu constructor](#parameters-of-the-reactionmenu-constructor)
+* [Options of the ReactionMenu constructor (kwargs)](#options-of-the-reactionmenu-constructor-kwargs)
+* [ReactionMenu.STATIC vs ReactionMenu.DYNAMIC](#reactionmenustatic-vs-reactionmenudynamic)
+  * [Static](#static)
+  * [Adding Pages](#adding-pages)
+  * [Deleting Pages](#deleting-pages)
+  * [Dynamic](#dynamic)
+  * [Adding Rows/data](#adding-rowsdata)
+  * [Deleting Data](#deleting-data)
+  * [Main/Last Pages](#mainlast-pages)
+* [Supported Emojis](#supported-emojis)
+* [What are Buttons and ButtonTypes?](#what-are-buttons-and-buttontypes)
+  * [Parameters of the Button constructor](#parameters-of-the-button-constructor)
+  * [Options of the Button constructor (kwargs)](#options-of-the-button-constructor-kwargs)
+  * [All ButtonTypes](#all-buttontypes)
+  * [Adding Buttons](#adding-buttons)
+  * [Deleting Buttons](#deleting-buttons)
+  * [Buttons with ButtonType.CALLER](#buttons-with-buttontypecaller)
+  * [Emoji Order](#emoji-order)
+* [Auto-pagination](#auto-pagination)
+* [Relays](#relays)
+* [Setting Limits](#setting-limits)
+* [Starting/Stopping the ReactionMenu](#startingstopping-the-reactionmenu)
+* [All attributes for ReactionMenu](#all-attributes-for-reactionmenu)
+* [All methods for ReactionMenu](#all-methods-for-reactionmenu)
+* [TextMenu](#textmenu)
+  * [How to import](#how-to-import-1)
+  * [Parameters of the TextMenu constructor](#parameters-of-the-textmenu-constructor)
+  * [TextMenu Specifics](#textmenu-specifics)
+  * [Starting/Stopping the TextMenu](#startingstopping-the-textmenu)
+---
 
 ## How to import
 ```py
@@ -54,7 +88,7 @@ menu = ReactionMenu(ctx, back_button='◀️', next_button='▶️', config=Reac
 | `timeout` | `float` | `60.0` | `STATIC and DYNAMIC` | timer in seconds for when the menu ends
 | `show_page_director` | `bool` | `True` | `STATIC and DYNAMIC` | show/do not show the current page in the embed footer (Page 1/5)
 | `name` | `str` | `None` | `STATIC and DYNAMIC` | name of the menu instance
-| `style` | `str` | `Page 1/X` | `STATIC and DYNAMIC` | custom page director style
+| `style` | `str` | `Page 1/X` | `STATIC and DYNAMIC` | custom page director style. Character "$" represents the current page, and "&" represents the total amount of pages. So the default style is `ReactionMenu(..., style='Page $/&')`
 | `all_can_react` | `bool` | `False` | `STATIC and DYNAMIC` | if all members can navigate the menu or only the message author
 | `delete_interactions` | `bool` | `True` | `STATIC and DYNAMIC` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
 | `navigation_speed` | `str` | `ReactionMenu.NORMAL` | `STATIC and DYNAMIC` | sets if the user needs to wait for the reaction to be removed by the bot before "turning" the page. Setting the speed to `ReactionMenu.FAST` makes it so that there is no need to wait (reactions are not removed on each press) and can navigate lengthy menu's more quickly
@@ -87,7 +121,7 @@ You can delete a single page using `menu.remove_page()` or all pages with `menu.
 
 ## Dynamic
 A dynamic menu is used when you do not know how much information will be applied to the menu. For example, if you were to request information from a database, that information can always change. You query something and you might get 1,500 results back, and the next maybe only 800. A dynamic menu pieces all this information together for you and adds it to an embed page by rows of data. `.add_row()` is best used in some sort of `Iterable` where everything can be looped through, but only add the amount of data you want to the menu page.
-> NOTE: In a dynamic menu, all added data is placed in the description section of an embed. If you choose to use a `custom_embed`, all text in the description will be overriden with the data you add
+> NOTE: In a dynamic menu, all added data is placed in the description section of an embed. If you choose to use a `custom_embed`, all text in the description will be overridden with the data you add
 * Associated methods
     * `ReactionMenu.add_row(data: str)`
     * `ReactionMenu.clear_all_row_data()`
@@ -283,6 +317,29 @@ menu.set_as_auto_paginator(turn_every=120)
 await menu.start()
 ```
 ---
+## Relays
+Menu relays are functions that are called anytime a reaction that is apart of a menu is pressed. It is considered as an extension of a `Button` with `ButtonType.CALLER`. Unlike `ButtonType.CALLER` which provides no details about the interactions on the menu, relays do.
+* Associated method
+  * `ReactionMenu.set_relay(Callable[[NamedTuple], None])`
+
+When creating a function for your relay, that function must contain a single positional argument. When a reaction is pressed, a `RelayPayload` object (a named tuple) is passed to that function. The attributes of `RelayPayload` are:
+* member (`discord.Member`) The person who pressed the reaction
+* reaction (`discord.Reaction`) The reaction that was pressed
+* time (`datetime`) What time in UTC for when the reaction was pressed
+* message (`discord.Message`) The message object that the menu is operating under
+
+Example:
+```py
+async def vote_relay(payload):
+    register_vote(payload.member.name, payload.time)
+    await payload.message.channel.send(f'{payload.member.mention}, thanks for voting!', delete_after=1)
+
+menu = ReactionMenu(ctx, ...)
+menu.set_relay(vote_relay)
+```
+> NOTE: The relay function should not return anything because nothing is stored or handled from a return
+
+---
 ## Setting Limits
 If you'd like, you can limit the amount of reaction menus that can be active at the same time. 
 * Associated CLASS Methods
@@ -439,6 +496,9 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 ---
 * `ReactionMenu.set_main_pages(*embeds: Embed)`
   * On a dynamic menu, set the pages you would like to show first. These embeds will be shown before the embeds that contain your data
+---
+* `ReactionMenu.set_relay(func)`
+  * Set a function to be called with a given set of information when a reaction is pressed on the menu
 ---
 * `ReactionMenu.set_sessions_limit(limit: int, message='Too many active reaction menus. Wait for other menus to be finished.')`
   * *class method* Sets the amount of menu sessions that can be concurrently active. Should be set before any menus are started and cannot be called more than once
