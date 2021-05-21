@@ -826,10 +826,16 @@ class Menu(metaclass=abc.ABCMeta):
         methods such as :meth:`Menu.get_button_by_name` could return the wrong :class:`Button` object.
         
             .. added:: v1.0.5
+
+            .. changes::
+                v1.0.9
+                    Added if check for `counter.values()`. This was added because by default, the :class:`ReactionMenu` constuctor parameters `back_button` and `next_button` already have a name. If the buttons were all removed and more
+                    buttons were added, it is possible for those buttons to not have a name, thus resulting in an empty sequence error when checked in `max()`. This checks if all/any the new buttons have a name and if not, ignore this check
         """
         counter = collections.Counter([btn.name.lower() for btn in self._all_buttons if btn.name is not None])
-        if max(counter.values()) != 1:
-            raise ReactionMenuException('There cannot be duplicate names when using Buttons. All names must be unique')
+        if counter.values():
+            if max(counter.values()) != 1:
+                raise ReactionMenuException('There cannot be duplicate names when using Buttons. All names must be unique')
 
     def _maybe_new_style(self, counter, total_pages) -> str: 
         """Sets custom page director styles"""
@@ -905,78 +911,85 @@ class Menu(metaclass=abc.ABCMeta):
     def _extract_all_emojis(self) -> List[str]:
         """Returns a list of the emojis that represents the button"""
         return [button.emoji for button in self._all_buttons]
-
-    def _sort_key(self, item: Button):
-        """Sort key for :attr:`_all_buttons`"""
-        idx = self._emoji_new_order.index(item.emoji)
-        return idx
-        
-    def _handle_dm_usage(self):
+    
+    def _verify_dm_usage(self, send_to):
         """|abc| If the session is going to start in a DM, override the attributes with the necessary values in order for the menu to function properly in a DM environment
             
             .. added:: v1.0.9
         """
-        # disable everything that is related to removing reactions. bots cannot remove reactions from users in DMs
-        self._clear_reactions_after = False
-        self._navigation_speed = Menu.FAST
-        self._delete_interactions = False
+        if self._ctx.guild is None:
+            self._is_dm_session = True
 
-        # in a DM, users don't have roles
-        self._only_roles = None
+            # disable everything that is related to removing reactions. bots cannot remove reactions from users in DMs
+            self._clear_reactions_after = False
+            self._navigation_speed = Menu.FAST
+            self._delete_interactions = False
 
-        # if the :attr:`Menu._timeout` is :class:`None`, set it back to the default value. there's simply no need for a menu created in a DM to be
-        # running indefinitely. more than likely, the user will be accessing the menu for a short duration of time. afterwards, its safe to assume they
-        # could close the DM. if they close the DM and have no intention of coming back to it, that particular menu instance will be stuck in the `discord.Client.wait_for` state.
-        # with nothing to wait for and the menu running indefinitely, the menu instance becomes literally useless
-        if self._timeout is None:
-            self._timeout = 60.0
+            # in a DM, users don't have roles
+            self._only_roles = None
 
-        # if the :attr:`Menu._auto_paginator` is `True`, set it back to the default value. DM use of an auto-pagination menu is not what it is intended for,
-        # but most importantly, is risky. i want all auto-pagination menus to be created, controlled, and be known to the user. if a member of a guild was to spam
-        # DM the users bot and start numerous amounts of auto-pagination menus in a single DM channel, the user could end up abusing the API because there would be multiple messages being
-        # edited in rapid succession in the same channel. to avoid this all together, just disable auto-pagination menus in DMs
-        if self._auto_paginator:
-            self._auto_paginator = False
+            # if the :attr:`Menu._timeout` is :class:`None`, set it back to the default value. there's simply no need for a menu created in a DM to be
+            # running indefinitely. more than likely, the user will be accessing the menu for a short duration of time. afterwards, its safe to assume they
+            # could close the DM. if they close the DM and have no intention of coming back to it, that particular menu instance will be stuck in the `discord.Client.wait_for` state.
+            # with nothing to wait for and the menu running indefinitely, the menu instance becomes literally useless
+            if self._timeout is None:
+                self._timeout = 60.0
+
+            # if the :attr:`Menu._auto_paginator` is `True`, set it back to the default value. DM use of an auto-pagination menu is not what it is intended for,
+            # but most importantly, is risky. i want all auto-pagination menus to be created, controlled, and be known to the user. if a member of a guild was to spam
+            # DM the users bot and start numerous amounts of auto-pagination menus in a single DM channel, the user could end up abusing the API because there would be multiple messages being
+            # edited in rapid succession in the same channel. to avoid this all together, just disable auto-pagination menus in DMs
+            if self._auto_paginator:
+                self._auto_paginator = False
+            
+            # in a DM, send_to cannot function
+            if send_to:
+                self._send_to_channel = None
     
     def _determine_location(self, path):
         """Set the text channel where the menu should start
             
             .. added:: v1.0.6
+
+            .. changes::
+                v1.0.9
+                    Added if check for :attr:`Menu._is_dm_session`
         """
-        text_channels = self._ctx.guild.text_channels
-        # channel name
-        if isinstance(path, str):
-            path = path.lower()
-            channel = [ch for ch in text_channels if ch.name == path]
-            if len(channel) == 1:
-                self._send_to_channel = channel[0]
+        if not self._is_dm_session:
+            text_channels = self._ctx.guild.text_channels
+            # channel name
+            if isinstance(path, str):
+                path = path.lower()
+                channel = [ch for ch in text_channels if ch.name == path]
+                if len(channel) == 1:
+                    self._send_to_channel = channel[0]
+                else:
+                    NO_CHANNELS_ERROR = f'When using parameter "send_to" in ReactionMenu.start(), there were no channels with the name {path!r}'
+                    MULTIPLE_CHANNELS_ERROR = f'When using parameter "send_to" in ReactionMenu.start(), there were {len(channel)} channels with the name {path!r}. With multiple channels having the same name, the intended channel is unknown'  
+                    raise ReactionMenuException(NO_CHANNELS_ERROR if len(channel) == 0 else MULTIPLE_CHANNELS_ERROR)
+
+            # channel ID
+            elif isinstance(path, int):
+                channel = [ch for ch in text_channels if ch.id == path]
+                if len(channel) == 1:
+                    guild = self._ctx.guild
+                    channel = guild.get_channel(path)
+                    self._send_to_channel = channel
+                else:
+                    raise ReactionMenuException(f'When using parameter "send_to" in ReactionMenu.start(), the channel ID {path} was not found')
+
+            # channel object
+            elif isinstance(path, discord.TextChannel):
+                # it's safe to just set it as the channel object because if the user was to use :meth:`discord.Guild.get_channel`, discord.py would return the obj or :class:`None`
+                # which if :class:`None` is sent to :meth:`ReactionMenu.start`, it would be handled in the the "default" elif below
+                self._send_to_channel = path
+            
+            # default 
+            elif isinstance(path, type(None)):
+                pass
+
             else:
-                NO_CHANNELS_ERROR = f'When using parameter "send_to" in ReactionMenu.start(), there were no channels with the name {path!r}'
-                MULTIPLE_CHANNELS_ERROR = f'When using parameter "send_to" in ReactionMenu.start(), there were {len(channel)} channels with the name {path!r}. With multiple channels having the same name, the intended channel is unknown' 
-                raise ReactionMenuException(NO_CHANNELS_ERROR if len(channel) == 0 else MULTIPLE_CHANNELS_ERROR)
-
-        # channel ID
-        elif isinstance(path, int):
-            channel = [ch for ch in text_channels if ch.id == path]
-            if len(channel) == 1:
-                guild = self._ctx.guild
-                channel = guild.get_channel(path)
-                self._send_to_channel = channel
-            else:
-                raise ReactionMenuException(f'When using parameter "send_to" in ReactionMenu.start(), the channel ID {path} was not found')
-
-        # channel object
-        elif isinstance(path, discord.TextChannel):
-            # it's safe to just set it as the channel object because if the user was to use :meth:`discord.Guild.get_channel`, discord.py would return the obj or :class:`None`
-            # which if :class:`None` is sent to :meth:`ReactionMenu.start`, it would be handled in the the "default" elif below
-            self._send_to_channel = path
-
-        # default 
-        elif isinstance(path, type(None)):
-            pass
-
-        else:
-            raise IncorrectType(f'When setting the "send_to" in ReactionMenu.start(), the value must be the name of the channel (str), the channel ID (int), or the channel object (discord.TextChannel), got {path.__class__.__name__}') 
+                raise IncorrectType(f'When setting the "send_to" in ReactionMenu.start(), the value must be the name of the channel (str), the channel ID (int), or the channel object (discord.TextChannel), got {path.__class__.__name__}') 
 
     def _main_session_callback(self, task: asyncio.Task):
         """|abc| Used for "handling" unhandled exceptions in :meth:`Menu._execute_session`. Because that method is running in the background (asyncio.create_task), a callback is needed
@@ -1008,6 +1021,31 @@ class Menu(metaclass=abc.ABCMeta):
                 # meaning a call to :meth:`Menu.stop` was not made so the task and sessions are still in their associated lists
                 cls = self.__class__
                 cls._remove_session(self, task)
+    
+    def set_relay(self, func):
+        """Set a function to be called with a given set of information when a reaction is pressed on the menu. The information passed is `RelayPayload`, a named tuple object. The
+        named tuple contains the following attributes:
+
+        - `member`: The :class:`discord.Member` object of the member who pressed the reaction. Could be :class:`discord.User` if the menu reaction was pressed in a direct message
+        - `reaction`: The :class:`discord.Reaction` object of the reaction that was pressed
+        - `time`: The :class:`datetime` object of when the reaction was pressed. The time is in UTC
+        - `message`: The :class:`discord.Message` object. This is the message the menu is operating from
+
+        Parameter
+        ---------
+        func: Callable[[:class:`NamedTuple`], :class:`None`]
+            The function should only contain a single positional argument
+        
+        Raises
+        ------
+        - `IncorrectType`: The argument provided was not callable
+        
+            .. added:: v1.0.9
+        """
+        if callable(func):
+            self._relay_function = func
+        else:
+            raise IncorrectType('When setting the relay, argument "func" must be callable')
     
     @ensure_not_primed
     def set_as_auto_paginator(self, turn_every: Union[int, float]):
@@ -1146,8 +1184,13 @@ class Menu(metaclass=abc.ABCMeta):
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        
+            .. changes::
+                v1.0.9
+                    Added instantiation of :attr:`Menu._all_buttons_removed`
         """
         self._all_buttons.clear()
+        self._all_buttons_removed = True
 
     @ensure_not_primed
     def remove_button(self, identity: Union[str, Button]):
@@ -1161,14 +1204,19 @@ class Menu(metaclass=abc.ABCMeta):
         Raises
         ------
         - `ButtonNotFound` - Button with given identity was not found
+
+            .. changes::
+                v1.0.9
+                    Added if check for :attr:`_all_buttons` and instantiation for :attr:`_all_buttons_removed`
         """
         if isinstance(identity, str):
             btn_name = identity.lower()
             for btn in self._all_buttons:
                 if btn.name == btn_name:
                     self._all_buttons.remove(btn)
-                    return
-            raise ButtonNotFound(f'Button "{btn_name}" was not found')
+                    break
+            else:
+                raise ButtonNotFound(f'Button "{btn_name}" was not found')
 
         elif isinstance(identity, Button):
             if identity in self._all_buttons:
@@ -1178,6 +1226,9 @@ class Menu(metaclass=abc.ABCMeta):
 
         else:
             raise IncorrectType(f'parameter "identity" expected str or Button, got {identity.__class__.__name__}')
+        
+        if len(self._all_buttons) == 0:
+            self._all_buttons_removed = True
 
     def help_appear_order(self): 
         """Prints all button emojis you've added before this method was called to the console for easy copy and pasting of the desired order. 
@@ -1192,44 +1243,52 @@ class Menu(metaclass=abc.ABCMeta):
         
         Parameter
         ---------
-        emoji_or_button: Union[:class:`str`, :class:`Button`]
-            The emoji itself or Button object
+        *emoji_or_button: Union[:class:`str`, :class:`Button`]
+            An argument list of the emojis themselves or :class:`Button` object
         
         Raises
         ------
         - `ImproperButtonOrderChange`: Missing or extra buttons 
+        - `IncorrectType`: All values in the argument list were not of type :class:`str` or :class:`Button`
+        - `NoButtons`: Attempted to change the appear order when no buttons were registered
         - `MenuAlreadyRunning`: Attempted to call this method after the menu has started
-        """
-        temp = []
-        for item in emoji_or_button:
-            if isinstance(item, str):
-                if item in self._extract_all_emojis():
-                    temp.append(item)
-            elif isinstance(item, Button):
-                if item.emoji in self._extract_all_emojis():
-                    temp.append(item.emoji)
-            else:
-                raise IncorrectType('When changing the appear order, parameters must be of type str or Button')
-        
-        if collections.Counter(temp) == collections.Counter(self._extract_all_emojis()):
-            self._emoji_new_order = temp
-            self._all_buttons.sort(key=self._sort_key) 
-        else:
-            def _new_order_extracted():
-                """If the item in :param:`emoji_or_button` isinstance of :class:`Button`, convert it to the emoji it represents, then add it to the list"""
-                new = []
-                for item in emoji_or_button:
-                    if isinstance(item, str):
-                        new.append(item)
-                    elif isinstance(item, Button):
-                        new.append(item.emoji)
-                return new
 
-            official = set(self._extract_all_emojis())
-            new_order = set(_new_order_extracted())
-            extra = new_order.difference(official) 
-            missing = official.difference(new_order)
-            raise ImproperButtonOrderChange(missing, extra)
+            .. changes::
+                v1.0.9
+                    - Moved method `sort_key` to here as a local function since this is the only place its used
+                    - Slight revamp to this method
+                    - Raise :exc:`NoButtons` if there are no registered buttons
+                    - Raise :exc:`IncorrectType` if all values in the argument list were not of type :class:`str` or :class:`Button`
+        """
+        # NOTE: don't raise an exception if the user doesn't provide an argument list because :exc:`ImproperButtonOrderChange` already takes care of that
+
+        if not self._all_buttons:
+            raise NoButtons('You cannot change the appear order when no buttons have been registered')
+        
+        new_emoji_order = []
+        original_emoji_order = self._extract_all_emojis()
+        for item in emoji_or_button:
+            if isinstance(item, str):       new_emoji_order.append(item)
+            elif isinstance(item, Button):  new_emoji_order.append(item.emoji)
+            else:   raise IncorrectType(f'When changing the button order, all values in the argument list must be of type str or Button, got {item.__class__.__name__}')
+        
+        if collections.Counter(new_emoji_order) == collections.Counter(original_emoji_order):
+            
+            def sort_key(item: Button):
+                """Sort key for :attr:`_all_buttons`"""
+                nonlocal new_emoji_order
+                idx = new_emoji_order.index(item.emoji)
+                return idx
+
+            self._all_buttons.sort(key=sort_key)
+        else:
+            original_s = set(original_emoji_order)
+            new_s = set(new_emoji_order)
+            
+            extras = new_s.difference(original_s)
+            missing = original_s.difference(new_s)
+            
+            raise ImproperButtonOrderChange(missing, extras)
 
     @abc.abstractmethod
     async def _execute_navigation_type(self, *args, **kwargs):
