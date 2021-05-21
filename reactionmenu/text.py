@@ -23,6 +23,8 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import asyncio
+import collections
+from datetime import datetime
 import inspect
 import itertools
 from typing import List, Union
@@ -30,12 +32,12 @@ from typing import List, Union
 from discord import TextChannel, Member, Role
 from discord.ext.commands import Context
 
-from .abc import Menu
+from . import abc
 from .buttons import Button, ButtonType
-from .decorators import ensure_not_primed
+from .decorators import ensure_not_primed, menu_verification
 from .errors import ReactionMenuException, TooManyButtons, DuplicateButton, MenuAlreadyRunning, MissingSetting, IncorrectType
 
-class TextMenu(Menu):
+class TextMenu(abc.Menu):
     """A text based version of :class:`ReactionMenu`. No embeds are involved in the pagination process, only plain text is used. Has limited capabilites compared to :class:`ReactionMenu`.
 
     Parameters
@@ -102,6 +104,9 @@ class TextMenu(Menu):
         self._is_running = False
         self._page_number = 0
         self._run_time = 0
+        self._all_buttons_removed = False
+        self._is_dm_session = False
+        self._relay_function = None
         
         # auto-pagination
         self._menu_owner = None
@@ -230,6 +235,9 @@ class TextMenu(Menu):
             self._all_buttons.append(button)
             if len(self._all_buttons) > 20:
                 raise TooManyButtons
+
+            if self._all_buttons_removed:
+                self._all_buttons_removed = False
         else:
             raise DuplicateButton(f'The emoji {tuple(button.emoji)} has already been registered as a button')
 
@@ -339,6 +347,16 @@ class TextMenu(Menu):
                 await self.stop(delete_menu_message=self._delete_on_timeout, clear_reactions=self._clear_reactions_after)
             else:
                 emoji = str(reaction.emoji)
+                if self._relay_function:
+                    RelayPayload = collections.namedtuple('RelayPayload', ['member', 'reaction', 'time', 'message'])
+                    relay = RelayPayload(member=user, reaction=reaction, time=datetime.utcnow(), message=self._msg)
+                    try:
+                        if asyncio.iscoroutinefunction(self._relay_function):
+                            await self._relay_function(relay)
+                        else:
+                            self._relay_function(relay)
+                    except TypeError:
+                        raise ReactionMenuException('When setting a relay, the relay function must have exactly one positional argument')
 
                 for btn in self._all_buttons:
                     # back
@@ -434,6 +452,7 @@ class TextMenu(Menu):
                         await self.stop(delete_menu_message=True)
 
     @ensure_not_primed
+    @menu_verification
     async def start(self, *, send_to: Union[str, int, TextChannel]=None):
         """|coro| Starts the text menu
 
@@ -467,19 +486,6 @@ class TextMenu(Menu):
             .. note::
                 ABC meth
         """
-        # check if its a DM session
-        if self._ctx.guild is None:
-            self._handle_dm_usage()
-            
-            # :param:`send_to` implies the menu was created in a guild. if theres no guild object (because its a DM), :param:`send_to` components cannot function
-            if send_to is not None:
-                send_to = None
-        
-        # theres no need to do button duplicate checks for an auto-pagination menu because no buttons will be used
-        if not self._auto_paginator:
-            self._duplicate_emoji_check()
-            self._duplicate_name_check()
-
         # check if the menu is limited
         if TextMenu._is_currently_limited():
             if TextMenu._limit_message:
@@ -487,8 +493,7 @@ class TextMenu(Menu):
             return
 
         # determine the channel to send the channel to (if any)
-        if send_to:
-            self._determine_location(send_to)
+        self._determine_location(send_to)
 
         if len(self._contents) == 0:
             raise ReactionMenuException("You cannot start a TextMenu when you haven't added any content")

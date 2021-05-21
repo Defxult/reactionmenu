@@ -25,18 +25,19 @@ DEALINGS IN THE SOFTWARE.
 import asyncio
 import collections
 from enum import Enum, auto
+from datetime import datetime
 import itertools
 from typing import List, Union, Deque
 
 from discord import Embed, TextChannel, Member, Role
 from discord.ext.commands import Context
 
-from .abc import Menu
+from . import abc
 from .buttons import Button, ButtonType
-from .decorators import dynamic_only, static_only, ensure_not_primed
+from .decorators import *
 from .errors import *
 
-class ReactionMenu(Menu):
+class ReactionMenu(abc.Menu):
 	"""A class to create a discord.py reaction menu. If discord.py version is 1.5.0+, intents are required
 	
 	Parameters
@@ -116,12 +117,16 @@ class ReactionMenu(Menu):
 				Added :attr:_menu_owner
 				Added :attr:_auto_paginator
 				Added :attr:_auto_turn_every
+				Added :attr:_auto_worker
 				Added :attr:_main_session_task
 				Added :attr:_runtime_tracking_task
 				Added :attr:_countdown_task
 				Added :attr:_limit_message
 				Added :attr:_default_back_button
 				Added :attr:_default_next_button
+				Added :attr:_all_buttons_removed
+				Added :attr:_is_dm_session
+				Added :attr:_relay_function
 
 				
 				This class now inherits from :abc:`Menu`
@@ -151,6 +156,9 @@ class ReactionMenu(Menu):
 		self._current_page = 0
 		self._last_page = 0
 		self._run_time = 0
+		self._all_buttons_removed = False
+		self._is_dm_session = False
+		self._relay_function = None
 
 		# auto-pagination
 		self._menu_owner = None
@@ -504,6 +512,7 @@ class ReactionMenu(Menu):
 				v1.0.3
 					Added check for ButtonType.CALLER
 				v1.0.9
+					Added if check for :attr:`_all_buttons_removed`
 					Moved to ABC
 		"""
 		if button.emoji not in self._extract_all_emojis():
@@ -526,6 +535,9 @@ class ReactionMenu(Menu):
 			self._all_buttons.append(button)
 			if len(self._all_buttons) > 20:
 				raise TooManyButtons
+
+			if self._all_buttons_removed:
+				self._all_buttons_removed = False
 		else:
 			raise DuplicateButton(f'The emoji {tuple(button.emoji)} has already been registered as a button')
 	
@@ -671,6 +683,7 @@ class ReactionMenu(Menu):
 					Added :attr:`ReactionMenu._delete_on_timeout` functionality
 				v1.0.9
 					- Added the initialization of :attr:`ReactionMenu._menu_owner` for proper handling in :meth:`Menu._wait_check`
+					- Added handling for relays
 					- Replaced the end session and timeout actions to :meth:`ReactionMenu.stop`. Stop does all the necessary things needed to properly stop a menu
 					- Instead of calling str() everytime on every button emoji check, just store it in a variable to access and check later
 					- Moved to ABC
@@ -689,6 +702,16 @@ class ReactionMenu(Menu):
 				await self.stop(delete_menu_message=self._delete_on_timeout, clear_reactions=self._clear_reactions_after)
 			else:
 				emoji = str(reaction.emoji)
+				if self._relay_function:
+					RelayPayload = collections.namedtuple('RelayPayload', ['member', 'reaction', 'time', 'message'])
+					relay = RelayPayload(member=user, reaction=reaction, time=datetime.utcnow(), message=self._msg)
+					try:
+						if asyncio.iscoroutinefunction(self._relay_function):
+							await self._relay_function(relay)
+						else:
+							self._relay_function(relay)
+					except TypeError:
+						raise ReactionMenuException('When setting a relay, the relay function must have exactly one positional argument')
 
 				for btn in self._all_buttons:
 					# previous
@@ -788,6 +811,7 @@ class ReactionMenu(Menu):
 						await self.stop(delete_menu_message=True)
 
 	@ensure_not_primed
+	@menu_verification
 	async def start(self, *, send_to: Union[str, int, TextChannel]=None):
 		"""|coro| Starts the reaction menu
 
@@ -838,22 +862,6 @@ class ReactionMenu(Menu):
 					- Removed [else] from ReactionMenu.STATIC/DYNAMIC check. Replaced with [if self._config] check at the top
 					- Moved #[core menu initialization] from both STATIC and DYNAMIC if checks to only one at the bottom. Having both was redundant because regardless of configuration both have the same #[core menu initialization]
 		"""
-		if self._config not in (ReactionMenu.STATIC, ReactionMenu.DYNAMIC):
-			raise MenuSettingsMismatch("The menu's setting for dynamic or static was not recognized")
-		
-		# check if its a DM session
-		if self._ctx.guild is None:
-			self._handle_dm_usage()
-			
-			# :param:`send_to` implies the menu was created in a guild. if theres no guild object (because its a DM), :param:`send_to` components cannot function
-			if send_to is not None:
-				send_to = None
-	
-		# theres no need to do button duplicate checks for an auto-pagination menu because no buttons will be used
-		if not self._auto_paginator:
-			self._duplicate_emoji_check()
-			self._duplicate_name_check()
-
 		# check if the menu is limited
 		if ReactionMenu._is_currently_limited():
 			if ReactionMenu._limit_message:
@@ -861,8 +869,7 @@ class ReactionMenu(Menu):
 			return
 		
 		# determine the channel to send the channel to (if any)
-		if send_to:
-			self._determine_location(send_to)
+		self._determine_location(send_to)
 		
 		if self._config == ReactionMenu.STATIC:
 			worker = []
