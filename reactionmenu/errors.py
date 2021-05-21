@@ -35,6 +35,14 @@ class IncorrectType(ReactionMenuException):
 	def __init__(self, message: str):
 		super().__init__(message)
 
+class NoButtons(ReactionMenuException):
+	"""Raised when the menu was started but no buttons were registered or the action initiated requires buttons to be registered
+
+		.. added:: v1.0.9
+	"""
+	def __init__(self, message: str='You cannot start the menu when no buttons are registered'):
+		super().__init__(message)
+
 class InvalidPage(ReactionMenuException):
 	"""Raised when the page selected to remove does not exist"""
 	pass
