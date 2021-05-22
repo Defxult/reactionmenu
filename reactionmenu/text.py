@@ -29,7 +29,7 @@ import inspect
 import itertools
 from typing import List, Union
 
-from discord import TextChannel, Member, Role
+from discord import TextChannel, Member, Role, AllowedMentions
 from discord.ext.commands import Context
 
 from . import abc
@@ -83,6 +83,9 @@ class TextMenu(abc.Menu):
     
     only_roles: List[:class:`discord.Role`]
         Members with any of the provided roles are the only ones allowed to control the menu. The member who started the menu will always be able to control it. This overrides :attr:`all_can_react`
+    
+    allowed_mentions: :class:`discord.AllowedMentions`
+        Controls the mentions being processed in the menu message
 
         .. added:: v1.0.9
     """
@@ -120,6 +123,7 @@ class TextMenu(abc.Menu):
         self._countdown_task: asyncio.Task = None
 
         # basic options (also ABC properties)
+        self._allowed_mentions = options.get('allowed_mentions', AllowedMentions())
         self._only_roles: List[Role] = options.get('only_roles')
         self._style: str = options.get('style')
         self._clear_reactions_after: bool = options.get('clear_reactions_after', True)
@@ -153,6 +157,34 @@ class TextMenu(abc.Menu):
             All the contents of a text menu. Can be :class:`None` if no content has been added
         """
         return self._contents if self._contents else None
+    
+    @property
+    def allowed_mentions(self):
+        return self._allowed_mentions
+    
+    @allowed_mentions.setter
+    def allowed_mentions(self, value):
+        """A property getter/setter for kwarg "allowed_mentions"
+
+        Example
+        -------
+        ```
+        menu = TextMenu(ctx, ...)
+        menu.allowed_mentions = discord.AllowedMentions(roles=False, ...)
+
+        >>> print(menu.allowed_mentions)
+        AllowedMentions(roles=False, ...)
+        ```
+
+        Returns
+        -------
+        :class:`discord.AllowedMentions`:
+            The values that were set to control the mentions of the text menu message
+        """
+        if isinstance(value, AllowedMentions):
+            self._allowed_mentions = value
+        else:
+            raise IncorrectType(f'"allowed_mentions" expected discord.AllowedMentions, got {value.__class__.__name__}')
 
     @ensure_not_primed
     def clear_all_contents(self):
@@ -288,7 +320,7 @@ class TextMenu(abc.Menu):
             if from_caller_button:
                 await self._msg.remove_reaction(emoji, self._ctx.author)
             else:
-                await self._msg.edit(content=worker)
+                await self._msg.edit(content=worker, allowed_mentions=self._allowed_mentions)
                 await self._msg.remove_reaction(emoji, self._ctx.author)
         
         elif self._navigation_speed == TextMenu.FAST:
@@ -296,7 +328,7 @@ class TextMenu(abc.Menu):
             # and you cannot edit a discord message with a content type of :class:`None`
             if from_caller_button:
                 return
-            await self._msg.edit(content=worker)
+            await self._msg.edit(content=worker, allowed_mentions=self._allowed_mentions)
 
     def refresh_auto_pagination_data(self, *contents: str):
         """Update the contents displayed in the auto-pagination menu. When refreshed, the new contents don't go into effect until the last round of waiting (what you set for `turn_every`) completes
@@ -330,7 +362,7 @@ class TextMenu(abc.Menu):
         self._countdown_task = self._loop.create_task(self._auto_countdown())
         while self._is_running:
             await asyncio.sleep(self._auto_turn_every)
-            await self._msg.edit(content=next(self._auto_worker))
+            await self._msg.edit(content=next(self._auto_worker), allowed_mentions=self._allowed_mentions)
     
     async def _execute_session(self):
         """|abc coro| Begin the pagination process"""
@@ -502,16 +534,16 @@ class TextMenu(abc.Menu):
         elif len(self._contents) == 1:
             self._mark_pages()
             if self._send_to_channel is None:
-                self._msg = await self._ctx.send(self._contents[0])
+                self._msg = await self._ctx.send(self._contents[0], allowed_mentions=self._allowed_mentions)
             else:
-                self._msg = await self._send_to_channel.send(self._contents[0])
+                self._msg = await self._send_to_channel.send(self._contents[0], allowed_mentions=self._allowed_mentions)
             
         else:
             self._mark_pages()
             if self._send_to_channel is None:
-                self._msg = await self._ctx.send(self._contents[0])
+                self._msg = await self._ctx.send(self._contents[0], allowed_mentions=self._allowed_mentions)
             else:
-                self._msg = await self._send_to_channel.send(self._contents[0])
+                self._msg = await self._send_to_channel.send(self._contents[0], allowed_mentions=self._allowed_mentions)
             
             if not self._auto_paginator:
                 for btn in self.all_buttons:
