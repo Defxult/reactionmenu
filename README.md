@@ -324,7 +324,7 @@ Menu relays are functions that are called anytime a reaction that is apart of a 
 
 When creating a function for your relay, that function must contain a single positional argument. When a reaction is pressed, a `RelayPayload` object (a named tuple) is passed to that function. The attributes of `RelayPayload` are:
 * member (`discord.Member`) The person who pressed the reaction
-* reaction (`discord.Reaction`) The reaction that was pressed
+* button (`Button`) The [button](#what-are-buttons-and-buttontypes) that was pressed
 * time (`datetime`) What time in UTC for when the reaction was pressed
 * message (`discord.Message`) The message object that the menu is operating under
 

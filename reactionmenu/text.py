@@ -24,7 +24,6 @@ DEALINGS IN THE SOFTWARE.
 
 import asyncio
 import collections
-from datetime import datetime
 import inspect
 import itertools
 from typing import List, Union
@@ -379,28 +378,20 @@ class TextMenu(abc.Menu):
                 await self.stop(delete_menu_message=self._delete_on_timeout, clear_reactions=self._clear_reactions_after)
             else:
                 emoji = str(reaction.emoji)
-                if self._relay_function:
-                    RelayPayload = collections.namedtuple('RelayPayload', ['member', 'reaction', 'time', 'message'])
-                    relay = RelayPayload(member=user, reaction=reaction, time=datetime.utcnow(), message=self._msg)
-                    try:
-                        if asyncio.iscoroutinefunction(self._relay_function):
-                            await self._relay_function(relay)
-                        else:
-                            self._relay_function(relay)
-                    except TypeError:
-                        raise ReactionMenuException('When setting a relay, the relay function must have exactly one positional argument')
 
                 for btn in self._all_buttons:
                     # back
                     if emoji == btn.emoji and btn.linked_to is ButtonType.PREVIOUS_PAGE:
                         worker = self._contents[self._page_control('-')]
                         await self._execute_navigation_type(worker, btn.emoji)
+                        await self._contact_relay(user, btn)
                         break
 
                     # next
                     elif emoji == btn.emoji and btn.linked_to is ButtonType.NEXT_PAGE:
                         worker = self._contents[self._page_control('+')]
                         await self._execute_navigation_type(worker, btn.emoji)
+                        await self._contact_relay(user, btn)
                         break
 
                     # first page
@@ -408,6 +399,7 @@ class TextMenu(abc.Menu):
                         self._page_number = 0
                         worker = self._contents[self._page_number]
                         await self._execute_navigation_type(worker, btn.emoji)
+                        await self._contact_relay(user, btn)
                         break
 
                     # last page
@@ -415,6 +407,7 @@ class TextMenu(abc.Menu):
                         self._page_number = len(self._contents) - 1
                         worker = self._contents[self._page_number]
                         await self._execute_navigation_type(worker, btn.emoji)
+                        await self._contact_relay(user, btn)
                         break
 
                     # go to page
@@ -453,6 +446,7 @@ class TextMenu(abc.Menu):
                                     self._page_number = requested_page - 1
                                     worker = self._contents[self._page_number]
                                     await self._execute_navigation_type(worker, btn.emoji)
+                                    await self._contact_relay(user, btn)
                                     if self._delete_interactions:
                                         await bot_prompt.delete()
                                         await msg.delete()
@@ -477,10 +471,12 @@ class TextMenu(abc.Menu):
 
                         # worker param is :class:`None` just as a placeholder. It is not handled in the call			
                         await self._execute_navigation_type(None, btn.emoji, from_caller_button=True)
+                        await self._contact_relay(user, btn)
                         break
                     
                     # end session
                     elif emoji == btn.emoji and btn.linked_to is ButtonType.END_SESSION:
+                        await self._contact_relay(user, btn)
                         await self.stop(delete_menu_message=True)
 
     @ensure_not_primed

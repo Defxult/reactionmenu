@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 import abc
 import asyncio
 import collections
+from datetime import datetime
 import itertools
 from typing import Union, List
 
@@ -849,6 +850,22 @@ class Menu(metaclass=abc.ABCMeta):
                 raise ImproperStyleFormat
         else:
             return f'Page {counter}/{total_pages}'
+    
+    async def _contact_relay(self, user, button):
+        """|coro abc| Calls the relay function that was set
+
+            .. added:: v1.0.9
+        """
+        if self._relay_function:
+            RelayPayload = collections.namedtuple('RelayPayload', ['member', 'button', 'time', 'message'])
+            relay = RelayPayload(member=user, button=button, time=datetime.utcnow(), message=self._msg)
+            try:
+                if asyncio.iscoroutinefunction(self._relay_function):
+                    await self._relay_function(relay)
+                else:
+                    self._relay_function(relay)
+            except TypeError:
+                raise ReactionMenuException('When setting a relay, the relay function must have exactly one positional argument')
     
     async def _track_runtime(self):
         """|coro abc| Track how long (in seconds) the menu session has been active 
