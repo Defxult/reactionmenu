@@ -559,6 +559,9 @@ Those kwargs are **NOT** valid for a `TextMenu`
 
 ---
 ## TextMenu Specifics
+##### Constructor kwargs
+* `allowed_mentions` (`discord.AllowedMentions`)
+
 ##### Methods
 There are only a few methods that are specifc to a `TextMenu`
 * `TextMenu.add_content(content: str)`
@@ -580,6 +583,7 @@ Those methods are **NOT** valid for a `TextMenu`
 
 ##### Attributes
 * `TextMenu.contents` (`List[str]`)
+* `TextMenu.allowed_mentions` (`discord.AllowedMentions`)
 
 `TextMenu` has the same attributes as [ReactionMenu attributes](#all-attributes-for-reactionmenu) **except**:
 
