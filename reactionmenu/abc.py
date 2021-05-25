@@ -65,6 +65,18 @@ class Menu(metaclass=abc.ABCMeta):
         raise NotImplementedError
     
     @property
+    def message(self) -> discord.Message:
+        """
+        Returns
+        -------
+        :class:`discord.Message`:
+            The menu's message object. Can be :class:`None` if the menu has not been started
+        
+            .. added:: v1.0.9
+        """
+        return self._msg
+    
+    @property
     def auto_paginator(self) -> bool:
         """
         Returns
@@ -281,7 +293,7 @@ class Menu(metaclass=abc.ABCMeta):
             # i do not want the menu to continue functioning after an exception involving that menu was raised
             cls._force_stop(self)
 
-            raise MenuAlreadyRunning(f'You cannot set the navigation speed when the menu is already running. Menu name: {self._name}')
+            raise MenuAlreadyRunning(f'You cannot set the navigation speed when the menu is already running. Menu name: {self._name!r}')
 
     @property
     def only_roles(self) -> List[discord.Role]:
@@ -580,8 +592,8 @@ class Menu(metaclass=abc.ABCMeta):
             .. added:: v1.0.9
         """
         if turn_every >= 1:
-            auto_session = [session for session in cls._active_sessions if session._auto_paginator]
-            for session in auto_session:
+            auto_sessions = [session for session in cls._active_sessions if session._auto_paginator]
+            for session in auto_sessions:
                 session.update_turn_every(turn_every)
         else:
             raise ReactionMenuException('Parameter "turn_every" must be greater than or equal to one')
@@ -664,10 +676,12 @@ class Menu(metaclass=abc.ABCMeta):
         Raises
         ------
         - `ReactionMenuException`: Attempted to call method when there are menu sessions that are already active or attempted to set a limit of zero
+        - `IncorrectType`: The :param:`limit` parameter was not of type `int`
 
             .. changes::
                 v1.0.9
                     Replaced now removed class :meth:`_cancel_all_sessions` with class :meth:`_force_stop`
+                    Added :exc:`IncorrectType`
         """
         if len(cls._active_sessions) != 0:
             # because of the created task(s) when making a session, the menu is still running in the background so manually stopping them is required to stop using resources
@@ -675,12 +689,12 @@ class Menu(metaclass=abc.ABCMeta):
             raise ReactionMenuException('Method "set_sessions_limit" cannot be called when any other menus have started')
 
         if not isinstance(limit, int):
-            raise ReactionMenuException(f'Limit type cannot be {limit.__class__.__name__}, int is required')
+            raise IncorrectType(f'Parameter "limit" expected int, got {limit.__class__.__name__}')
         else:
             if limit <= 0:
                 raise ReactionMenuException('The session limit must be greater than or equal to one')
             cls._sessions_limit = limit
-            cls._limit_message = message
+            cls._limit_message = str(message)
     
     @classmethod
     def _force_stop(cls, target: 'Menu'):
@@ -1044,7 +1058,7 @@ class Menu(metaclass=abc.ABCMeta):
         named tuple contains the following attributes:
 
         - `member`: The :class:`discord.Member` object of the member who pressed the reaction. Could be :class:`discord.User` if the menu reaction was pressed in a direct message
-        - `reaction`: The :class:`discord.Reaction` object of the reaction that was pressed
+        - `button`: The :class:`Button` object of the reaction that was pressed
         - `time`: The :class:`datetime` object of when the reaction was pressed. The time is in UTC
         - `message`: The :class:`discord.Message` object. This is the message the menu is operating from
 
