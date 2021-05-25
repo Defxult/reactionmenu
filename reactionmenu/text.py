@@ -233,6 +233,7 @@ class TextMenu(abc.Menu):
         - `DuplicateButton`: The emoji used is already registered as a button
         - `TooManyButtons`: More than 20 buttons were added. Discord has a reaction limit of 20
         - `ReactionMenuException`: The :class:`ButtonType` used in the :class:`Button` is not supported for a :class:`TextMenu` or a name used for the :class:`Button` is already registered
+        - `MissingSetting`: Set the Button :param:`linked_to` as `ButtonType.CALLER` but did not assign the Button kwarg "details" a value
         
             .. note::
                 ABC meth

@@ -411,7 +411,7 @@ class ReactionMenu(abc.Menu):
 			self._dynamic_completed_pages.extendleft(embeds)
 			self._main_pages_already_set = True
 		else:
-			raise SingleUseOnly('Once you\'ve set main pages, you cannot set more')
+			raise SingleUseOnly("Once you've set main pages, you cannot set more")
 
 	@dynamic_only
 	@ensure_not_primed
@@ -502,7 +502,7 @@ class ReactionMenu(abc.Menu):
 		Raises
 		------
 		- `MenuAlreadyRunning`: Attempted to call this method after the menu has started
-		- `MissingSetting`: Set the Button :param:`linked_to` as `ButtonType.CUSTOM_EMBED` but did not assign the Button kwarg "embed" a value. 
+		- `MissingSetting`: Set the Button :param:`linked_to` as `ButtonType.CUSTOM_EMBED`/`ButtonType.CALLER` but did not assign the Button kwarg "embed"/"details" a value
 		- `DuplicateButton`: The emoji used is already registered as a button
 		- `TooManyButtons`: More than 20 buttons were added. Discord has a reaction limit of 20
 		- `ReactionMenuException`: A name used for the Button is already registered
@@ -855,8 +855,9 @@ class ReactionMenu(abc.Menu):
 					- Added handling for :attr:`ReactionMenu._auto_paginator` to determine when to, and when not to apply reactions
 					- Added handling for :attr:`ReactionMenu._auto_paginator` to determine when to check for duplicate emojis/names
 					- Added handling for menus started in DMs
+					- Added decorator `menu_verification`
 					- Moved to ABC
-					- Removed [else] from ReactionMenu.STATIC/DYNAMIC check. Replaced with [if self._config] check at the top
+					- Removed [else] from ReactionMenu.STATIC/DYNAMIC check
 					- Moved #[core menu initialization] from both STATIC and DYNAMIC if checks to only one at the bottom. Having both was redundant because regardless of configuration both have the same #[core menu initialization]
 		"""
 		# check if the menu is limited
