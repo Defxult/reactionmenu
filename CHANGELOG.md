@@ -27,6 +27,8 @@
   * `ReactionMenu.run_time`
 * Added the ability to set if only members with certain roles can control the menu ([docs](https://github.com/Defxult/reactionmenu#options-of-the-reactionmenu-constructor-kwargs))
   * `ReactionMenu.only_roles`
+* Added the ability to access the `discord.Message` object the menu is operating from ([docs](https://github.com/Defxult/reactionmenu#all-attributes-for-reactionmenu))
+  * `ReactionMenu.message`
 * Added the ability to gracefully stop all running menu's ([docs](https://github.com/Defxult/reactionmenu#setting-limits))
   * `ReactionMenu.stop_all_sessions()`
 * Added the ability to stop a specific menu by it's name ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))

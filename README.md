@@ -434,6 +434,7 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 | `ReactionMenu.only_roles` | `List[discord.Role]` | the members with those role are the only ones allowed to control the menu. the menu owner can always control the menu
 | `ReactionMenu.run_time` | `int` | the amount of time in seconds the menu has been active
 | `ReactionMenu.auto_turn_every` | `int` | how frequently an auto-pagination menu should change the page
+| `ReactionMenu.message` | `discord.Message` | the message object the menu is operating from
 </details>
 
 ## All methods for ReactionMenu
