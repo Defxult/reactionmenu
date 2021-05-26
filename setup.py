@@ -18,17 +18,18 @@ tags = [
     'discord.py',
     'discord paginator',
     'discord reaction menu',
+    'discord reactions'
     'discord embed',
+    'discord menu'
     'reaction menu',
     'paginator',
+    'pagination'
     'embed menu',
     'embed reaction menu',
     'embed paginator'
 ]
 
 details = {
-    'Github Repo' : 'https://github.com/Defxult/reactionmenu',
-    'Github Issues' : 'https://github.com/Defxult/reactionmenu/issues',
     'Changelog' : 'https://github.com/Defxult/reactionmenu/blob/main/CHANGELOG.md'
 }
 
@@ -37,7 +38,7 @@ setup(
     name='reactionmenu',
     description='A package to create a discord.py reaction menu. If your discord.py version is 1.5.0+, intents are required',
     version='1.0.9', 
-    url='https://github.com/Defxult',
+    url='https://github.com/Defxult/reactionmenu',
     project_urls=details,
     classifiers=classifiers,
     long_description=_get_readme(),
