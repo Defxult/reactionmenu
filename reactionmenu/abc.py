@@ -1234,7 +1234,7 @@ class Menu(metaclass=abc.ABCMeta):
 
         Raises
         ------
-        - `ButtonNotFound` - Button with given identity was not found
+        - `ButtonNotFound`: Button with given identity was not found
 
             .. changes::
                 v1.0.9
