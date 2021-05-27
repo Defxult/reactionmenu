@@ -90,10 +90,10 @@ class ReactionMenu(abc.Menu):
 		navigate lengthy menu's more quickly (defaults to `ReactionMenu.NORMAL`)
 	
 	delete_on_timeout: :class:`bool`
-		When the menu times out, delete the menu message. This overrides :attr:`clear_reactions_after`
+		When the menu times out, delete the menu message. This overrides :attr:`clear_reactions_after` (defaults to `False`)
 	
 	only_roles: List[:class:`discord.Role`]
-        Members with any of the provided roles are the only ones allowed to control the menu. The member who started the menu will always be able to control it. This overrides :attr:`all_can_react`
+        Members with any of the provided roles are the only ones allowed to control the menu. The member who started the menu will always be able to control it. This overrides :attr:`all_can_react` (defaults to :class:`None`)
 
 		.. changes::
 			v1.0.1

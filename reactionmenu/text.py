@@ -78,13 +78,13 @@ class TextMenu(abc.Menu):
         navigate lengthy menu's more quickly (defaults to `TextMenu.NORMAL`)
 
     delete_on_timeout: :class:`bool`
-        When the menu times out, delete the menu message. This overrides :attr:`clear_reactions_after`
+        When the menu times out, delete the menu message. This overrides :attr:`clear_reactions_after` (defaults to `False`)
     
     only_roles: List[:class:`discord.Role`]
-        Members with any of the provided roles are the only ones allowed to control the menu. The member who started the menu will always be able to control it. This overrides :attr:`all_can_react`
+        Members with any of the provided roles are the only ones allowed to control the menu. The member who started the menu will always be able to control it. This overrides :attr:`all_can_react` (defaults to :class:`None`)
     
     allowed_mentions: :class:`discord.AllowedMentions`
-        Controls the mentions being processed in the menu message
+        Controls the mentions being processed in the menu message (defaults to :class:`discord.AllowedMentions(*, everyone=True, users=True, roles=True, replied_user=True)`)
 
         .. added:: v1.0.9
     """
