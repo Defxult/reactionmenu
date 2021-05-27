@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 DEALINGS IN THE SOFTWARE.
 """
+
 import inspect
 
 class ReactionMenuException(Exception):
@@ -93,7 +94,7 @@ class MissingSetting(ReactionMenuException):
 class NoPages(ReactionMenuException):
 	"""Tried to start the menu when they haven't added any pages"""
 	def __init__(self):
-		super().__init__('You cannot start a reaction menu when there aren\'t any pages')
+		super().__init__("You cannot start a reaction menu when there aren't any pages")
 
 class MenuAlreadyRunning(ReactionMenuException):
 	"""Called a method that is not allowed to be called after the menu has started"""
