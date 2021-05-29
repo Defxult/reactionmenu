@@ -26,6 +26,7 @@ import asyncio
 import collections
 import inspect
 import itertools
+import re
 from typing import List, Union
 
 from discord import TextChannel, Member, Role, AllowedMentions
@@ -289,16 +290,25 @@ class TextMenu(abc.Menu):
         """Add the page director information to the content"""
         if self._show_page_director:
             page_count = 1
+            CODEBLOCK = re.compile(r'(`{3})(.*?)(`{3})', flags=re.DOTALL)
+            CODEBLOCK_DATA_AFTER = re.compile(r'(`{3})(.*?)(`{3}).+', flags=re.DOTALL)
             for idx in range(len(self._contents)):
                 content = self._contents[idx]
-                cleaned = inspect.cleandoc(
-                    f"""
-                    {content}
-
-                    {self._maybe_new_style(page_count, len(self._contents))}
-                    """
-                )
-                self._contents[idx] = cleaned
+                page_info = self._maybe_new_style(page_count, len(self._contents))
+                
+                # the main purpose of the re is to decide if only 1 or 2 '\n' should be used. with codeblocks, at the end of the block there is already a new line, so there's no need to add an extra one except in
+                # the case where there is more information after the codeblock
+                
+                # NOTE: with codeblocks, i already tried the f doc string version of this and it doesnt work because there is a spacing issue with page_info. using a normal f string with \n works as intended
+                # f doc string version: https://github.com/Defxult/reactionmenu/blob/eb88af3a2a6dd468f7bcff38214eb77bc91b241e/reactionmenu/text.py#L288
+                
+                if re.search(CODEBLOCK, content):
+                    if re.search(CODEBLOCK_DATA_AFTER, content):
+                        self._contents[idx] = f'{content}\n\n{page_info}'
+                    else:
+                        self._contents[idx] = f'{content}\n{page_info}'
+                else:
+                    self._contents[idx] = f'{content}\n\n{page_info}'
                 page_count += 1
     
     async def _execute_navigation_type(self, worker, emoji, **kwargs):
