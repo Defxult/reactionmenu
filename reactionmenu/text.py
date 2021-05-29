@@ -511,6 +511,8 @@ class TextMenu(abc.Menu):
         ------
         - `MenuAlreadyRunning`: Attempted to call this method after the menu has started
         - `ReactionMenuException`: The menu was started before content was added
+        - `NoButtons`: Attempted to start the menu when no Buttons have been registered
+        - `ReactionMenuException`: A duplicate Button emoji/name was used
 
             .. note::
                 ABC meth

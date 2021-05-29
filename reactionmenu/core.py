@@ -350,7 +350,7 @@ class ReactionMenu(abc.Menu):
 		
 		Raises
 		------
-		- `MissingSetting`: kwarg "rows_requested" was missing from the Button object
+		- `MissingSetting`: kwarg "rows_requested" was missing from the :class:`ReactionMenu` constructor
 		- `MenuAlreadyRunning`: Attempted to call method after the menu has already started
 		- `MenuSettingsMismatch`: Tried to use method on a static menu
 		"""
@@ -838,6 +838,8 @@ class ReactionMenu(abc.Menu):
 		------
 		- `MenuAlreadyRunning`: Attempted to call this method after the menu has started
 		- `MenuSettingsMismatch`: The wrong number was used in the "config" parameter. only 0 (`ReactionMenu.STATIC`) or 1 (`ReactionMenu.DYNAMIC`) are permitted
+		- `NoButtons`: Attempted to start the menu when no Buttons have been registered
+		- `ReactionMenuException`: A duplicate Button emoji/name was used
 
 			.. changes::
 				v1.0.3
@@ -859,6 +861,7 @@ class ReactionMenu(abc.Menu):
 					- Moved to ABC
 					- Removed [else] from ReactionMenu.STATIC/DYNAMIC check
 					- Moved #[core menu initialization] from both STATIC and DYNAMIC if checks to only one at the bottom. Having both was redundant because regardless of configuration both have the same #[core menu initialization]
+					- Now raises :exc:`NoButtons` (from decorator `menu_verification`)
 		"""
 		# check if the menu is limited
 		if ReactionMenu._is_currently_limited():
