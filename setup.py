@@ -36,8 +36,8 @@ details = {
 setup(
     author='Defxult#8269',
     name='reactionmenu',
-    description='A package to create a discord.py reaction menu. If your discord.py version is 1.5.0+, intents are required',
     version='1.0.9', 
+    description='A package to create a discord.py reaction menu (paginator). If your discord.py version is 1.5.0+, intents are required',
     url='https://github.com/Defxult/reactionmenu',
     project_urls=details,
     classifiers=classifiers,
