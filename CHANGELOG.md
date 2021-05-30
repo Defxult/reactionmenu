@@ -37,7 +37,7 @@
   * `ReactionMenu.get_session(name: str)`
 * Added the ability to get all active sessions ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
   * `ReactionMenu.get_all_sessions()`
-* Added the ability for a menu reaction press to call other functions with the information of who pressed the reaction, what reaction was pressed, the time it was pressed, and the menu's message object ([docs](https://github.com/Defxult/reactionmenu#relays))
+* Added the ability for a menu reaction press to call other functions with the information of who pressed the reaction, what reaction was pressed, the time it was pressed, and the menu's object ([docs](https://github.com/Defxult/reactionmenu#relays))
   * `ReactionMenu.set_relay(func)`
 * Added `__repr__` for `ReactionMenu`
 * Added documentation (doc strings) to a lot more properties/methods to easily see what it does and what the return type is
