@@ -326,7 +326,7 @@ When creating a function for your relay, that function must contain a single pos
 * member (`discord.Member`) The person who pressed the reaction
 * button (`Button`) The [button](#what-are-buttons-and-buttontypes) that was pressed
 * time (`datetime`) What time in UTC for when the reaction was pressed
-* message (`discord.Message`) The message object that the menu is operating under
+* menu (`ReactionMenu`) The menu object
 
 Example:
 ```py

@@ -871,8 +871,8 @@ class Menu(metaclass=abc.ABCMeta):
             .. added:: v1.0.9
         """
         if self._relay_function:
-            RelayPayload = collections.namedtuple('RelayPayload', ['member', 'button', 'time', 'message'])
-            relay = RelayPayload(member=user, button=button, time=datetime.utcnow(), message=self._msg)
+            RelayPayload = collections.namedtuple('RelayPayload', ['member', 'button', 'time', 'menu'])
+            relay = RelayPayload(member=user, button=button, time=datetime.utcnow(), menu=self)
             try:
                 if asyncio.iscoroutinefunction(self._relay_function):
                     await self._relay_function(relay)
@@ -1060,7 +1060,7 @@ class Menu(metaclass=abc.ABCMeta):
         - `member`: The :class:`discord.Member` object of the member who pressed the reaction. Could be :class:`discord.User` if the menu reaction was pressed in a direct message
         - `button`: The :class:`Button` object of the reaction that was pressed
         - `time`: The :class:`datetime` object of when the reaction was pressed. The time is in UTC
-        - `message`: The :class:`discord.Message` object. This is the message the menu is operating from
+        - `menu`: Depending on the instance, the :class:`ReactionMenu` or :class:`TextMenu` object
 
         Parameter
         ---------
