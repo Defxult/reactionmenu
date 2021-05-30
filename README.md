@@ -92,7 +92,7 @@ menu = ReactionMenu(ctx, back_button='◀️', next_button='▶️', config=Reac
 | `all_can_react` | `bool` | `False` | `STATIC and DYNAMIC` | if all members can navigate the menu or only the message author
 | `delete_interactions` | `bool` | `True` | `STATIC and DYNAMIC` | delete the bot prompt message and the users message after selecting the page you'd like to go to when using `ButtonType.GO_TO_PAGE`
 | `navigation_speed` | `str` | `ReactionMenu.NORMAL` | `STATIC and DYNAMIC` | sets if the user needs to wait for the reaction to be removed by the bot before "turning" the page. Setting the speed to `ReactionMenu.FAST` makes it so that there is no need to wait (reactions are not removed on each press) and can navigate lengthy menu's more quickly
-| `delete_on_timeout` | `bool` | `False` | `STATIC and DYNAMIC` | When the menu times out, delete the menu message. This overrides `clear_reactions_after`
+| `delete_on_timeout` | `bool` | `False` | `STATIC and DYNAMIC` | when the menu times out, delete the menu message. This overrides `clear_reactions_after`
 | `only_roles` | `List[discord.Role]` | `None` | `STATIC and DYNAMIC` | sets it so that only the members with any of the provided roles can control the menu. The menu owner can always control the menu. This overrides `all_can_react`
 > NOTE: All `ReactionMenu` kwargs can also be set using an instance of `ReactionMenu` **except** `rows_requested`
 ---
@@ -299,7 +299,7 @@ An auto-pagination menu is a menu that doesn't need a reaction press to go to th
   * `ReactionMenu.update_turn_every(turn_every: Union[int, float])`
   * `ReactionMenu.refresh_auto_pagination_data(*embeds: Embed)`
   * `ReactionMenu.update_all_turn_every(turn_every: Union[int, float])` (class method)
-  * `ReactionMenu.stop_all_auto_sessions()` (class method)
+  * `await ReactionMenu.stop_all_auto_sessions()` (class method)
   * `ReactionMenu.auto_turn_every` (property)
   * `ReactionMenu.auto_paginator` (property)
 
@@ -564,7 +564,7 @@ Those kwargs are **NOT** valid for a `TextMenu`
 * `allowed_mentions` (`discord.AllowedMentions`)
 
 ##### Methods
-There are only a few methods that are specifc to a `TextMenu`
+There are only a few methods that are specific to a `TextMenu`
 * `TextMenu.add_content(content: str)`
   * This is similiar to adding a page to a `ReactionMenu`, but each addition is text
 * `TextMenu.clear_all_contents()`
