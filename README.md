@@ -11,10 +11,10 @@ pip install git+https://github.com/Defxult/reactionmenu.git
 ```
 You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the Github version of this package. If you are using the PyPI version of this package, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
 
-* `Github: v1.0.9.dev`
-* `PyPI: v1.0.8`
+* `Github: v1.0.9`
+* `PyPI: v1.0.9`
 
-If you are using `v1.0.9.dev` and discover any bugs, please don't hesitate to put them in [issues](https://github.com/Defxult/reactionmenu/issues) so they can be fixed before release 😀
+<!-- If you are using `v1.0.9.dev` and discover any bugs, please don't hesitate to put them in [issues](https://github.com/Defxult/reactionmenu/issues) so they can be fixed before release 😀 -->
 
 ---
 ## How to install
