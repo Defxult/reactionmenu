@@ -332,7 +332,8 @@ Example:
 ```py
 async def vote_relay(payload):
     register_vote(payload.member.name, payload.time)
-    await payload.message.channel.send(f'{payload.member.mention}, thanks for voting!', delete_after=1)
+    channel = payload.menu.message.channel
+    await channel.send(f'{payload.member.mention}, thanks for voting!', delete_after=1)
 
 menu = ReactionMenu(ctx, ...)
 menu.set_relay(vote_relay)
