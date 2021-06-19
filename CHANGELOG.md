@@ -1,3 +1,17 @@
+## v1.1.0 » Upcoming release
+#### New Features
+* Added new type of menu (`ButtonsMenu`). Discords new [Buttons](https://support.discord.com/hc/en-us/articles/1500012250861-Bots-Buttons) feature ([docs](https://github.com/Defxult/reactionmenu#buttonsmenu))
+* (`ReactionMenu`/`TextMenu`) Added the ability to get the menu object from a message ID ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
+  * `ReactionMenu.get_menu_from_message(message_id: int)`
+* (`ReactionMenu`/`TextMenu`) Added the ability to set menu session limits per guild, channel, or member (before you could only set per guild) ([docs](https://github.com/Defxult/reactionmenu#setting-limits))
+* (`ReactionMenu`/`TextMenu`) Added the ability to remove limits that have been set ([docs](https://github.com/Defxult/reactionmenu#setting-limits))
+  * `ReactionMenu.remove_limit()`
+* (`ReactionMenu`/`TextMenu`) Added the ability to access the `discord.Member` object of the person that started the menu ([docs](https://github.com/Defxult/reactionmenu#all-attributes-for-reactionmenu))
+  * `ReactionMenu.owner`
+* (`ReactionMenu`/`TextMenu`) Added `owner` to `__repr__`
+* (`ReactionMenu`/`TextMenu`) Added the ability to get all active DM sessions ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
+  * `ReactionMenu.get_all_dm_sessions()`
+
 ## v1.0.9 » Jun. 1, 2021
 #### New Features
 * Added new type of reaction menu (`TextMenu`). Just like the normal reaction menu but no embeds are involved, only plain text is used. `TextMenu` has limited options compared to `ReactionMenu` ([docs](https://github.com/Defxult/reactionmenu#textmenu))

@@ -11,12 +11,17 @@ pip install git+https://github.com/Defxult/reactionmenu.git
 ```
 You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the Github version of this package. If you are using the PyPI version of this package, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
 
-* `Github: v1.0.9`
+* `Github: v1.1.0.dev`
 * `PyPI: v1.0.9`
 
-<!-- If you are using `v1.0.9.dev` and discover any bugs, please don't hesitate to put them in [issues](https://github.com/Defxult/reactionmenu/issues) so they can be fixed before release 😀 -->
+If you are using `v1.1.0.dev` and discover any bugs, please don't hesitate to put them in [issues](https://github.com/Defxult/reactionmenu/issues) so they can be fixed before release 😀
 
 ---
+## Now featuring Buttons! 
+![buttons_row](https://cdn.discordapp.com/attachments/655186216060321816/855045265793744916/unknown.png)
+
+Click [here](#buttonsmenu) to go to the `ButtonsMenu` documentation
+
 ## How to install
 ```
 pip install reactionmenu
@@ -27,37 +32,62 @@ pip install reactionmenu
 ![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
 ---
 ## Index
-* [How to Import](#how-to-import)
-* [Parameters of the ReactionMenu constructor](#parameters-of-the-reactionmenu-constructor)
-* [Options of the ReactionMenu constructor (kwargs)](#options-of-the-reactionmenu-constructor-kwargs)
-* [ReactionMenu.STATIC vs ReactionMenu.DYNAMIC](#reactionmenustatic-vs-reactionmenudynamic)
-  * [Static](#static)
-  * [Adding Pages](#adding-pages)
-  * [Deleting Pages](#deleting-pages)
-  * [Dynamic](#dynamic)
-  * [Adding Rows/data](#adding-rowsdata)
-  * [Deleting Data](#deleting-data)
-  * [Main/Last Pages](#mainlast-pages)
-* [Supported Emojis](#supported-emojis)
-* [What are Buttons and ButtonTypes?](#what-are-buttons-and-buttontypes)
-  * [Parameters of the Button constructor](#parameters-of-the-button-constructor)
-  * [Options of the Button constructor (kwargs)](#options-of-the-button-constructor-kwargs)
-  * [All ButtonTypes](#all-buttontypes)
-  * [Adding Buttons](#adding-buttons)
-  * [Deleting Buttons](#deleting-buttons)
-  * [Buttons with ButtonType.CALLER](#buttons-with-buttontypecaller)
-  * [Emoji Order](#emoji-order)
-* [Auto-pagination](#auto-pagination)
-* [Relays](#relays)
-* [Setting Limits](#setting-limits)
-* [Starting/Stopping the ReactionMenu](#startingstopping-the-reactionmenu)
-* [All attributes for ReactionMenu](#all-attributes-for-reactionmenu)
-* [All methods for ReactionMenu](#all-methods-for-reactionmenu)
+<details>
+  <summary>Click to show index</summary>
+
+* [ReactionMenu](#how-to-import)
+  * [How to Import](#how-to-import)
+  * [Parameters of the ReactionMenu constructor](#parameters-of-the-reactionmenu-constructor)
+  * [Options of the ReactionMenu constructor (kwargs)](#options-of-the-reactionmenu-constructor-kwargs)
+  * [ReactionMenu.STATIC vs ReactionMenu.DYNAMIC](#reactionmenustatic-vs-reactionmenudynamic)
+    * [Static](#static)
+    * [Adding Pages](#adding-pages)
+    * [Deleting Pages](#deleting-pages)
+    * [Dynamic](#dynamic)
+    * [Adding Rows/data](#adding-rowsdata)
+    * [Deleting Data](#deleting-data)
+    * [Main/Last Pages](#mainlast-pages)
+  * [Supported Emojis](#supported-emojis)
+  * [What are Buttons and ButtonTypes?](#what-are-buttons-and-buttontypes)
+    * [Parameters of the Button constructor](#parameters-of-the-button-constructor)
+    * [Options of the Button constructor (kwargs)](#options-of-the-button-constructor-kwargs)
+    * [All ButtonTypes](#all-buttontypes)
+    * [Adding Buttons](#adding-buttons)
+    * [Deleting Buttons](#deleting-buttons)
+    * [Buttons with ButtonType.CALLER](#buttons-with-buttontypecaller)
+    * [Emoji Order](#emoji-order)
+  * [Auto-pagination](#auto-pagination)
+  * [Relays](#relays)
+  * [Setting Limits](#setting-limits)
+  * [Starting/Stopping the ReactionMenu](#startingstopping-the-reactionmenu)
+  * [All attributes for ReactionMenu](#all-attributes-for-reactionmenu)
+  * [All methods for ReactionMenu](#all-methods-for-reactionmenu)
+
 * [TextMenu](#textmenu)
   * [How to import](#how-to-import-1)
   * [Parameters of the TextMenu constructor](#parameters-of-the-textmenu-constructor)
   * [TextMenu Specifics](#textmenu-specifics)
   * [Starting/Stopping the TextMenu](#startingstopping-the-textmenu)
+
+* [ButtonsMenu](#buttonsmenu)
+  * [How to import](#how-to-import-2)
+  * [Initial setup](#initial-setup)
+  * [Parameters of the ButtonsMenu constructor](#parameters-of-the-buttonsmenu-constructor)
+  * [Options of of ButtonsMenu constructor (kwargs)](#options-of-the-buttonsmenu-constructor-kwargs)
+  * [Pages for ButtonsMenu](#pages-for-buttonmenu)
+    * [Adding Pages](#adding-pages-1)
+  * [Buttons for ButtonsMenu](#buttons-for-buttonsmenu)
+  * [ComponentsButton](#componentsbutton)
+  * [Parameters of the ComponentsButton constructor](#parameters-of-the-componentsbutton-constructor)
+  * [Attributes for ComponentsButton](#attributes-for-componentsbutton)
+  * [Adding a ComponentsButton](#adding-a-componentsbutton)
+  * [Updating ComponentsButton and Pages](#updating-componentsbutton-and-pages)
+    * [Updating a Button](#updating-a-button)
+    * [Updating Pages and Buttons](#updating-pages-and-buttons)
+  * [Starting/Stopping the ButtonsMenu](#startingstopping-the-buttonsmenu)
+  * [ButtonsMenu Full Example](#buttonsmenu-full-example)
+</details>
+
 ---
 
 ## How to import
@@ -72,9 +102,9 @@ menu = ReactionMenu(ctx, back_button='◀️', next_button='▶️', config=Reac
 ---
 ## Parameters of the ReactionMenu constructor
 * `ctx` The `discord.ext.commands.Context` object
-* `back_button` Emoji used to go to the previous page ([supported emojis](#supported-emojis))
-* `next_button` Emoji used to go to the next page ([supported emojis](#supported-emojis))
-* `config` The config of the menu is important. You have two options when it comes to configuration. 
+* `back_button` (`str`) Emoji used to go to the previous page ([supported emojis](#supported-emojis))
+* `next_button` (`str`) Emoji used to go to the next page ([supported emojis](#supported-emojis))
+* `config` (`int`) The config of the menu is important. You have two options when it comes to configuration. 
     * `ReactionMenu.STATIC` [more info](#reactionmenustatic-vs-reactionmenudynamic)
     * `ReactionMenu.DYNAMIC` [more info](#reactionmenustatic-vs-reactionmenudynamic)
 ---
@@ -189,8 +219,8 @@ menu = ReactionMenu(ctx, back_button=ReactionMenu.EMOJI_BACK_BUTTON, next_button
 Buttons/button types are used when you want to add a reaction to the menu that does a certain function. Buttons and button types work together to achieve the desired action.
 
 ##### Parameters of the Button constructor
-* `emoji` The emoji you would like to use as the reaction
-* `linked_to` When the reaction is clicked, this is what determines what it will do (`ButtonType`)
+* `emoji` (`str`) The emoji you would like to use as the reaction
+* `linked_to` (`ButtonType`) When the reaction is clicked, this is what determines what it will do
 
 ##### Options of the Button constructor [kwargs]
 | Name | Type | Default Value | Used for
@@ -260,7 +290,7 @@ Remove all buttons with `menu.clear_all_buttons()`. You can also remove an indiv
 This class method is used to setup a function and it's arguments that are later called when the button is pressed. The `Button` constructor has the kwarg `details`, and that's what you'll use with `.caller_details` to assign the values needed. Some examples are below on how to properly implement `ButtonType.CALLER`
 
 ```py
-@client.command()
+@bot.command()
 async def user(ctx, name, *, message):
     await ctx.send(f"Hi {name}! {message}. We're glad you're here!")
 
@@ -342,9 +372,10 @@ menu.set_relay(vote_relay)
 
 ---
 ## Setting Limits
-If you'd like, you can limit the amount of reaction menus that can be active at the same time. 
+If you'd like, you can limit the amount of reaction menus that can be active at the same time *per* "guild", "member", or "channel" 
 * Associated CLASS Methods
-    * `ReactionMenu.set_sessions_limit(limit: int, message: str)` 
+    * `ReactionMenu.set_sessions_limit(limit: int, per='guild', message='Too many active reaction menus. Wait for other menus to be finished.')` 
+    * `ReactionMenu.remove_limit()`
     * `ReactionMenu.get_sessions_count()`
     * `await ReactionMenu.stop_all_sessions()`
 
@@ -356,10 +387,10 @@ from reactionmenu import ReactionMenu, Button, ButtonType
 class Example(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-	ReactionMenu.set_sessions_limit(3, 'Sessions are limited')
+	ReactionMenu.set_sessions_limit(3, per='member', message='Sessions are limited to 3 per member')
 ```
 
-With the above example, only 3 menus can be active at once, and if someone tries to create more before other menus are finished, they will get an error message saying "Sessions are limited".
+With the above example, only 3 menus can be active at once for each member, and if they try to create more before their other menu's are finished, they will get an error message saying "Sessions are limited to 3 per member".
 
 If you have an excess amount of menu's running, it is possible to stop all sessions. Example:
 ```py
@@ -436,6 +467,7 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 | `ReactionMenu.run_time` | `int` | the amount of time in seconds the menu has been active
 | `ReactionMenu.auto_turn_every` | `int` | how frequently an auto-pagination menu should change the page
 | `ReactionMenu.message` | `discord.Message` | the message object the menu is operating from
+| `ReactionMenu.owner` | `discord.Member` | the person who started the menu
 </details>
 
 ## All methods for ReactionMenu
@@ -466,16 +498,22 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 * `ReactionMenu.clear_all_row_data()`
   * Delete all the data thats been added using `ReactionMenu.add_row()`
 ---
+* `ReactionMenu.get_all_dm_sessions() -> list`
+  * *class method* Returns all active DM menu sessions
+---
 * `ReactionMenu.get_all_sessions()`
   * *class method* Returns all active menu sessions
 ---
 * `ReactionMenu.get_button_by_name(name: str)`
   * Retrieve a `Button` object by its name if the kwarg "name" for that `Button` was set
 ---
+* `ReactionMenu.get_menu_from_message(message_id: int)`
+  * *class method* Return the menu object associated with the message with the given ID
+---
 * `ReactionMenu.get_session(name: str)`
   * *class method* Return a menu instance by it's name. Can return a `list` of menu instances if multiple instances of the menu with the supplied name are running. Can also return `None` if the menu with the supplied name was not found in the list of active sessions
 ---
-* `ReactionMenu.get_sessions_count() -> int`
+* `ReactionMenu.get_sessions_count()`
   * *class method* Returns the number of active sessions
 ---
 * `ReactionMenu.help_appear_order()`
@@ -486,6 +524,9 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 ---
 * `ReactionMenu.remove_button(identity: Union[str, Button])`
   * Remove a button by its name or its object
+---
+* `ReactionMenu.remove_limit()`
+  * *class method* Remove the limits currently set for reaction menu's
 ---
 * `ReactionMenu.remove_page(page_number: int)`
   * On a static menu, delete a certain page that has been added
@@ -541,14 +582,14 @@ txt = TextMenu(ctx, back_button='◀️', next_button='▶️')
 
 ## How to import
 ```py
-from reactionmenu import TextMenu
+from reactionmenu import TextMenu, Button, ButtonType
 ```
 
 ---
 ## Parameters of the TextMenu constructor
 * `ctx` The `discord.ext.commands.Context` object
-* `back_button` Emoji used to go to the previous page ([supported emojis](#supported-emojis))
-* `next_button` Emoji used to go to the next page ([supported emojis](#supported-emojis))
+* `back_button` (`str`) Emoji used to go to the previous page ([supported emojis](#supported-emojis))
+* `next_button` (`str`) Emoji used to go to the next page ([supported emojis](#supported-emojis))
 ---
 
 ## Options of the TextMenu constructor [kwargs]
@@ -603,3 +644,261 @@ Those attributes are **NOT** valid for a `TextMenu`
 
 Starting/stopping the menu is the same as `ReactionMenu`. See the [Starting/Stopping the ReactionMenu](#startingstopping-the-reactionmenu) documentation. Of course you will need to use an instance of `TextMenu` instead.
 
+---
+---
+## ButtonsMenu
+A `ButtonsMenu` is just like a reacton menu except it uses discords new Buttons feature. With buttons, you can enable and disable them, set a certain color for them with emojis, have buttons that send hidden messages, and add hyperlinks. This package offers a broader range of functionalities such as who clicked the button, how many times it was clicked and more. It uses [dislash.py](https://github.com/EQUENOS/dislash.py) to implement the Buttons functionality, but uses some of it's own methods in order to make a Button pagination menu simple.
+
+## Showcase
+![buttons_showcase](https://cdn.discordapp.com/attachments/655186216060321816/855818139450081280/buttons_showcase_reduced.gif)
+
+---
+
+## How to import
+```py
+from reactionmenu import ButtonsMenu, ComponentsButton
+```
+It should be noted that those two classes are the only classes that should be used when creating a Buttons pagination menu. All other classes in this package are *not* related and should not be used when creating a `ButtonsMenu`
+
+```py
+menu = ButtonsMenu(ctx, menu_type=ButtonsMenu.TypeEmbed)
+```
+---
+## Initial setup
+Before we get into the details of creating a buttons menu, you first need to allow your bot to be compatible with components. If you skip this step, `ButtonsMenu` will not work.
+
+```py
+from discord.ext import commands
+
+bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
+ButtonsMenu.initialize(bot) # <-------- THIS IS REQUIRED
+
+bot.run(...)
+```
+---
+## Parameters of the ButtonsMenu constructor
+* `ctx` The `discord.ext.commands.Context` object
+* `menu_type` (`int`) The configuration of the menu. Class variables:
+  * `ButtonsMenu.TypeEmbed`, a normal embed pagination menu.
+  * `ButtonsMenu.TypeEmbedDynamic`, an embed pagination menu with dynamic data. See ReactionMenu's description [here](#dynamic)
+  * `ButtonsMenu.TypeText`, a text only pagination menu.
+---
+## Options of the ButtonsMenu constructor [kwargs]
+| Name | Type | Default Value | Used for | Info 
+-------|------|---------------|----------|------
+| `wrap_in_codeblock` | `str` | `None` | `ButtonsMenu.TypeEmbedDynamic` | The discord codeblock language identifier to wrap your data in. Example: `ButtonsMenu(ctx, ..., wrap_in_codeblock='py')`
+| `custom_embed` | `discord.Embed` | `None` | `ButtonsMenu.TypeEmbedDynamic` | Embed object to use when adding data with `ButtonsMenu.add_row()`. Used for styling purposes
+| `delete_on_timeout` | `bool` | `False` | `All menu types` | Delete the menu when it times out
+| `disable_buttons_on_timeout` | `bool` | `True` | `All menu types` | Disable the buttons on the menu when the menu times out
+| `remove_buttons_on_timeout` | `bool` | `False` | `All menu types` | Remove the buttons on the menu when the menu times out
+| `only_roles` | `List[discord.Role]` | `None` | `All menu types` | If set, only members with any of the given roles are allowed to control the menu. The menu owner can always control the menu
+| `timeout` | `Union[int, float, None]` | `60.0` | `All menu types` | The timer for when the menu times out. Can be `None` for no timeout
+| `show_page_director` | `bool` | `True` | `All menu types` | Shown at the botttom of each embed page. "Page 1/20"
+| `name` | `str` | `None` | `All menu types` | A name you can set for the menu
+| `style` | `str` | `"Page $/&"` | `All menu types` | A custom page director style you can select. "$" represents the current page, "&" represents the total amount of pages. Example: `ButtonsMenu(ctx, ..., style='On $ out of &')`
+| `all_can_click` | `bool` | `False` | `All menu types` | Sets if everyone is allowed to control when pages are 'turned' when buttons are clicked
+| `delete_interactions` | `bool` | `True` | `All menu types` | Delete the prompt message by the bot and response message by the user when asked what page they would like to go to when using `ComponentsButton.ID_GO_TO_PAGE`
+| `rows_requested` | `int` | `None` | `ButtonsMenu.TypeEmbedDynamic` | The amount of information per `ButtonsMenu.add_row()` you would like applied to each embed page
+
+---
+## Pages for ButtonMenu
+Depending on the `menu_type`, pages can either be a `str` or `discord.Embed`
+* If the `menu_type` is `ButtonsMenu.TypeEmbed`, use embeds
+* If the `menu_type` is `ButtonsMenu.TypeText` or `ButtonsMenu.TypeEmbedDynamic`, use strings.
+* Associated methods
+  * `ButtonsMenu.add_page(Union[discord.Embed, str])`
+  * `ButtonsMenu.add_row(data: str)`
+  * `ButtonsMenu.clear_all_pages()`
+  * `ButtonsMenu.clear_all_row_data()`
+  * `ButtonsMenu.remove_page(page_number: int)`
+  * `ButtonsMenu.set_main_pages(*embeds: Embed)`
+  * `ButtonsMenu.set_last_pages(*embeds: Embed)`
+
+> **NOTE**: For an overview of `ButtonsMenu.TypeEmbedDynamic`, click [here](#dynamic). They are just like `ReactionMenu`'s dynamic setting, just with buttons instead
+
+##### Adding Pages
+```py
+# ButtonsMenu.TypeEmbed
+menu = ButtonsMenu(ctx, menu_type=ButtonsMenu.TypeEmbed)
+menu.add_page(summer_embed)
+menu.add_page(winter_embed)
+
+# ButtonsMenu.TypeText
+menu = ButtonsMenu(ctx, menu_type=ButtonsMenu.TypeText)
+menu.add_page('Its so hot!')
+menu.add_page('Its so cold!')
+
+# ButtonsMenu.TypeEmbedDynamic
+menu = ButtonsMenu(ctx, menu_type=ButtonsMenu.TypeEmbedDynamic, rows_requested=5)
+for data in get_information():
+  menu.add_row(data)
+```
+---
+## Buttons for ButtonsMenu
+Buttons are what you use to interact with the menu. Unlike reactions, they look cleaner, provides less rate limit issues, and offer more in terms of interactions. Enable and disable buttons, use markdown hyperlinks in it's messages, and even send hidden messages.
+
+![discord_buttons](https://discord.com/assets/7bb017ce52cfd6575e21c058feb3883b.png)
+
+
+* Associated methods
+  * `ButtonsMenu.add_button(button: ComponentsButton)`
+  * `ButtonsMenu.disable_all_buttons()`
+  * `ButtonsMenu.disable_button(button: ComponentsButton)`
+  * `ButtonsMenu.enable_all_buttons()`
+  * `ButtonsMenu.enable_button(button: ComponentsButton)`
+  * `ButtonsMenu.get_button(identity: str, *, search_by='label')`
+  * `ButtonsMenu.remove_all_buttons()`
+  * `ButtonsMenu.remove_button(button: ComponentsButton)`
+  * `await ButtonsMenu.refresh_menu_buttons()`
+
+## ComponentsButton
+A `ComponentsButton` is a class that represents the discord button. It is a subclass of [dislash.py's](https://github.com/EQUENOS/dislash.py) `Button`.
+```
+class ComponentsButton(*, style: ButtonStyle, label: str, custom_id=None, emoji=None, url=None, disabled=False, followup=None)
+```
+The following are the rules set by Discord for Buttons:
+* Non-link buttons **must** have a `custom_id`, and cannot have a `url`
+* Link buttons **must** have a `url`, and cannot have a `custom_id`
+* There cannot be more than 5 buttons per message
+---
+## Parameters of the ComponentsButton constructor
+* `style` (`ButtonStyle`) The button style
+* `label` (`str`) The text on the button
+* `custom_id` (`str`) An ID to determine what action that button should take. Just like ReactionMenu's [ButtonTypes](#all-buttontypes). Available IDs:
+  * `ComponentsButton.ID_NEXT_PAGE`
+  * `ComponentsButton.ID_PREVIOUS_PAGE`
+  * `ComponentsButton.ID_GO_TO_FIRST_PAGE` 
+  * `ComponentsButton.ID_GO_TO_LAST_PAGE`
+  * `ComponentsButton.ID_GO_TO_PAGE`
+  * `ComponentsButton.ID_END_SESSION`
+  * `ComponentsButton.ID_CALLER` (used with method `ButtonsMenu.set_caller_details(...)`)
+  * `ComponentsButton.ID_SEND_MESSAGE`
+* `emoji` (`discord.PartialEmoji`) Emoji used for the button
+* `url` (`str`) URL for a button with style `ComponentsButton.style.link`
+* `disabled` (`bool`) If the button should be disabled
+* `followup` (`ComponentsButton.Followup`) The message sent after the button is clicked. Only available for buttons that have a `custom_id` of `ComponentsButton.ID_CALLER` or `ComponentsButton.ID_SEND_MESSAGE`. `ComponentsButton.Followup` is a class that has parameters similiar to discord.py's `Messageable.send()`, and is used to control if a message is ephemeral (hidden), contains a file, embed, tts, etc...
+
+##### Attributes for ComponentsButton
+The following attributes (properties) are made specifically for a `ComponentsButton`
+| Property | Return Type | Info
+|----------|-------------|------
+| `clicked_by` | `Set[discord.Member]` | The members who clicked the button
+| `total_clicks` | `int` | Amount of clicks from the button
+| `last_clicked` | `datetime` | The time in UTC for when the button was last clicked
+
+##### Adding a ComponentsButton
+```py
+from reactionmenu import ButtonsMenu, ComponentsButton
+
+menu = ButtonsMenu(ctx, menu_type=ButtonsMenu.TypeEmbed)
+
+# Link Button
+link_button = ComponentsButton(style=ComponentsButton.style.link, emoji='🌍', label='Link to Google', url='https://google.com')
+
+# ComponentsButton.ID_PREVIOUS_PAGE
+back_button = ComponentsButton(style=ComponentsButton.style.primary, label='Back', custom_id=ComponentsButton.ID_PREVIOUS_PAGE)
+
+# ComponentsButton.ID_NEXT_PAGE
+next_button = ComponentsButton(style=ComponentsButton.style.secondary, label='Next', custom_id=ComponentsButton.ID_NEXT_PAGE)
+
+# All other ComponentsButton are created the same way as the last 2 EXCEPT
+# 1 - ComponentsButton.ID_CALLER
+# 2 - ComponentsButton.ID_SEND_MESSAGE
+
+# ComponentsButton.ID_SEND_MESSAGE
+follow_details = ComponentsButton.Followup('This message is hidden!', ephemeral=True)
+message_button = ComponentsButton(style=ComponentsButton.style.green, label='Message', custom_id=ComponentsButton.ID_SEND_MESSAGE, followup=follow_details)
+
+# ComponentsButton.ID_CALLER
+def say_hello(name: str):
+    print('Hello', name)
+
+caller_button = ComponentsButton(style=ComponentsButton.style.red, label='Say Hi', custom_id=ComponentsButton.ID_CALLER)
+menu.set_caller_details(say_hello, 'John')
+
+
+menu.add_button(link_button)
+menu.add_button(back_button)
+menu.add_button(next_button)
+menu.add_button(message_button)
+menu.add_button(caller_button)
+```
+---
+
+## Updating ComponentsButton and Pages
+* Associated methods
+  * `await ButtonsMenu.refresh_menu_buttons()`
+  * `await ButtonsMenu.update(new_pages: Union[List[Union[Embed, str]], None], new_buttons: Union[List[ComponentsButton], None])`
+
+When the menu is running, you can update the pages or buttons on the menu. Using `ButtonsMenu.update(...)`, you can replace the pages and buttons. Using `ButtonsMenu.refresh_menu_buttons()` updates the buttons you have changed.
+
+##### Updating a Button
+```py
+@bot.command()
+async def menu(ctx):
+    menu = ButtonsMenu(..., name='test')
+    link_button = ComponentsButton(..., label='Link')
+    
+    menu.add_button(link_button)
+    menu.add_page(...)
+
+    await menu.start()
+
+
+@bot.command()
+async def disable(ctx):
+    menu = ButtonsMenu.get_session('test')
+    link_button = menu.get_button('Link', search_by='label')
+    
+    menu.disable_button(link_button)
+    await menu.refresh_menu_buttons()
+```
+If the buttons are not refreshed with `ButtonsMenu.refresh_menu_buttons()`, the menu will not be updated when changing a button.
+
+##### Updating Pages and Buttons
+Method `ButtonsMenu.update(...)` is used when you want to replace all or a few of the buttons on the menu. 
+```py
+menu = ButtonsMenu(...)
+
+# in a different .command()
+await menu.update(new_pages=[hello_embed, goodbye_embed], new_buttons=[link_button, next_button])
+```
+
+> **NOTE**: When using `ButtonsMenu.update(...)`, there is no need to use `ButtonsMenu.refresh_menu_buttons()` because they are updated during the update call. 
+
+---
+## Starting/Stopping the ButtonsMenu
+* Associated methods
+  * `await ButtonsMenu.start()`
+  * `await ButtonsMenu.stop(*, delete_menu_message=False, remove_buttons=False, disable_buttons=False)`
+---
+## All attributes for ButtonsMenu
+<details>
+    <summary>Click to show all attributes</summary>
+
+| Attribute | Return Type | Info
+|-----------|-------------|-----
+| `wrap_in_codeblock` | `str` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `custom_embed` | `discord.Embed` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `delete_on_timeout` | `bool` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `disable_buttons_on_timeout` | `bool` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `remove_buttons_on_timeout` | `bool` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `only_roles` | `List[discord.Role]` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `timeout` | `Union[int, float, None]` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `show_page_director` | `bool` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `name` | `str` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `style` | `str` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `all_can_click` | `bool` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `delete_interactions` | `bool` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `allowed_mentions` | `discord.AllowedMentions` | [info here](#options-of-the-buttonsmenu-constructor-kwargs)
+| `is_running` | `bool` | if the menu is currently active (property)
+| `owner` | `discord.Member` | the person who started the menu (property)
+| `message` | `discord.Message` | the message the menu is operating from (property)
+| `buttons`    | `List[ComponentsButton]` | the buttons registered to the menu (property)
+| `buttons_most_clicked` | `List[ComponentsButton]` | buttons registered to the menu ordered from most clicks to least clicks (property)
+| `in_dms` | `bool` | if the menu is in a DM (property)
+| `pages` | `list` | the pages registered to the menu (property)
+
+</details>
+
+[Jump to top](#github-updates-vs-pypi-updates)
