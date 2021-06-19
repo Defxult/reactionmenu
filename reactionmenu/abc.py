@@ -25,9 +25,9 @@ DEALINGS IN THE SOFTWARE.
 import abc
 import asyncio
 import collections
-from datetime import datetime
 import itertools
-from typing import Union, List
+from datetime import datetime
+from typing import List, Union
 
 import discord
 
@@ -35,10 +35,62 @@ from .buttons import Button, ButtonType
 from .decorators import ensure_not_primed
 from .errors import *
 
+class _PageController:
+    """An helper class to control the pagination process
+    
+        .. added:: v1.1.0
+    """
+
+    __slots__ = ('pages', 'total_pages', 'index')
+
+    def __init__(self, pages: List[Union[discord.Embed, str]]):
+        self.pages = pages
+        self.total_pages = len(pages) - 1
+        self.index = 0
+
+    @property
+    def current_page(self) -> Union[discord.Embed, str]:
+        """Return the current page in the pagination process"""
+        return self.pages[self.index]
+    
+    def next(self) -> Union[discord.Embed, str]:
+        """Go to the next page in the pagination process"""
+        try:
+            self.index += 1
+            temp = self.pages[self.index]
+        except IndexError:
+            if self.index > self.total_pages:
+                self.index = 0
+            
+            elif self.index < 0:
+                self.index = self.total_pages
+        finally:
+            return self.pages[self.index]
+    
+    def prev(self) -> Union[discord.Embed, str]:
+        """Go to the last page in the pagination process"""
+        try:
+            self.index -= 1
+            temp = self.pages[self.index]
+        except IndexError:
+            if self.index > self.total_pages:
+                self.index = 0
+            
+            elif self.index < 0:
+                self.index = self.total_pages
+        finally:
+            return self.pages[self.index]
+
 class Menu(metaclass=abc.ABCMeta):
     """Abstract base class for :class:`ReactionMenu` and :class:`TextMenu`
     
         .. added:: v1.0.9
+
+        .. changes::
+            v1.1.0
+                Moved session limit class variables here (.core and .text use to have their own)
+                Added :attr:`_sessions_limit_details` (used to be :attr:`_limit_message` and `_sessions_limit`)
+                Replaced :meth:`_is_currently_limited` with :meth:`_handle_session_limits` to support different types of limits
 
         .. note::
             The class itself was created in v1.0.9, any other abc that is not labeled with a version was moved from :class:`ReactionMenu`. So their version
@@ -54,11 +106,33 @@ class Menu(metaclass=abc.ABCMeta):
     EMOJI_GO_TO_PAGE =  '🔢'
     EMOJI_END_SESSION = '❌'
 
-    def __repr__(self):
-        """ .. added:: v1.0.9"""
-        class_name = self.__class__.__name__
-        return f'<{class_name} name={self._name!r} is_running={self._is_running} run_time={self._run_time} timeout={self._timeout} auto_paginator={self._auto_paginator}>'
+    _sessions_limited = False
+    _sessions_limit_details = None 
+    _task_sessions_pool: List[asyncio.Task] = []
 
+    def __repr__(self):
+        """
+            .. added:: v1.0.9
+        
+            .. changes::
+                v1.1.0
+                    Added owner
+        """
+        class_name = self.__class__.__name__
+        return f'<{class_name} name={self._name!r} owner={str(self._menu_owner)!r} is_running={self._is_running} run_time={self._run_time} timeout={self._timeout} auto_paginator={self._auto_paginator}>'
+
+    @property
+    def owner(self) -> Union[discord.Member, discord.User]:
+        """
+        Returns
+        -------
+        Union[:class:`discord.Member`, :class:`discord.User`]:
+            The owner of the menu (the person that started the menu). If the menu was started in a DM, this will return `discord.User`
+        
+            .. added:: v1.1.0
+        """
+        return self._menu_owner
+    
     @property
     @abc.abstractmethod
     def total_pages(self):
@@ -557,18 +631,47 @@ class Menu(metaclass=abc.ABCMeta):
             cls._task_sessions_pool.remove(task)
     
     @classmethod
-    def _is_currently_limited(cls) -> bool:
-        """|class method| Check if there is a limit on reaction menus
+    def get_menu_from_message(cls, message_id: int):
+        """|class method| Return the menu object associated with the message with the given ID
         
-            .. added:: v1.0.1
+        Parameters
+        ----------
+        message_id: :class:`int`
+            The `discord.Message.id` from the menu message
+        
+        Returns
+        -------
+        The menu object. Can be :class:`None` if the menu is not found in this list of active menu sessions
+            
+            .. added:: v1.1.0
         """
-        if cls._sessions_limit:
-            if len(cls._active_sessions) < cls._sessions_limit:
-                return False
-            else:
-                return True
-        else:
-            return False
+        for menu in cls._active_sessions:
+            if menu._msg.id == message_id:
+                return menu
+        return None
+    
+    @classmethod
+    def remove_limit(cls):
+        """|class method| Remove the limits currently set for reaction menu's
+        
+            .. added:: v1.1.0
+        """
+        cls._sessions_limited = False
+        cls._sessions_limit_details = None
+    
+    @classmethod
+    def get_all_dm_sessions(cls):
+        """|class method| Returns all active DM menu sessions
+        
+        Returns
+        -------
+        :class:`list`:
+            Can return :class:`None` if the there are no active DM sessions
+
+            .. added:: v1.1.0
+        """
+        dm_sessions = [session for session in cls._active_sessions if session.message.guild is None]
+        return dm_sessions if dm_sessions else None
     
     @classmethod
     def update_all_turn_every(cls, turn_every: Union[int, float]):
@@ -608,8 +711,12 @@ class Menu(metaclass=abc.ABCMeta):
             A list of :class:`ReactionMenu` or :class:`TextMenu` depending on the instance. Can be an empty list if there are no active sessions
 
             .. added:: v1.0.9
+
+            .. changes::
+                v1.1.0
+                    Changed return type from :class:`list` to :class:`None` if list is empty
         """
-        return cls._active_sessions
+        return cls._active_sessions if cls._active_sessions else None
     
     @classmethod
     def get_session(cls, name: str):
@@ -650,8 +757,8 @@ class Menu(metaclass=abc.ABCMeta):
         return len(cls._active_sessions)
 
     @classmethod
-    def set_sessions_limit(cls, limit: int, message: str='Too many active reaction menus. Wait for other menus to be finished.'):
-        """|class method| Sets the amount of menu sessions that can be active at the same time. Should be set before any menus are started. Ideally this should only
+    def set_sessions_limit(cls, limit: int, per: str='guild', message: str='Too many active reaction menus. Wait for other menus to be finished.'):
+        """|class method| Sets the amount of menu sessions that can be active at the same time per guild, channel, or member. Should be set before any menus are started. Ideally this should only
         be set once. But can be set at anytime if there are no active menu sessions
             
             .. added:: v1.0.1
@@ -660,6 +767,9 @@ class Menu(metaclass=abc.ABCMeta):
         ----------
         limit: :class:`int`
             The amount of menu sessions allowed
+        
+        per: :class:`str`
+            (optional) How menu sessions should be limited. Options: "channel", "guild", "member" (defaults to "guild")
         
         message: :class:`str`
             (optional) Message that will be sent informing users about the menu limit when the limit is reached. Can be :class:`None` for no message
@@ -670,7 +780,7 @@ class Menu(metaclass=abc.ABCMeta):
         class Example(commands.Cog):
             def __init__(self, bot):
                 self.bot = bot
-                Menu.set_sessions_limit(3, 'Sessions are limited')
+                Menu.set_sessions_limit(3, per='member', 'Sessions are limited to 3 per member')
         ```
             
         Raises
@@ -682,6 +792,8 @@ class Menu(metaclass=abc.ABCMeta):
                 v1.0.9
                     Replaced now removed class :meth:`_cancel_all_sessions` with class :meth:`_force_stop`
                     Added :exc:`IncorrectType`
+                v1.1.0
+                    Added :param:`per` and initialization of new limits
         """
         if len(cls._active_sessions) != 0:
             # because of the created task(s) when making a session, the menu is still running in the background so manually stopping them is required to stop using resources
@@ -693,8 +805,14 @@ class Menu(metaclass=abc.ABCMeta):
         else:
             if limit <= 0:
                 raise ReactionMenuException('The session limit must be greater than or equal to one')
-            cls._sessions_limit = limit
-            cls._limit_message = str(message)
+            
+            per = str(per).lower()
+            if per not in ('guild', 'channel', 'member'):
+                raise ReactionMenuException('Parameter value of "per" was not recognized. Expected: "channel", "guild", or "member"')
+
+            LimitDetails = collections.namedtuple('LimitDetails', ['limit', 'per', 'message'])
+            cls._sessions_limit_details = LimitDetails(limit=limit, per=per, message=message)
+            cls._sessions_limited = True
     
     @classmethod
     def _force_stop(cls, target: 'Menu'):
@@ -782,6 +900,46 @@ class Menu(metaclass=abc.ABCMeta):
             session = cls._active_sessions[0]
             await session.stop()
 
+    async def _handle_session_limits(self) -> bool:
+        """|coro| Determine if the menu session is currently limited, if so, send the error message and return `False` indicating that further code execution (starting the menu) should be cancelled
+        
+            .. added:: v1.1.0
+
+            .. note:: use to be :meth:`_is_currently_limited`
+        """
+        cls = self.__class__
+        details: 'NamedTuple' = cls._sessions_limit_details
+        can_proceed = True
+        
+        # if the menu is in a DM, handle it seperatly
+        if self._ctx.guild is None:
+            dm_sessions = cls.get_all_dm_sessions()
+            if dm_sessions:
+                user_dm_sessions = [session for session in dm_sessions if session.owner.id == self._ctx.author.id]
+                if len(user_dm_sessions) >= details.limit:
+                    can_proceed = False
+        else:
+            if details.per == 'guild':
+                guild_sessions = [session for session in cls._active_sessions if session.message.guild is not None]
+                if len(guild_sessions) >= details.limit:
+                    can_proceed = False
+            
+            elif details.per == 'member':
+                member_sessions = [session for session in cls._active_sessions if session.owner.id == self._ctx.author.id]
+                if len(member_sessions) >= details.limit:
+                    can_proceed = False
+            
+            elif details.per == 'channel':
+                channel_sessions = [session for session in cls._active_sessions if session.message.channel.id == self._ctx.channel.id]
+                if len(channel_sessions) >= details.limit:
+                    can_proceed = False
+        
+        if can_proceed:
+            return True
+        else:
+            await self._ctx.send(details.message)
+            return False
+    
     async def _handle_fast_navigation(self):
         """|coro| If either of the below events are dispatched, return the result (reaction, user) of the coroutine object. Used in :meth:`Menu._execute_session` for :attr:`Menu.FAST`.
         Can timeout, `.result()` raises :class:`asyncio.TimeoutError` but is caught in :meth:`Menu._execute_session` for proper cleanup. This is the core function as to how the 
