@@ -24,8 +24,15 @@ DEALINGS IN THE SOFTWARE.
 
 import inspect
 
+class ButtonsMenuException(Exception):
+	"""Base :class:`ButtonsMenu` exception
+	
+		.. added:: v1.1.0
+	"""
+	pass
+
 class ReactionMenuException(Exception):
-	"""Base Reaction Menu exception"""
+	"""Base :class:`ReactionMenu` exception"""
 	pass
 
 class IncorrectType(ReactionMenuException):
@@ -84,8 +91,8 @@ class ImproperButtonOrderChange(ReactionMenuException):
 
 class TooManyButtons(ReactionMenuException):
 	"""The amount of buttons registered is > 20 (over discords reaction limit)"""
-	def __init__(self):
-		super().__init__('Discord currently has a limit of 20 reactions or less per message. Remove 1 or more buttons')
+	def __init__(self, message: str='Discord currently has a limit of 20 reactions or less per message. Remove 1 or more buttons'):
+		super().__init__(message)
 
 class MissingSetting(ReactionMenuException):
 	"""Raised when an action requires specific input from the user"""
@@ -93,8 +100,8 @@ class MissingSetting(ReactionMenuException):
 
 class NoPages(ReactionMenuException):
 	"""Tried to start the menu when they haven't added any pages"""
-	def __init__(self):
-		super().__init__("You cannot start a reaction menu when there aren't any pages")
+	def __init__(self, message: str="You cannot start a reaction menu when there aren't any pages"):
+		super().__init__(message)
 
 class MenuAlreadyRunning(ReactionMenuException):
 	"""Called a method that is not allowed to be called after the menu has started"""
