@@ -25,7 +25,6 @@ DEALINGS IN THE SOFTWARE.
 import asyncio
 from functools import wraps
 
-from . import core
 from .errors import MenuSettingsMismatch, MenuAlreadyRunning, ReactionMenuException, NoButtons
 
 __all__ = ('menu_verification', 'dynamic_only', 'static_only', 'ensure_not_primed')
@@ -40,9 +39,9 @@ def menu_verification(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
         inst = args[0]
-
-        if isinstance(inst, core.ReactionMenu):
-            if inst._config not in (core.ReactionMenu.STATIC, core.ReactionMenu.DYNAMIC):
+        from . import ReactionMenu # circular import
+        if isinstance(inst, ReactionMenu):
+            if inst._config not in (ReactionMenu.STATIC, ReactionMenu.DYNAMIC):
                 raise MenuSettingsMismatch("The menu's setting for dynamic or static was not recognized")
 
         if inst._all_buttons_removed:
@@ -66,7 +65,8 @@ def dynamic_only(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         inst = args[0]
-        if inst._config == core.ReactionMenu.DYNAMIC:
+        from . import ReactionMenu # circular import
+        if inst._config == ReactionMenu.DYNAMIC:
             func(*args, **kwargs)
         else:
             raise MenuSettingsMismatch(f'Method "{func.__name__}" can only be used on a dynamic menu')
@@ -77,7 +77,8 @@ def static_only(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         inst = args[0]
-        if inst._config == core.ReactionMenu.STATIC:
+        from . import ReactionMenu # circular import
+        if inst._config == ReactionMenu.STATIC:
             func(*args, **kwargs)
         else:
             raise MenuSettingsMismatch(f'Method "{func.__name__}" can only be used on a static menu')
