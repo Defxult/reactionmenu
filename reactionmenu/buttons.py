@@ -22,11 +22,150 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from datetime import datetime
 from enum import Enum, auto
+from typing import List, Set, Union
+
+import discord
+import dislash
 from discord.ext.commands import Command
 
+
+class ComponentsButton(dislash.Button):
+	"""A helper class for :class:`ButtonsMenu`. Determines the generic action a components button can perform. This should *NOT* be used with :class:`ReactionMenu` or :class:`TextMenu`
+
+		.. added:: v1.1.0
+	"""
+	style = dislash.ButtonStyle
+
+	ID_NEXT_PAGE =          '0'
+	ID_PREVIOUS_PAGE =      '1'
+	ID_GO_TO_FIRST_PAGE =   '2'
+	ID_GO_TO_LAST_PAGE =    '3'
+	ID_GO_TO_PAGE =         '4'
+	ID_END_SESSION =        '5'
+	ID_CALLER =             '6'
+	ID_SEND_MESSAGE =       '7'
+
+	# would have imported from .abc, but circular imports
+	EMOJI_BACK_BUTTON = 	'◀️'
+	EMOJI_NEXT_BUTTON = 	'▶️'
+	EMOJI_FIRST_PAGE =  	'⏪'
+	EMOJI_LAST_PAGE =   	'⏩'
+	EMOJI_GO_TO_PAGE =  	'🔢'
+	EMOJI_END_SESSION = 	'❌'
+
+	def __init__(self, *, style: dislash.ButtonStyle, label: str, custom_id: str=None, emoji: Union[discord.PartialEmoji, str]=None, url: str=None, disabled: bool=False, followup: 'ComponentsButton.Followup'=None):
+		self.followup = followup
+		self.__clicked_by = set()
+		self.__total_clicks = 0
+		self.__last_clicked: datetime = None
+		super().__init__(style=style, label=label, emoji=emoji, custom_id=custom_id, url=url, disabled=disabled)
+
+	def __repr__(self):
+	    return f'<ComponentsButton label={self.label!r} custom_id={self._get_id_name_from_id(self.custom_id)} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled} total_clicks={self.__total_clicks}>'
+
+	class Followup:
+		"""A class that represents the message sent using a :class:`ComponentsButton`. Contains parameters similiar to discord.py's `Messageable.send`. Only to be used with :class:`ComponentsButton` kwarg "followup".
+		It is to be noted that this should not be used with :class:`ComponentsButton` with a "style" of `ComponentsButton.style.link` because link buttons do not send interaction events.
+		
+		Parameters
+		----------
+		content: :class:`str`
+			Message to send (defaults to :class:`None`)
+
+		embed: :class:`discord.Embed`
+			Embed to send (defaults to :class:`None`)
+
+		file: :class:`discord.File`
+			File to send (defaults to :class:`None`) *NOTE* If the :class:`ComponentsButton` custom_id is `ComponentsButton.ID_SEND_MESSAGE`, the file will be ignored because of discord API limitations
+		
+		tts: :class:`bool`
+			If discord should read the message aloud (defaults to `False`) *NOTE* Not valid for `ephemeral` messages
+		
+		allowed_mentions: :class:`discord.AllowedMentions`
+			Controls the mentions being processed in the menu message (defaults to :class:`None`) *NOTE* Not valid for `ephemeral` messages
+		
+		delete_after: Union[:class:`int`, :class:`float`]
+			Amount of time to wait before the message is deleted (defaults to :class:`None`) *NOTE* Not valid for `ephemeral` messages
+		
+		ephemeral: :class:`bool`
+			If the message will be hidden from everyone except the person that clicked the button (defaults to `False`) *NOTE* This is only valid for a :class:`ComponentsButton` with custom_id `ComponentsButton.ID_SEND_MESSAGE`
+		"""
+		
+		__slots__ = ('content', 'embed', 'file', 'tts', 'allowed_mentions', 'delete_after', 'ephemeral')
+
+		def __init__(self, content: str=None, *, embed: discord.Embed=None, file: discord.File=None, tts: bool=False, allowed_mentions: discord.AllowedMentions=None, delete_after: Union[int, float]=None, ephemeral: bool=False):
+			self.content = content
+			self.embed = embed
+			self.file = file
+			self.tts = tts
+			self.allowed_mentions = allowed_mentions
+			self.delete_after = delete_after
+			self.ephemeral = ephemeral
+		
+		def _to_dict(self) -> dict:
+			new = {}
+			for i in self.__slots__:
+				new[i] = getattr(self, i)
+			return new
+	
+	@property
+	def clicked_by(self) -> Set[discord.Member]:
+		"""
+		Returns
+		-------
+		Set[:class:`discord.Member`]:
+			The members who clicked the button
+		"""
+		return self.__clicked_by
+
+	@property
+	def total_clicks(self) -> int:
+		"""
+		Returns
+		-------
+		:class:`int`:
+			The amount of clicks on the button
+		"""
+		return self.__total_clicks
+
+	@property
+	def last_clicked(self) -> datetime:
+		"""
+		Returns
+		-------
+		:class:`datetime`:
+			The time in UTC for when the button was last clicked. Can be :class:`None` if the button has not been clicked
+		"""
+		return self.__last_clicked
+
+	@classmethod
+	def _all_ids(cls) -> List[int]:
+		ids = []
+		for key, val in cls.__dict__.items():
+			key = str(key) # str() because of ButtonStyle
+			if key.startswith('ID_'):
+				ids.append(val)
+		return ids
+
+	@classmethod
+	def _get_id_name_from_id(cls, id: str) -> str:
+		for key, val in cls.__dict__.items():
+			if id == val:
+				return f'ComponentsButton.{key}'
+
+	@classmethod
+	def _to_dict_ids(cls) -> dict:
+		new = {}
+		for key, val in cls.__dict__.items():
+			key = str(key) # str() because of ButtonStyle
+			if key.startswith('ID_'):
+				new[key] = val
+		return new
+
 class ButtonType(Enum):
-	"""A helper class for :class:`ReactionMenu`. Determines the generic action a button can perform
+	"""A helper class for :class:`ReactionMenu` and :class:`TextMenu`. Determines the generic action a button can perform. This should *NOT* be used with :class:`ButtonsMenu`
 	
 		.. changes::
 			v1.0.1
@@ -78,7 +217,7 @@ class ButtonType(Enum):
 		return (func, args, kwargs)
 
 class Button:
-	"""A helper class for :class:`ReactionMenu`. Represents a reaction
+	"""A helper class for :class:`ReactionMenu` and :class:`TextMenu`. Represents a reaction. This should *NOT* be used with :class:`ButtonsMenu`
 	
 	Parameters
 	----------
