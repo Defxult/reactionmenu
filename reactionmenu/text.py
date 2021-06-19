@@ -29,16 +29,17 @@ import itertools
 import re
 from typing import List, Union
 
-from discord import TextChannel, Member, Role, AllowedMentions
+from discord import AllowedMentions, Member, Role, TextChannel
 from discord.ext.commands import Context
 
 from . import abc
 from .buttons import Button, ButtonType
 from .decorators import ensure_not_primed, menu_verification
-from .errors import ReactionMenuException, TooManyButtons, DuplicateButton, MenuAlreadyRunning, MissingSetting, IncorrectType
+from .errors import DuplicateButton, IncorrectType, MenuAlreadyRunning, MissingSetting, ReactionMenuException, TooManyButtons
+
 
 class TextMenu(abc.Menu):
-    """A text based version of :class:`ReactionMenu`. No embeds are involved in the pagination process, only plain text is used. Has limited capabilites compared to :class:`ReactionMenu`.
+    """A class to create a discord.py text pagination menu using reactions
 
     Parameters
     ----------
@@ -85,14 +86,15 @@ class TextMenu(abc.Menu):
         Members with any of the provided roles are the only ones allowed to control the menu. The member who started the menu will always be able to control it. This overrides :attr:`all_can_react` (defaults to :class:`None`)
     
     allowed_mentions: :class:`discord.AllowedMentions`
-        Controls the mentions being processed in the menu message (defaults to :class:`discord.AllowedMentions(*, everyone=True, users=True, roles=True, replied_user=True)`)
+        Controls the mentions being processed in the menu message (defaults to :class:`discord.AllowedMentions(everyone=True, users=True, roles=True, replied_user=True)`)
 
         .. added:: v1.0.9
+
+        .. changes ::
+            v1.1.0
+                Added initialization of :attr:`_menu_owner` to the `__init__` instead of the execute session method, etc.
     """
     _active_sessions: List['TextMenu'] = []
-    _sessions_limit = None
-    _task_sessions_pool: List[asyncio.Task] = []
-    _limit_message: str = ''
 
     def __init__(self, ctx: Context, *, back_button: str, next_button: str, **options):
         self._ctx = ctx
@@ -112,7 +114,7 @@ class TextMenu(abc.Menu):
         self._relay_function = None
         
         # auto-pagination
-        self._menu_owner = None
+        self._menu_owner = ctx.author
         self._auto_paginator = False
         self._auto_turn_every = None
         self._auto_worker = None
@@ -376,7 +378,6 @@ class TextMenu(abc.Menu):
     
     async def _execute_session(self):
         """|abc coro| Begin the pagination process"""
-        self._menu_owner = self._ctx.author
         while self._is_running:
             try:
                 if self._navigation_speed == TextMenu.NORMAL:
@@ -505,7 +506,7 @@ class TextMenu(abc.Menu):
         Example for :param:`send_to`
         ---------------------------
         ```
-        menu = ReactionMenu(...)
+        menu = TextMenu(...)
         # channel name
         await menu.start(send_to='bot-commands')
 
@@ -528,10 +529,10 @@ class TextMenu(abc.Menu):
                 ABC meth
         """
         # check if the menu is limited
-        if TextMenu._is_currently_limited():
-            if TextMenu._limit_message:
-                await self._ctx.send(TextMenu._limit_message)
-            return
+        if TextMenu._sessions_limited:
+            can_proceed = await self._handle_session_limits()
+            if not can_proceed:
+                return
 
         # determine the channel to send the channel to (if any)
         self._determine_location(send_to)

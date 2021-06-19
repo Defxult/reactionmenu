@@ -24,11 +24,11 @@ DEALINGS IN THE SOFTWARE.
 
 import asyncio
 import collections
-from enum import Enum, auto
 import itertools
-from typing import List, Union, Deque
+from enum import Enum, auto
+from typing import Deque, List, Union
 
-from discord import Embed, TextChannel, Member, Role
+from discord import Embed, Member, Role, TextChannel
 from discord.ext.commands import Context
 
 from . import abc
@@ -37,7 +37,7 @@ from .decorators import *
 from .errors import *
 
 class ReactionMenu(abc.Menu):
-	"""A class to create a discord.py reaction menu. If discord.py version is 1.5.0+, intents are required
+	"""A class to create a discord.py embed pagination menu using reactions
 	
 	Parameters
 	----------
@@ -131,15 +131,14 @@ class ReactionMenu(abc.Menu):
 				This class now inherits from :abc:`Menu`
 				
 				A sizeable amount of methods and properties were moved from here to abc.py to support :class:`TextMenu`
+            v1.1.0
+                Added initialization of :attr:`_menu_owner` to the `__init__` instead of the execute session method, etc.
 
 	"""
 	STATIC = 0
 	DYNAMIC = 1
 	
 	_active_sessions: List['ReactionMenu'] = []
-	_sessions_limit = None
-	_task_sessions_pool: List[asyncio.Task] = []
-	_limit_message: str = ''
 
 	def __init__(self, ctx: Context, *, back_button: str, next_button: str, config: int, **options): 
 		self._ctx = ctx
@@ -160,7 +159,7 @@ class ReactionMenu(abc.Menu):
 		self._relay_function = None
 
 		# auto-pagination
-		self._menu_owner = None
+		self._menu_owner = ctx.author
 		self._auto_paginator = False
 		self._auto_turn_every = None
 		self._auto_worker = None
@@ -195,7 +194,7 @@ class ReactionMenu(abc.Menu):
 		self._delete_interactions: bool = options.get('delete_interactions', True)
 		self._navigation_speed: str = options.get('navigation_speed', ReactionMenu.NORMAL)
 		self._delete_on_timeout: bool = options.get('delete_on_timeout', False)
-		
+
 	@property
 	def config(self) -> int:
 		"""
@@ -687,8 +686,9 @@ class ReactionMenu(abc.Menu):
 					- Instead of calling str() everytime on every button emoji check, just store it in a variable to access and check later
 					- Moved to ABC
 					- Fixed issue associated with `ButtonType.GO_TO_PAGE` and kwarg `send_to` in :meth:`ReactionMenu.start`
+				v1.1.0
+					Removed initialization of :attr:`ReactionMenu._menu_owner`. Makes more sense to set it in the `__init__`
 		"""
-		self._menu_owner = self._ctx.author
 		while self._is_running:
 			try:
 				if self._navigation_speed == ReactionMenu.NORMAL:
@@ -862,12 +862,14 @@ class ReactionMenu(abc.Menu):
 					- Removed [else] from ReactionMenu.STATIC/DYNAMIC check
 					- Moved #[core menu initialization] from both STATIC and DYNAMIC if checks to only one at the bottom. Having both was redundant because regardless of configuration both have the same #[core menu initialization]
 					- Now raises :exc:`NoButtons` (from decorator `menu_verification`)
+				v1.1.0
+					Added handling for per limit type
 		"""
 		# check if the menu is limited
-		if ReactionMenu._is_currently_limited():
-			if ReactionMenu._limit_message:
-				await self._ctx.send(ReactionMenu._limit_message)
-			return
+		if ReactionMenu._sessions_limited:
+			can_proceed = await self._handle_session_limits()
+			if not can_proceed:
+				return
 		
 		# determine the channel to send the channel to (if any)
 		self._determine_location(send_to)
