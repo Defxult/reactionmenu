@@ -840,6 +840,8 @@ class ReactionMenu(abc.Menu):
 		- `MenuSettingsMismatch`: The wrong number was used in the "config" parameter. only 0 (`ReactionMenu.STATIC`) or 1 (`ReactionMenu.DYNAMIC`) are permitted
 		- `NoButtons`: Attempted to start the menu when no Buttons have been registered
 		- `ReactionMenuException`: A duplicate Button emoji/name was used
+		- `NoPages`: The menu was started when no pages have been added
+		- `DescriptionOversized`: When using `ReactionMenu.DYNAMIC`, the embed description was over discords size limit
 
 			.. changes::
 				v1.0.3
