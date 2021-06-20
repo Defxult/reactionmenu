@@ -124,7 +124,7 @@ menu = ReactionMenu(ctx, back_button='◀️', next_button='▶️', config=Reac
 | `navigation_speed` | `str` | `ReactionMenu.NORMAL` | `STATIC and DYNAMIC` | sets if the user needs to wait for the reaction to be removed by the bot before "turning" the page. Setting the speed to `ReactionMenu.FAST` makes it so that there is no need to wait (reactions are not removed on each press) and can navigate lengthy menu's more quickly
 | `delete_on_timeout` | `bool` | `False` | `STATIC and DYNAMIC` | when the menu times out, delete the menu message. This overrides `clear_reactions_after`
 | `only_roles` | `List[discord.Role]` | `None` | `STATIC and DYNAMIC` | sets it so that only the members with any of the provided roles can control the menu. The menu owner can always control the menu. This overrides `all_can_react`
-> NOTE: All `ReactionMenu` kwargs can also be set using an instance of `ReactionMenu` **except** `rows_requested`
+> **NOTE:** All `ReactionMenu` kwargs can also be set using an instance of `ReactionMenu` **except** `rows_requested`
 ---
 ## ReactionMenu.STATIC vs ReactionMenu.DYNAMIC
 ## Static 
@@ -151,7 +151,7 @@ You can delete a single page using `menu.remove_page()` or all pages with `menu.
 
 ## Dynamic
 A dynamic menu is used when you do not know how much information will be applied to the menu. For example, if you were to request information from a database, that information can always change. You query something and you might get 1,500 results back, and the next maybe only 800. A dynamic menu pieces all this information together for you and adds it to an embed page by rows of data. `.add_row()` is best used in some sort of `Iterable` where everything can be looped through, but only add the amount of data you want to the menu page.
-> NOTE: In a dynamic menu, all added data is placed in the description section of an embed. If you choose to use a `custom_embed`, all text in the description will be overridden with the data you add
+> **NOTE:** In a dynamic menu, all added data is placed in the description section of an embed. If you choose to use a `custom_embed`, all text in the description will be overridden with the data you add
 * Associated methods
     * `ReactionMenu.add_row(data: str)`
     * `ReactionMenu.clear_all_row_data()`
@@ -201,7 +201,7 @@ Button(emoji='<:miscTwitter:705423192818450453>', ...)
 Button(emoji='\U000027a1', ...)
 Button(emoji='\N{winking face}', ...)
 ```
-> NOTE: These formats are applicable to the `ReactionMenu`/`TextMenu` back and next buttons
+> **NOTE:** These formats are applicable to the `ReactionMenu`/`TextMenu` back and next buttons
 
 Each menu class provides a set of basic emojis (class attributes) to use as your `back_button` and `next_button` for your convenience. As well as additional emojis to use for a `Button`
 ```py
@@ -229,7 +229,7 @@ Buttons/button types are used when you want to add a reaction to the menu that d
 | `embed` | `discord.Embed` | `None` | When the reaction is pressed, go to the specifed embed. 
 | `details` | [more info](#buttons-with-buttontypecaller) | `None` | Assigns the function and it's arguments to call when a `Button` with `ButtonType.CALLER` is pressed
 
-> NOTE: All `Button` kwargs can also be set using an instance of `Button`
+> **NOTE:** All `Button` kwargs can also be set using an instance of `Button`
 
 * Associated methods
     * `ReactionMenu.add_button(button: Button)`
@@ -254,7 +254,7 @@ Buttons/button types are used when you want to add a reaction to the menu that d
 
 ##### Adding Buttons
 You can add buttons (reactions) to the menu using a `Button`. By default, two buttons have already been set in the `ReactionMenu` constructor. The `back_button` as `ButtonType.PREVIOUS_PAGE` and `next_button` as `ButtonType.NEXT_PAGE`. It's up to you if you would like additional buttons. Below are examples on how to implement each `ButtonType`. 
-> NOTE: Buttons with `ButtonType.CALLER` are a little different, so there is a dedicated section explaining how they work and how to implement them [here](#buttons-with-buttontypecaller)
+> **NOTE:** Buttons with `ButtonType.CALLER` are a little different, so there is a dedicated section explaining how they work and how to implement them [here](#buttons-with-buttontypecaller)
 
 
 ```py
@@ -300,7 +300,7 @@ def car(year, make, model):
 ub = Button(emoji='👋', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(user, ctx, 'Defxult', message='Welcome to the server'))
 cb = Button(emoji='🚗', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(car, 2021, 'Ford', 'Mustang'))
 ```
-> NOTE: The function you pass in should not return anything. Calling functions with `ButtonType.CALLER` does not store or handle anything returned by that function
+> **NOTE:** The function you pass in should not return anything. Calling functions with `ButtonType.CALLER` does not store or handle anything returned by that function
 
 ---
 
@@ -333,7 +333,7 @@ An auto-pagination menu is a menu that doesn't need a reaction press to go to th
   * `ReactionMenu.auto_turn_every` (property)
   * `ReactionMenu.auto_paginator` (property)
 
-> NOTE: When you only want to create a auto-pagination menu, there's no need to set the `back_button` or `next_button` with an emoji. Simply set them to `None`
+> **NOTE:** When you only want to create a auto-pagination menu, there's no need to set the `back_button` or `next_button` with an emoji. Simply set them to `None`
 
 Example:
 ```py
@@ -368,7 +368,7 @@ async def vote_relay(payload):
 menu = ReactionMenu(ctx, ...)
 menu.set_relay(vote_relay)
 ```
-> NOTE: The relay function should not return anything because nothing is stored or handled from a return
+> **NOTE:** The relay function should not return anything because nothing is stored or handled from a return
 
 ---
 ## Setting Limits
@@ -418,6 +418,7 @@ await menu.start(send_to=1234567890123456)
 channel = guild.get_channel(1234567890123456)
 await menu.start(send_to=channel)
 ```
+> **NOTE:** `send_to` is not valid if a menu was started in DM's
 
 When stopping the menu, you have two options. Delete the reaction menu by setting the first parameter to `True` or only remove all it's reactions, setting the second parameter to `True`
 
@@ -869,8 +870,27 @@ await menu.update(new_pages=[hello_embed, goodbye_embed], new_buttons=[link_butt
 ---
 ## Starting/Stopping the ButtonsMenu
 * Associated methods
-  * `await ButtonsMenu.start()`
+  * `await ButtonsMenu.start(*, send_to=None)`
   * `await ButtonsMenu.stop(*, delete_menu_message=False, remove_buttons=False, disable_buttons=False)`
+
+When starting the menu, you have the option to send the menu to a certain channel. Parameter `send_to` is the channel you'd like to send the menu to. You can set `send_to` as the channel name (`str`), channel ID (`int`), or channel object (`discord.TextChannel`). Example:
+```py
+menu = ButtonsMenu(...)
+# channel name
+await menu.start(send_to='bot-commands')
+
+# channel ID
+await menu.start(send_to=1234567890123456)
+
+# channel object
+channel = guild.get_channel(1234567890123456)
+await menu.start(send_to=channel)
+```
+> **NOTE:** `send_to` is not valid if a menu was started in DM's
+
+Only one option is available when stopping the menu. If you have multiple parameters as `True`, only one will execute
+- `delete_menu_message` > `disable_buttons`
+- `disable_buttons` > `remove_buttons`
 ---
 ## All attributes for ButtonsMenu
 <details>
