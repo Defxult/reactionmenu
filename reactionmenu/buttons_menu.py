@@ -322,6 +322,41 @@ class ButtonsMenu:
         """
         return self.__pages if self.__pages else None
     
+    def _handle_send_to(self, send_to):
+        # in DMs
+        if self._ctx.guild is None:
+            return self._ctx
+        
+        # in guild
+        else:
+            if send_to is None:
+                return self._ctx
+            else:
+                if not isinstance(send_to, (str, int, discord.TextChannel)):
+                    raise IncorrectType(f'Parameter "send_to" expected str, int, or discord.TextChannel, got {send_to.__class__.__name__}')
+                else:
+                    # before we continue, check if there are any duplicate named channels/no matching names found if a str was provided
+                    if isinstance(send_to, str):
+                        matched_channels = [ch for ch in self._ctx.guild.text_channels if ch.name == send_to]
+                        NO_CHANNELS_ERROR = f'When using parameter "send_to" in ButtonsMenu.start(), there were no channels with the name {send_to!r}'
+                        MULTIPLE_CHANNELS_ERROR = f'When using parameter "send_to" in ButtonsMenu.start(), there were {len(matched_channels)} channels with the name {send_to!r}. With multiple channels having the same name, the intended channel is unknown'  
+                        raise ButtonsMenuException(NO_CHANNELS_ERROR if len(matched_channels) == 0 else MULTIPLE_CHANNELS_ERROR)
+                    
+                    for channel in self._ctx.guild.text_channels:
+                        if isinstance(send_to, str):
+                            if channel.name == send_to:
+                                return channel
+                        
+                        elif isinstance(send_to, int):
+                            if channel.id == send_to:
+                                return channel
+
+                        elif isinstance(send_to, discord.TextChannel):
+                            if channel == send_to:
+                                return channel
+                    else:
+                        raise ButtonsMenuException(f'When using parameter "send_to" in ButtonsMenu.start(), the channel {send_to} was not found')
+    
     def _check(self, inter: MessageInteraction):
         author_pass = False
         
@@ -1031,16 +1066,39 @@ class ButtonsMenu:
                 self._main_session_task.cancel()
     
     @ensure_not_primed
-    async def start(self):
+    async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None):
         """|coro| Start the menu
+
+        Parameter
+        ---------
+        send_to: Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`]
+            (optional) The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
+            method :meth:`discord.Client.get_channel`, that text channel should be in the same list as if you were to use `ctx.guild.text_channels`. This only works on a context guild text channel basis. That means a menu instance cannot be
+            created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to` (defaults to :class:`None`)
+
+        Example for :param:`send_to`
+        ---------------------------
+        ```
+        menu = ButtonsMenu(...)
+        # channel name
+        await menu.start(send_to='bot-commands')
+
+        # channel ID
+        await menu.start(send_to=1234567890123456)
+
+        # channel object
+        channel = guild.get_channel(1234567890123456)
+        await menu.start(send_to=channel)
+        ```
 
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `MissingSetting`: The "components" kwarg is missing from the `Messageable.send()` method (the menu was not initialized with `ButtonsMenu.initialize(...)`)
         - `NoPages`: The menu was started when no pages have been added
-        - `ButtonsMenuException`: The `ButtonsMenu` menu_type was not recognized
+        - `ButtonsMenuException`: The `ButtonsMenu` menu_type was not recognized or there was an issue with locating the :param:`send_to` channel if set
         - `DescriptionOversized`: When using a menu_type of `ButtonsMenu.TypeEmbedDynamic`, the embed description was over discords size limit
+        - `IncorrectType`: Parameter :param:`send_to` was not :class:`str`, :class:`int`, or :class:`discord.TextChannel`
         """
         # before the menu starts, ensure the "components" kwarg is implemented inside the `_ctx.send` method. If it's missing, raise an error (the menu cannot function without it)
         send_info = inspect.getfullargspec(self._ctx.send)
@@ -1058,7 +1116,7 @@ class ButtonsMenu:
         # add page (normal menu)
         if self._menu_type == ButtonsMenu.TypeEmbed:
             self._refresh_page_director_info(ButtonsMenu.TypeEmbed, self.__pages)
-            self._msg = await self._ctx.send(embed=self.__pages[0], components=[ActionRow(*self._row_of_buttons)]) # allowed_mentions not needed in embeds
+            self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], components=[ActionRow(*self._row_of_buttons)]) # allowed_mentions not needed in embeds
         
         # add row (dynamic menu)
         elif self._menu_type == ButtonsMenu.TypeEmbedDynamic:
@@ -1087,12 +1145,12 @@ class ButtonsMenu:
                 # make sure data has been added to create at least 1 page
                 if not self.__pages: raise NoPages('You cannot start a ButtonsMenu when no data has been added')
                 
-                self._msg = await self._ctx.send(embed=self.__pages[0], components=[ActionRow(*self._row_of_buttons)]) # allowed_mentions not needed in embeds
+                self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], components=[ActionRow(*self._row_of_buttons)]) # allowed_mentions not needed in embeds
         
         # add page (text menu)
         else:
             self._refresh_page_director_info(ButtonsMenu.TypeText, self.__pages)
-            self._msg = await self._ctx.send(content=self.__pages[0], components=[ActionRow(*self._row_of_buttons)], allowed_mentions=self.allowed_mentions)
+            self._msg = await self._handle_send_to(send_to).send(content=self.__pages[0], components=[ActionRow(*self._row_of_buttons)], allowed_mentions=self.allowed_mentions)
         
         self._pc = _PageController(self.__pages)
         self._is_running = True
