@@ -323,6 +323,7 @@ class ButtonsMenu:
         return self.__pages if self.__pages else None
     
     def _handle_send_to(self, send_to):
+        """For the `send_to` kwarg in :meth:`ButtonsMenu.start()`, determine what channel the menu should start in"""
         # in DMs
         if self._ctx.guild is None:
             return self._ctx
@@ -358,6 +359,7 @@ class ButtonsMenu:
                         raise ButtonsMenuException(f'When using parameter "send_to" in ButtonsMenu.start(), the channel {send_to} was not found')
     
     def _check(self, inter: MessageInteraction):
+        """Base menu button interaction check"""
         author_pass = False
         
         if self._ctx.author.id == inter.author.id: author_pass = True
@@ -430,6 +432,7 @@ class ButtonsMenu:
                     page_count += 1
             
     def _decide_kwargs(self, button_id: str) -> dict:
+        """Used in :meth:`ButtonsMenu._execute_interactive_session()`, determines the kwargs that need to be passed to the `MessageInteraction.reply()` method"""
         kwargs = {
             'content' : None,
             'embed' : None,
@@ -465,6 +468,7 @@ class ButtonsMenu:
         return kwargs
 
     async def _execute_interactive_session(self):
+        """|coro| Handles all processing of the pagination session"""
         ButtonsMenu._active_sessions.append(self)
         while self._is_running:
             try:
@@ -589,6 +593,7 @@ class ButtonsMenu:
                     raise ButtonsMenuException('ComponentsButton custom_id was not recognized')
 
     def _done_callback(self, task: asyncio.Task):
+        """Main session task done callback"""
         try:
             task.result()
         except asyncio.CancelledError:
@@ -792,6 +797,7 @@ class ButtonsMenu:
         self._caller_details = Details(func=func, args=args, kwargs=kwargs)
     
     def _button_add_check(self, button: ComponentsButton):
+        """A set of checks to ensure the proper button is being added"""
         # ensure they are using only the ComponentsButton and not ReactionMenus :class:`Button`/:class:`ButtonType`
         if isinstance(button, ComponentsButton):
 
@@ -1045,6 +1051,7 @@ class ButtonsMenu:
                 
                 elif disable_buttons:
                     def disable_and_return():
+                        """Disable all the buttons registered to the menu and return them for use"""
                         for i in self._row_of_buttons:
                             i.disabled = True
                         return self._row_of_buttons
