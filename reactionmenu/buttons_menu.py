@@ -26,6 +26,7 @@ import asyncio
 import collections
 import inspect
 import re
+import warnings
 from datetime import datetime
 from typing import List, Union
 
@@ -36,7 +37,7 @@ from dislash import ActionRow, MessageInteraction, ResponseType, SlashClient
 from .abc import _PageController
 from .buttons import ComponentsButton
 from .decorators import ensure_not_primed
-from .errors import ButtonNotFound, ButtonsMenuException, DescriptionOversized, ImproperStyleFormat, IncorrectType, MenuSettingsMismatch, MissingSetting, NoPages, TooManyButtons
+from .errors import ButtonNotFound, ButtonsMenuException, DescriptionOversized, ImproperStyleFormat, IncorrectType, MenuSettingsMismatch, MissingSetting, NoButtons, NoPages, TooManyButtons
 
 
 class ButtonsMenu:
@@ -102,8 +103,8 @@ class ButtonsMenu:
 
     def __repr__(self):
         x = {key : val for key, val in self.__dict__.items() if not key.startswith('_') and val}
-        y = ' '.join(f'{key}={val!r}' for key, val in x.items())
-        z = f'<ButtonsMenu {y}>'
+        y = ' '.join(f'{key}={val!r}' for key, val in x.items() if key != 'name') # intentionally exclude "name" because i want the first 3 items to be just like ReactionMenu's __repr__
+        z = f'<ButtonsMenu name={self.name!r} owner={str(self.owner)!r} is_running={self._is_running} {y}>'
         return z
 
     def __init__(self, ctx: Context, *, menu_type: int, **options):
@@ -119,6 +120,7 @@ class ButtonsMenu:
         self._inter: MessageInteraction = None
         self._pc: _PageController = None
         self._caller_details: 'NamedTuple' = None
+        self._on_timeout_details: 'function' = None
         self._main_page_contents = collections.deque()
         self._last_page_contents = collections.deque()
 
@@ -318,7 +320,7 @@ class ButtonsMenu:
         """
         Returns
         -------
-        A list of either `discord.Embed` if the menu_type is `ButtonsMenu.TypeEmbed`/`ButtonsEmbed.TypeEmbedDynamc`. Or `str` if `ButtonsMenu.TypeText`. Can return :class:`None` if there are no pages
+        A list of either :class:`discord.Embed` if the menu_type is :attr:`ButtonsMenu.TypeEmbed` / :attr:`ButtonsEmbed.TypeEmbedDynamc`. Or :class:`str` if :attr:`ButtonsMenu.TypeText`. Can return :class:`None` if there are no pages
         """
         return self.__pages if self.__pages else None
     
@@ -475,7 +477,7 @@ class ButtonsMenu:
                 inter: MessageInteraction = await self._msg.wait_for_button_click(check=self._check, timeout=self.timeout)
                 self._inter = inter
             except asyncio.TimeoutError:
-               await self.stop(delete_menu_message=self.delete_on_timeout, remove_buttons=self.remove_buttons_on_timeout, disable_buttons=self.disable_buttons_on_timeout)
+                await self.stop(delete_menu_message=self.delete_on_timeout, remove_buttons=self.remove_buttons_on_timeout, disable_buttons=self.disable_buttons_on_timeout)
             else:
                 btn = inter.clicked_button
 
@@ -776,6 +778,22 @@ class ButtonsMenu:
         for btn in self._row_of_buttons:
             btn.disabled = False
     
+    def set_on_timeout(self, func: object):
+        """Set the function to be called when the menu times out
+
+        Parameters
+        ----------
+        func: :class:`object`
+            The function object that will be called when the menu times out. The function should contain a single positional argument
+            and should not return anything. The argument passed to that function is an instance of the menu.
+        
+        Raises
+        ------
+        - `ButtonsMenuException`: Parameter "func" was not a callable object
+        """
+        if not callable(func): raise ButtonsMenuException('Parameter "func" must be callable')
+        self._on_timeout_details = func
+    
     def set_caller_details(self, func: object, *args, **kwargs):
         """Set the parameters for the function you set for a :class:`ComponentsButton` with the custom_id `ComponentsButton.ID_CALLER`
         
@@ -1070,6 +1088,28 @@ class ButtonsMenu:
                 self._is_running = False
                 if self in ButtonsMenu._active_sessions:
                     ButtonsMenu._active_sessions.remove(self)
+                
+                # handle `on_timeout`
+                if self._on_timeout_details:
+                    func = self._on_timeout_details
+                    
+                    # call the timeout function but ignore any and all exceptions that may occur during the function timeout call.
+                    # the most important thing here is to ensure the menu is properly shutdown (task is cancelled) upon timeout and if an exception occurs
+                    # the process will not complete
+                    try:
+                        if asyncio.iscoroutinefunction(func): await func(self)
+                        else: func(self)
+                    except Exception as error:
+                        warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}'
+                        warnings.warn(inspect.cleandoc(
+                            f"""
+                            UserWarning: The function you have set in method ButtonsMenu.set_on_timeout() raised on error
+
+                            -> {error.__class__.__name__}: {error}
+                            
+                            This error has been ignored so the menu timeout process can complete
+                            """
+                        ))
                 self._main_session_task.cancel()
     
     @ensure_not_primed
@@ -1103,10 +1143,13 @@ class ButtonsMenu:
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `MissingSetting`: The "components" kwarg is missing from the `Messageable.send()` method (the menu was not initialized with `ButtonsMenu.initialize(...)`)
         - `NoPages`: The menu was started when no pages have been added
+        - `NoButtons`: Attempted to start the menu when no Buttons have been registered
         - `ButtonsMenuException`: The `ButtonsMenu` menu_type was not recognized or there was an issue with locating the :param:`send_to` channel if set
         - `DescriptionOversized`: When using a menu_type of `ButtonsMenu.TypeEmbedDynamic`, the embed description was over discords size limit
         - `IncorrectType`: Parameter :param:`send_to` was not :class:`str`, :class:`int`, or :class:`discord.TextChannel`
         """
+        # ------------------------------- CHECKS -------------------------------
+
         # before the menu starts, ensure the "components" kwarg is implemented inside the `_ctx.send` method. If it's missing, raise an error (the menu cannot function without it)
         send_info = inspect.getfullargspec(self._ctx.send)
         if 'components' not in send_info.kwonlyargs:
@@ -1116,9 +1159,15 @@ class ButtonsMenu:
         if self._menu_type in (ButtonsMenu.TypeEmbed, ButtonsMenu.TypeText) and not self.__pages:
             raise NoPages("You cannot start a ButtonsMenu when you haven't added any pages")
         
+        # ensure at least 1 button exists before starting the menu
+        if not self._row_of_buttons:
+            raise NoButtons('You cannot start a ButtonsMenu when no buttons are registered')
+        
         # ensure only valid menu types have been set
         if self._menu_type not in (ButtonsMenu.TypeEmbed, ButtonsMenu.TypeEmbedDynamic, ButtonsMenu.TypeText):
             raise ButtonsMenuException('ButtonsMenu menu_type not recognized')
+        
+        # ------------------------------- END CHECKS -------------------------------
 
         # add page (normal menu)
         if self._menu_type == ButtonsMenu.TypeEmbed:
