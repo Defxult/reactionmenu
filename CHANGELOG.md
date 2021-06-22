@@ -1,21 +1,28 @@
+## Key
+* `BM` = `ButtonsMenu`
+* `RM` = `ReactionMenu`
+* `TM` = `TextMenu`
+
 ## v1.1.0 » Upcoming release
 #### New Features
-* Added new type of menu (`ButtonsMenu`). Discords new [Buttons](https://support.discord.com/hc/en-us/articles/1500012250861-Bots-Buttons) feature ([docs](https://github.com/Defxult/reactionmenu#buttonsmenu))
-* (`ReactionMenu`/`TextMenu`) Added the ability to get the menu object from a message ID ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
+* Added new type of menu (`ButtonsMenu`). Discords new [Buttons](https://support.discord.com/hc/en-us/articles/1500012250861-Bots-Buttons) feature
+* `RM|TM` Added the ability to call a function upon menu timeout
+  * `ReactionMenu.set_on_timeout(func: object)`
+* `RM|TM` Added the ability to get the menu object from a message ID
   * `ReactionMenu.get_menu_from_message(message_id: int)`
-* (`ReactionMenu`/`TextMenu`) Added the ability to set menu session limits per guild, channel, or member (before you could only set per guild) ([docs](https://github.com/Defxult/reactionmenu#setting-limits))
-* (`ReactionMenu`/`TextMenu`) Added the ability to remove limits that have been set ([docs](https://github.com/Defxult/reactionmenu#setting-limits))
+* `RM|TM` Added the ability to set menu session limits per guild, channel, or member (before you could only set per guild)
+* `RM|TM` Added the ability to remove limits that have been set
   * `ReactionMenu.remove_limit()`
-* (`ReactionMenu`/`TextMenu`) Added the ability to access the `discord.Member` object of the person that started the menu ([docs](https://github.com/Defxult/reactionmenu#all-attributes-for-reactionmenu))
+* `RM|TM` Added the ability to access the `discord.Member` object of the person that started the menu
   * `ReactionMenu.owner`
-* (`ReactionMenu`/`TextMenu`) Added `owner` to `__repr__`
-* (`ReactionMenu`/`TextMenu`) Added the ability to get all active DM sessions ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
+* `RM|TM` Added `owner` to `__repr__`
+* `RM|TM` Added the ability to get all active DM sessions
   * `ReactionMenu.get_all_dm_sessions()`
 
 ## v1.0.9 » Jun. 1, 2021
 #### New Features
-* Added new type of reaction menu (`TextMenu`). Just like the normal reaction menu but no embeds are involved, only plain text is used. `TextMenu` has limited options compared to `ReactionMenu` ([docs](https://github.com/Defxult/reactionmenu#textmenu))
-* Added auto-pagination. The ability for the menu to turn pages on it's own. In addition to this, the `ReactionMenu` constructors `back_button` and `next_button` parameters can now be set to `None` if you intend to set the menu as an auto-pagination menu ([docs](https://github.com/Defxult/reactionmenu#auto-pagination))
+* Added new type of reaction menu (`TextMenu`). Just like the normal reaction menu but no embeds are involved, only plain text is used. `TextMenu` has limited options compared to `ReactionMenu`
+* Added auto-pagination. The ability for the menu to turn pages on it's own. In addition to this, the `ReactionMenu` constructors `back_button` and `next_button` parameters can now be set to `None` if you intend to set the menu as an auto-pagination menu
   * `ReactionMenu.set_as_auto_paginator(turn_every: Union[int, float])`
   * `ReactionMenu.update_turn_every(turn_every: Union[int, float])`
   * `ReactionMenu.update_all_turn_every(turn_every: Union[int, float])`
@@ -23,7 +30,7 @@
   * `ReactionMenu.stop_all_auto_sessions()`
   * `ReactionMenu.auto_turn_every`
   * `ReactionMenu.auto_paginator`
-* Added basic emojis. Used as in-house helper variables to set your `back_button`/`next_button` parameters in `ReactionMenu`/`TextMenu` as well as the `emoji` parameter in `Button` ([docs](https://github.com/Defxult/reactionmenu#supported-emojis))
+* Added basic emojis. Used as in-house helper variables to set your `back_button`/`next_button` parameters in `ReactionMenu`/`TextMenu` as well as the `emoji` parameter in `Button`
   * `ReactionMenu.EMOJI_NEXT_BUTTON`
   * `ReactionMenu.EMOJI_BACK_BUTTON`
   * `ReactionMenu.EMOJI_FIRST_PAGE`
@@ -37,21 +44,21 @@
   * `ReactionMenu.only_roles` (set to `None`)
   * `ReactionMenu.timeout` (set to `60.0` if set to `None`)
   * `ReactionMenu.auto_paginator` (set to `False`)
-* Added the ability to track how long a menu session has been active ([docs](https://github.com/Defxult/reactionmenu#all-attributes-for-reactionmenu))
+* Added the ability to track how long a menu session has been active
   * `ReactionMenu.run_time`
-* Added the ability to set if only members with certain roles can control the menu ([docs](https://github.com/Defxult/reactionmenu#options-of-the-reactionmenu-constructor-kwargs))
+* Added the ability to set if only members with certain roles can control the menu
   * `ReactionMenu.only_roles`
-* Added the ability to access the `discord.Message` object the menu is operating from ([docs](https://github.com/Defxult/reactionmenu#all-attributes-for-reactionmenu))
+* Added the ability to access the `discord.Message` object the menu is operating from
   * `ReactionMenu.message`
-* Added the ability to gracefully stop all running menu's ([docs](https://github.com/Defxult/reactionmenu#setting-limits))
+* Added the ability to gracefully stop all running menu's
   * `ReactionMenu.stop_all_sessions()`
-* Added the ability to stop a specific menu by it's name ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
+* Added the ability to stop a specific menu by it's name
   * `ReactionMenu.stop_session(name: str, include_all=False)`
-* Added the ability to get a session by it's name ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
+* Added the ability to get a session by it's name
   * `ReactionMenu.get_session(name: str)`
-* Added the ability to get all active sessions ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
+* Added the ability to get all active sessions
   * `ReactionMenu.get_all_sessions()`
-* Added the ability for a menu reaction press to call other functions with the information of who pressed the reaction, what reaction was pressed, the time it was pressed, and the menu's object ([docs](https://github.com/Defxult/reactionmenu#relays))
+* Added the ability for a menu reaction press to call other functions with the information of who pressed the reaction, what reaction was pressed, the time it was pressed, and the menu's object
   * `ReactionMenu.set_relay(func)`
 * Added `__repr__` for `ReactionMenu`
 * Added documentation (doc strings) to a lot more properties to easily see what it does and what the return type is
@@ -79,7 +86,7 @@
 
 ## v1.0.8 » May 4, 2021
 #### New Features
-* Added `ReactionMenu.delete_on_timeout` ([docs](https://github.com/Defxult/reactionmenu#options-of-the-reactionmenu-constructor-kwargs))
+* Added `ReactionMenu.delete_on_timeout`
 
 ## v1.0.7 » Mar. 30, 2021
 #### Bug Fixes
@@ -87,14 +94,14 @@
 
 ## v1.0.6 » Mar. 22, 2021
 #### New Features
-* Added the ability to start a menu in a specific channel ([docs](https://github.com/Defxult/reactionmenu#startingstopping-the-reactionmenu))
+* Added the ability to start a menu in a specific channel
 
 #### Bug Fixes
 * Fixed an issue where custom embeds in a dynamic menu would not display all implemented values from that embed 
 
 ## v1.0.5 » Mar. 19, 2021
 #### New Features
-* Added `ReactionMenu` kwarg `navigation_speed`. Used with the below class attributes ([docs](https://github.com/Defxult/reactionmenu#options-of-the-reactionmenu-constructor-kwargs))
+* Added `ReactionMenu` kwarg `navigation_speed`. Used with the below class attributes
   * `ReactionMenu.NORMAL`
   * `ReactionMenu.FAST`
 #### Bug Fixes
@@ -106,27 +113,26 @@
 
 ## v1.0.4 » Mar. 13, 2021
 #### New Features
-* Small additional update for `v1.0.3`. Support for `@client.command()` functions to be used with `ButtonType.CALLER` ([docs](https://github.com/Defxult/reactionmenu#buttons-with-buttontypecaller))
-
+* Small additional update for `v1.0.3`. Support for `@client.command()` functions to be used with `ButtonType.CALLER`
 ## v1.0.3 » Mar. 13, 2021
 #### New Features
-* Added the ability for buttons to call functions ([docs](https://github.com/Defxult/reactionmenu#buttons-with-buttontypecaller))
-* Added new `ButtonType` (`ButtonType.CALLER`) ([docs](https://github.com/Defxult/reactionmenu#all-buttontypes))
-* Added class method `ButtonType.caller_details()` ([docs](https://github.com/Defxult/reactionmenu#buttons-with-buttontypecaller))
+* Added the ability for buttons to call functions
+* Added new `ButtonType` (`ButtonType.CALLER`)
+* Added class method `ButtonType.caller_details()`
 
 #### Bug Fixes
 * Fixed an issue where all exceptions were suppressed specifically inside the execution method
 
 ## v1.0.2 » Feb. 19, 2021
 #### New Features
-* Added class method `ReactionMenu.get_sessions_count()` ([docs](https://github.com/Defxult/reactionmenu#all-methods-for-reactionmenu))
-* Added the option to delete the messages sent when interacting with the menu via `ButtonType.GO_TO_PAGE` (`ReactionMenu` kwarg `delete_interactions`). Repeatedly using `ButtonType.GO_TO_PAGE` can sometimes make the chat look like spam ([docs](https://github.com/Defxult/reactionmenu#options-of-the-reactionmenu-constructor-kwargs))
+* Added class method `ReactionMenu.get_sessions_count()`
+* Added the option to delete the messages sent when interacting with the menu via `ButtonType.GO_TO_PAGE` (`ReactionMenu` kwarg `delete_interactions`). Repeatedly using `ButtonType.GO_TO_PAGE` can sometimes make the chat look like spam
 
 ## v1.0.1 » Feb. 16, 2021
 #### New Features
-* Added the ability to limit the amount of active menu sessions ([docs](https://github.com/Defxult/reactionmenu#setting-limits))
+* Added the ability to limit the amount of active menu sessions
    * `ReactionMenu.set_sessions_limit()`
-* Added new `ButtonType` (`ButtonType.GO_TO_PAGE`) ([docs](https://github.com/Defxult/reactionmenu#all-buttontypes))
-* Added `go_to_page_buttons` property ([docs](https://github.com/Defxult/reactionmenu#all-attributes-for-reactionmenu))
-* Added `total_pages` property ([docs](https://github.com/Defxult/reactionmenu#all-attributes-for-reactionmenu))
+* Added new `ButtonType` (`ButtonType.GO_TO_PAGE`)
+* Added `go_to_page_buttons` property
+* Added `total_pages` property
 * Added class method `ReactionMenu.cancel_all_sessions()` (**removed since** `v1.0.9`)
