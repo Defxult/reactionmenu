@@ -133,6 +133,7 @@ class ReactionMenu(abc.Menu):
 				A sizeable amount of methods and properties were moved from here to abc.py to support :class:`TextMenu`
             v1.1.0
                 Added initialization of :attr:`_menu_owner` to the `__init__` instead of the execute session method, etc.
+				Added :attr:_on_timeout_details
 
 	"""
 	STATIC = 0
@@ -157,6 +158,7 @@ class ReactionMenu(abc.Menu):
 		self._all_buttons_removed = False
 		self._is_dm_session = False
 		self._relay_function = None
+		self._on_timeout_details: 'function' = None
 
 		# auto-pagination
 		self._menu_owner = ctx.author

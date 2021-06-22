@@ -93,6 +93,7 @@ class TextMenu(abc.Menu):
         .. changes ::
             v1.1.0
                 Added initialization of :attr:`_menu_owner` to the `__init__` instead of the execute session method, etc.
+                Added :attr:_on_timeout_details
     """
     _active_sessions: List['TextMenu'] = []
 
@@ -112,6 +113,7 @@ class TextMenu(abc.Menu):
         self._all_buttons_removed = False
         self._is_dm_session = False
         self._relay_function = None
+        self._on_timeout_details: 'function' = None
         
         # auto-pagination
         self._menu_owner = ctx.author
