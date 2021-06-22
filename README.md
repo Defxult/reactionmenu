@@ -760,7 +760,7 @@ class ComponentsButton(*, style: ButtonStyle, label: str, custom_id=None, emoji=
 The following are the rules set by Discord for Buttons:
 * Non-link buttons **must** have a `custom_id`, and cannot have a `url`
 * Link buttons **must** have a `url`, and cannot have a `custom_id`
-* There cannot be more than 5 buttons per message
+* There cannot be more than 25 buttons per message. At the moment, since this is a pagination menu it is limited to 5 because there's simply no point in having more than one button that goes to the next page or stops the session, but that will be updated soon to allow multiple buttons with a `custom_id` of `ComponentsButton.ID_CALLER` or  `ComponentsButton.ID_SEND_MESSAGE` to be added to the menu.
 ---
 ## Parameters of the ComponentsButton constructor
 * `style` (`ButtonStyle`) The button style
