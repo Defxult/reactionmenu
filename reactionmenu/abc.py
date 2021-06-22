@@ -26,6 +26,7 @@ import abc
 import asyncio
 import collections
 import itertools
+import warnings
 from datetime import datetime
 from typing import List, Union
 
@@ -1211,6 +1212,24 @@ class Menu(metaclass=abc.ABCMeta):
                 cls = self.__class__
                 cls._remove_session(self, task)
     
+    def set_on_timeout(self, func: object):
+        """Set the function to be called when the menu times out
+
+        Parameters
+        ----------
+        func: :class:`object`
+            The function object that will be called when the menu times out. The function should contain a single positional argument
+            and should not return anything. The argument passed to that function is an instance of the menu.
+        
+        Raises
+        ------
+        - `ReactionMenuException`: Parameter "func" was not a callable object
+
+            ..added:: v1.1.0
+        """
+        if not callable(func): raise ReactionMenuException('Parameter "func" must be callable')
+        self._on_timeout_details = func
+    
     def set_relay(self, func):
         """Set a function to be called with a given set of information when a reaction is pressed on the menu. The information passed is `RelayPayload`, a named tuple object. The
         named tuple contains the following attributes:
@@ -1345,6 +1364,8 @@ class Menu(metaclass=abc.ABCMeta):
 
                         - Removed ID handling for static/dynamic task names (:meth:`_get_proper_task`)
                         - Moved to ABC
+                    v1.1.0
+                        Added handling for on_timeout setting
         """
         if self._is_running:
             try:
@@ -1364,6 +1385,29 @@ class Menu(metaclass=abc.ABCMeta):
                 cls = self.__class__
                 cls._remove_session(self, self._main_session_task)
 
+                # handle `on_timeout`
+                if self._on_timeout_details:
+                    func = self._on_timeout_details
+                    
+                    # call the timeout function but ignore any and all exceptions that may occur during the function timeout call.
+                    # the most important thing here is to ensure the menu is properly shutdown (task is cancelled) upon timeout and if an exception occurs
+                    # the process will not complete
+                    try:
+                        if asyncio.iscoroutinefunction(func): await func(self)
+                        else: func(self)
+                    except Exception as error:
+                        warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}'
+                        
+                        # NOTE" inspect imported with "from .errors import *"
+                        warnings.warn(inspect.cleandoc(
+                            f"""
+                            UserWarning: The function you have set in method ReactionMenu.set_on_timeout() raised on error
+
+                            -> {error.__class__.__name__}: {error}
+                            
+                            This error has been ignored so the menu timeout process can complete
+                            """
+                        ))
                 self._main_session_task.cancel()
 
     @ensure_not_primed
