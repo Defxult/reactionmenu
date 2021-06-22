@@ -134,6 +134,7 @@ class ReactionMenu(abc.Menu):
             v1.1.0
                 Added initialization of :attr:`_menu_owner` to the `__init__` instead of the execute session method, etc.
 				Added :attr:_on_timeout_details
+				Added :attr:_menu_timed_out
 
 	"""
 	STATIC = 0
@@ -159,6 +160,7 @@ class ReactionMenu(abc.Menu):
 		self._is_dm_session = False
 		self._relay_function = None
 		self._on_timeout_details: 'function' = None
+		self._menu_timed_out = False
 
 		# auto-pagination
 		self._menu_owner = ctx.author
@@ -700,6 +702,7 @@ class ReactionMenu(abc.Menu):
 				else:
 					raise ReactionMenuException(f'Navigation speed {self._navigation_speed!r} is not recognized')
 			except asyncio.TimeoutError:
+				self._menu_timed_out = True
 				await self.stop(delete_menu_message=self._delete_on_timeout, clear_reactions=self._clear_reactions_after)
 			else:
 				emoji = str(reaction.emoji)

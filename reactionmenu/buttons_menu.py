@@ -121,6 +121,7 @@ class ButtonsMenu:
         self._pc: _PageController = None
         self._caller_details: 'NamedTuple' = None
         self._on_timeout_details: 'function' = None
+        self._menu_timed_out = False
         self._main_page_contents = collections.deque()
         self._last_page_contents = collections.deque()
 
@@ -477,6 +478,7 @@ class ButtonsMenu:
                 inter: MessageInteraction = await self._msg.wait_for_button_click(check=self._check, timeout=self.timeout)
                 self._inter = inter
             except asyncio.TimeoutError:
+                self._menu_timed_out = True
                 await self.stop(delete_menu_message=self.delete_on_timeout, remove_buttons=self.remove_buttons_on_timeout, disable_buttons=self.disable_buttons_on_timeout)
             else:
                 btn = inter.clicked_button
@@ -1090,7 +1092,7 @@ class ButtonsMenu:
                     ButtonsMenu._active_sessions.remove(self)
                 
                 # handle `on_timeout`
-                if self._on_timeout_details:
+                if self._on_timeout_details and self._menu_timed_out:
                     func = self._on_timeout_details
                     
                     # call the timeout function but ignore any and all exceptions that may occur during the function timeout call.

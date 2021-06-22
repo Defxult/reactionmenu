@@ -1386,7 +1386,7 @@ class Menu(metaclass=abc.ABCMeta):
                 cls._remove_session(self, self._main_session_task)
 
                 # handle `on_timeout`
-                if self._on_timeout_details:
+                if self._on_timeout_details and self._menu_timed_out:
                     func = self._on_timeout_details
                     
                     # call the timeout function but ignore any and all exceptions that may occur during the function timeout call.
