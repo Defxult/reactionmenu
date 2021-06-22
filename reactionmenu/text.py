@@ -391,6 +391,7 @@ class TextMenu(abc.Menu):
                 else:
                     raise ReactionMenuException(f'Navigation speed {self._navigation_speed!r} is not recognized')
             except asyncio.TimeoutError:
+                self._menu_timed_out = True
                 await self.stop(delete_menu_message=self._delete_on_timeout, clear_reactions=self._clear_reactions_after)
             else:
                 emoji = str(reaction.emoji)
