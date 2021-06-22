@@ -541,6 +541,9 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 * `ReactionMenu.set_main_pages(*embeds: Embed)`
   * On a dynamic menu, set the pages you would like to show first. These embeds will be shown before the embeds that contain your data
 ---
+* `ReactionMenu.set_on_timeout(func: object)`
+  * Set the function to be called when the menu times out
+---
 * `ReactionMenu.set_relay(func)`
   * Set a function to be called with a given set of information when a reaction is pressed on the menu
 ---
