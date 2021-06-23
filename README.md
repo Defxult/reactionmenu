@@ -761,9 +761,10 @@ A `ComponentsButton` is a class that represents the discord button. It is a subc
 class ComponentsButton(*, style: ButtonStyle, label: str, custom_id=None, emoji=None, url=None, disabled=False, followup=None)
 ```
 The following are the rules set by Discord for Buttons:
+* Link buttons don't send interactions to the Discord App, so link button statistics (it's properties) are not tracked
 * Non-link buttons **must** have a `custom_id`, and cannot have a `url`
 * Link buttons **must** have a `url`, and cannot have a `custom_id`
-* There cannot be more than 25 buttons per message. At the moment, since this is a pagination menu it is limited to 5 because there's simply no point in having more than one button that goes to the next page or stops the session, but that will be updated soon to allow multiple buttons with a `custom_id` of `ComponentsButton.ID_CALLER` or  `ComponentsButton.ID_SEND_MESSAGE` to be added to the menu.
+* There cannot be more than 25 buttons per message
 ---
 ## Parameters of the ComponentsButton constructor
 * `style` (`ButtonStyle`) The button style
@@ -775,7 +776,7 @@ The following are the rules set by Discord for Buttons:
   * `ComponentsButton.ID_GO_TO_LAST_PAGE`
   * `ComponentsButton.ID_GO_TO_PAGE`
   * `ComponentsButton.ID_END_SESSION`
-  * `ComponentsButton.ID_CALLER` (used with method `ButtonsMenu.set_caller_details(...)`)
+  * `ComponentsButton.ID_CALLER`
   * `ComponentsButton.ID_SEND_MESSAGE`
 * `emoji` (`discord.PartialEmoji`) Emoji used for the button
 * `url` (`str`) URL for a button with style `ComponentsButton.style.link`
@@ -810,16 +811,16 @@ next_button = ComponentsButton(style=ComponentsButton.style.secondary, label='Ne
 # 2 - ComponentsButton.ID_SEND_MESSAGE
 
 # ComponentsButton.ID_SEND_MESSAGE
-follow_details = ComponentsButton.Followup('This message is hidden!', ephemeral=True)
-message_button = ComponentsButton(style=ComponentsButton.style.green, label='Message', custom_id=ComponentsButton.ID_SEND_MESSAGE, followup=follow_details)
+message_followup = ComponentsButton.Followup('This message is hidden!', ephemeral=True)
+message_button = ComponentsButton(style=ComponentsButton.style.green, label='Message', custom_id=ComponentsButton.ID_SEND_MESSAGE, followup=message_followup)
 
 # ComponentsButton.ID_CALLER
 def say_hello(name: str):
     print('Hello', name)
 
-caller_button = ComponentsButton(style=ComponentsButton.style.red, label='Say Hi', custom_id=ComponentsButton.ID_CALLER)
-menu.set_caller_details(say_hello, 'John')
-
+call_followup = ComponentsButton.Followup()
+call_followup.set_caller_details(say_hello, 'John')
+caller_button = ComponentsButton(style=ComponentsButton.style.red, label='Say Hi', custom_id=ComponentsButton.ID_CALLER, followup=call_followup)
 
 menu.add_button(link_button)
 menu.add_button(back_button)
@@ -828,6 +829,7 @@ menu.add_button(message_button)
 menu.add_button(caller_button)
 ```
 ---
+> **NOTE:** When it comes to buttons with a `custom_id` of `ComponentsButton.ID_CALLER`, `ComponentsButton.ID_SEND_MESSAGE`, or link buttons, you can add as many as you'd like as long as in total it's 25 buttons or less. For all other button ID's, each menu can only have one.
 
 ## Updating ComponentsButton and Pages
 * Associated methods
