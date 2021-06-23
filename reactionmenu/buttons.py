@@ -117,6 +117,9 @@ class ComponentsButton(dislash.Button):
 		
 		def set_caller_details(self, func: object, *args, **kwargs):
 			"""Set the parameters for the function you set for a :class:`ComponentsButton` with the custom_id `ComponentsButton.ID_CALLER`
+
+			Parameters
+			----------
 			
 			func: :class:`object`
 				The function object that will be called when the associated button is clicked
