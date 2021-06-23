@@ -539,7 +539,7 @@ class TextMenu(abc.Menu):
             if not can_proceed:
                 return
 
-        # determine the channel to send the channel to (if any)
+        # determine the channel to send the menu to (if any)
         self._determine_location(send_to)
 
         if len(self._contents) == 0:
