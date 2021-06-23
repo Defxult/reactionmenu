@@ -517,7 +517,7 @@ class ButtonsMenu:
                         if 1 <= selected_page <= len(self.__pages):
                             self._pc.index = selected_page - 2
                             kwargs = self._decide_kwargs(button_id=btn.custom_id)
-                            kwargs['components'] = [ActionRow(*self._row_of_buttons)]
+                            kwargs['components'] = self._initialize_action_row()
 
                             # remove unused kwargs that will be sent in the `.edit` parameters
                             # NOTE: this was made because there was an issue with sending a message with 'content' of :class:`None` because :meth:`_decide_kwargs` is mainly made for the above ComponentButton IDs
