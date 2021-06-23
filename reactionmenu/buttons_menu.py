@@ -119,7 +119,6 @@ class ButtonsMenu:
         self._menu_type = menu_type
         self._inter: MessageInteraction = None
         self._pc: _PageController = None
-        self._caller_details: 'NamedTuple' = None
         self._on_timeout_details: 'function' = None
         self._menu_timed_out = False
         self._main_page_contents = collections.deque()
@@ -545,56 +544,72 @@ class ButtonsMenu:
                 elif btn.custom_id == ComponentsButton.ID_END_SESSION:
                     await self.stop(delete_menu_message=True)
                 
-                elif btn.custom_id == ComponentsButton.ID_CALLER:
-                    if self._caller_details:
-                        func = self._caller_details.func
-                        args = self._caller_details.args
-                        kwargs = self._caller_details.kwargs
+                else:
+                    if btn.custom_id.startswith(ComponentsButton.ID_CALLER):
+                        if cmp_btn.followup is None or cmp_btn.followup._caller_info is None:
+                            error_msg = 'ComponentsButton custom_id was set as ComponentsButton.ID_CALLER but the "followup" kwarg for that ComponentsButton was not set ' \
+                                        'or method ComponentsButton.Followup.set_caller_details(..) was not called to set the caller information'
+                            raise ButtonsMenuException(error_msg)
                         
+                        func = cmp_btn.followup._caller_info.func
+                        args = cmp_btn.followup._caller_info.args
+                        kwargs = cmp_btn.followup._caller_info.kwargs
+                        
+                        # reply now because we don't know how long the users function will take to execute
                         await inter.reply(type=ResponseType.DeferredUpdateMessage)
                         
                         try:
-                            if asyncio.iscoroutinefunction(func):
-                                await func(*args, **kwargs)
-                            else:
-                                func(*args, **kwargs)
-                        except TypeError as err:
-                            raise ButtonsMenuException(f'When setting the caller details, {err}')
+                            if asyncio.iscoroutinefunction(func): await func(*args, **kwargs)
+                            else: func(*args, **kwargs)
+                        except Exception as err:
+                            call_failed_error_msg = inspect.cleandoc(
+                                f"""
+                                The button with custom_id ComponentsButton.ID_CALLER with the label "{cmp_btn.label}" raised an error during it's execution
+
+                                -> {err.__class__.__name__}: {err}
+                                """
+                            )
+                            raise ButtonsMenuException(call_failed_error_msg)
                         else:
                             if cmp_btn.followup:
-                                # make sure there is atleast content, embed, or file. if all of them are None, a discord.HTTPException will occur
+                                # if the executes, the user doesn't want to respond with a message, only with the caller function (already called ^)
                                 if all((cmp_btn.followup.content is None, cmp_btn.followup.embed is None, cmp_btn.followup.file is None)):
-                                    raise ButtonsMenuException('In a ComponentsButton.Followup, there must be at least content, embed, or file')
-                                
-                                followup_kwargs = cmp_btn.followup._to_dict()
+                                    continue
+                                else:
+                                    followup_kwargs = cmp_btn.followup._to_dict()
 
-                                # inter.followup() has no attribute delete_after/ephemeral so manually delete the key/val pairs to avoid an error
-                                del followup_kwargs['delete_after']
-                                del followup_kwargs['ephemeral']
+                                    # inter.followup() has no attribute delete_after/ephemeral/_caller_info, so manually delete the key/val pairs to avoid :exc:`TypeError`, got an unexpected kwarg
+                                    for kwarg_to_delete in ('delete_after', 'ephemeral', '_caller_info'):
+                                        del followup_kwargs[kwarg_to_delete]
 
-                                followup_message: discord.Message = await inter.followup(**followup_kwargs)
-                                
-                                if cmp_btn.followup.delete_after:
-                                    await followup_message.delete(delay=cmp_btn.followup.delete_after)
+                                    followup_message: discord.Message = await inter.followup(**followup_kwargs)
+                                    
+                                    if cmp_btn.followup.delete_after:
+                                        await followup_message.delete(delay=cmp_btn.followup.delete_after)
+                    
+                    elif btn.custom_id.startswith(ComponentsButton.ID_SEND_MESSAGE):
+                        if cmp_btn.followup is None:
+                            raise ButtonsMenuException('ComponentsButton custom_id was set as ComponentsButton.ID_SEND_MESSAGE but the "followup" kwarg for that ComponentsButton was not set')
+                        
+                        # there must be at least 1. cannot send an empty message
+                        if all((cmp_btn.followup.content is None, cmp_btn.followup.embed is None, cmp_btn.followup.file is None)):
+                            raise ButtonsMenuException('When using a ComponentsButton with a custom_id of ComponentsButton.ID_SEND_MESSAGE, the followup message cannot be empty')
+                        
+                        followup_kwargs = cmp_btn.followup._to_dict()
+
+                        # inter.reply() has no kwarg "_caller_info"
+                        del followup_kwargs['_caller_info']
+
+                        # if a file exists, remove it because the file will be ignored because of discord limitations (noted in ComponentsButton.Followup doc string)
+                        if followup_kwargs['file']:
+                            del followup_kwargs['file']
+                        
+                        followup_kwargs['type'] = ResponseType.ChannelMessageWithSource
+                        await inter.reply(**followup_kwargs)
+                    
                     else:
-                        raise ButtonsMenuException('ComponentsButton with custom_id ComponentsButton.ID_CALLER was clicked but method ButtonsMenu.set_caller_details(...) was not called')
-                
-                elif btn.custom_id == ComponentsButton.ID_SEND_MESSAGE:
-                    if cmp_btn.followup is None:
-                        raise ButtonsMenuException('ComponentsButton custom_id was set as ComponentsButton.ID_SEND_MESSAGE but the "followup" kwarg for that ComponentsButton was not set')
-                    
-                    followup_kwargs = cmp_btn.followup._to_dict()
-
-                    # if a file exists, remove it because the file will be ignored because of discord limitations (noted in ComponentsButton.Followup doc string)
-                    if followup_kwargs['file']:
-                        del followup_kwargs['file']
-                    
-                    followup_kwargs['type'] = ResponseType.ChannelMessageWithSource
-                    await inter.reply(**followup_kwargs)
-                
-                else:
-                    # this shouldnt execute because of :meth:`_button_add_check`, but just in case i missed something, throw the appropriate error
-                    raise ButtonsMenuException('ComponentsButton custom_id was not recognized')
+                        # this shouldnt execute because of :meth:`_button_add_check`, but just in case i missed something, throw the appropriate error
+                        raise ButtonsMenuException('ComponentsButton custom_id was not recognized')
 
     def _done_callback(self, task: asyncio.Task):
         """Main session task done callback"""
@@ -796,29 +811,9 @@ class ButtonsMenu:
         if not callable(func): raise ButtonsMenuException('Parameter "func" must be callable')
         self._on_timeout_details = func
     
-    def set_caller_details(self, func: object, *args, **kwargs):
-        """Set the parameters for the function you set for a :class:`ComponentsButton` with the custom_id `ComponentsButton.ID_CALLER`
-        
-        func: :class:`object`
-            The function object that will be called when the associated button is clicked
-
-        *args: :class:`Any`
-            An argument list that represents the parameters of that function
-        
-        **kwargs: :class:`Any`
-            An argument list that represents the kwarg parameters of that function
-        
-        Raises
-        ------
-        - `ButtonsMenuException`: Parameter "func" was not a callable object
-        """
-        if not callable(func): raise ButtonsMenuException('Parameter "func" must be callable')
-        Details = collections.namedtuple('Details', ['func', 'args', 'kwargs'])
-        self._caller_details = Details(func=func, args=args, kwargs=kwargs)
-    
     def _button_add_check(self, button: ComponentsButton):
         """A set of checks to ensure the proper button is being added"""
-        # ensure they are using only the ComponentsButton and not ReactionMenus :class:`Button`/:class:`ButtonType`
+        # ensure they are using only the ComponentsButton and not ReactionMenus :class:`Button` / :class:`ButtonType`
         if isinstance(button, ComponentsButton):
 
             # ensure the button custom_id is a valid one
@@ -828,15 +823,15 @@ class ButtonsMenu:
                 else:
                     raise ButtonsMenuException(f'ComponentsButton custom_id {button.custom_id!r} was not recognized')
 
-            # ensure there are no duplicate custom_ids
-            active_button_ids: List[str] = [btn.custom_id for btn in self._row_of_buttons]
+            # ensure there are no duplicate custom_ids, excluding ComponentsButton.ID_CALLER and ComponentsButton.ID_SEND_MESSAGE
+            active_button_ids: List[str] = [btn.custom_id for btn in self._row_of_buttons if btn.custom_id not in (ComponentsButton.ID_CALLER, ComponentsButton.ID_SEND_MESSAGE)]
             if button.custom_id in active_button_ids:
                 name = ComponentsButton._get_id_name_from_id(button.custom_id)
                 raise ButtonsMenuException(f'A ComponentsButton with custom_id {name!r} has already been added')
             
-            # ensure there are no more than 5 buttons
-            if len(self._row_of_buttons) >= 5:
-                raise TooManyButtons('ButtonsMenu cannot have more that 5 buttons (discord limitation)')
+            # ensure there are no more than 25 buttons
+            if len(self._row_of_buttons) >= 25:
+                raise TooManyButtons('ButtonsMenu cannot have more than 25 buttons (discord limitation)')
         else:
             raise IncorrectType(f'When adding a button to the ButtonsMenu, the button type must be ComponentsButton, not {button.__class__.__name__}')
     
@@ -856,6 +851,9 @@ class ButtonsMenu:
         - `IncorrectType`: Parameter :param:`button` was not of type :class:`ComponentsButton`
         """
         self._button_add_check(button)
+        # create a unique ID if the custom_id is ComponentsButton.ID_SEND_MESSAGE or ComponentsButton.ID_CALLER
+        if button.custom_id in (ComponentsButton.ID_CALLER, ComponentsButton.ID_SEND_MESSAGE):
+            button.custom_id = f'{button.custom_id}_{id(button)}'
         self._row_of_buttons.append(button)
     
     def get_button(self, identity: str, *, search_by: str='label') -> Union[ComponentsButton, List[ComponentsButton], None]:
@@ -1114,6 +1112,16 @@ class ButtonsMenu:
                         ))
                 self._main_session_task.cancel()
     
+    def _initialize_action_row(self):
+        """Create the :class:`ActionRow` for the registered buttons. Handles button count of <= 5 as well as <= 25"""
+        if len(self._row_of_buttons) <= 5:
+            return [ActionRow(*self._row_of_buttons)]
+        else:
+            action_rows = []
+            for btns_clump in self._chunks(self._row_of_buttons, 5):
+                action_rows.append(ActionRow(*btns_clump))
+            return action_rows
+    
     @ensure_not_primed
     async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None):
         """|coro| Start the menu
@@ -1174,7 +1182,7 @@ class ButtonsMenu:
         # add page (normal menu)
         if self._menu_type == ButtonsMenu.TypeEmbed:
             self._refresh_page_director_info(ButtonsMenu.TypeEmbed, self.__pages)
-            self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], components=[ActionRow(*self._row_of_buttons)]) # allowed_mentions not needed in embeds
+            self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], components=self._initialize_action_row()) # allowed_mentions not needed in embeds
         
         # add row (dynamic menu)
         elif self._menu_type == ButtonsMenu.TypeEmbedDynamic:
@@ -1203,12 +1211,12 @@ class ButtonsMenu:
                 # make sure data has been added to create at least 1 page
                 if not self.__pages: raise NoPages('You cannot start a ButtonsMenu when no data has been added')
                 
-                self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], components=[ActionRow(*self._row_of_buttons)]) # allowed_mentions not needed in embeds
+                self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], components=self._initialize_action_row()) # allowed_mentions not needed in embeds
         
         # add page (text menu)
         else:
             self._refresh_page_director_info(ButtonsMenu.TypeText, self.__pages)
-            self._msg = await self._handle_send_to(send_to).send(content=self.__pages[0], components=[ActionRow(*self._row_of_buttons)], allowed_mentions=self.allowed_mentions)
+            self._msg = await self._handle_send_to(send_to).send(content=self.__pages[0], components=self._initialize_action_row(), allowed_mentions=self.allowed_mentions)
         
         self._pc = _PageController(self.__pages)
         self._is_running = True
