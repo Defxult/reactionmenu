@@ -22,6 +22,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+import re
+from collections import namedtuple
 from datetime import datetime
 from enum import Enum, auto
 from typing import List, Set, Union
@@ -29,6 +31,8 @@ from typing import List, Set, Union
 import discord
 import dislash
 from discord.ext.commands import Command
+
+from .errors import ButtonsMenuException
 
 
 class ComponentsButton(dislash.Button):
@@ -93,7 +97,7 @@ class ComponentsButton(dislash.Button):
 			If the message will be hidden from everyone except the person that clicked the button (defaults to `False`) *NOTE* This is only valid for a :class:`ComponentsButton` with custom_id `ComponentsButton.ID_SEND_MESSAGE`
 		"""
 		
-		__slots__ = ('content', 'embed', 'file', 'tts', 'allowed_mentions', 'delete_after', 'ephemeral')
+		__slots__ = ('content', 'embed', 'file', 'tts', 'allowed_mentions', 'delete_after', 'ephemeral', '_caller_info')
 
 		def __init__(self, content: str=None, *, embed: discord.Embed=None, file: discord.File=None, tts: bool=False, allowed_mentions: discord.AllowedMentions=None, delete_after: Union[int, float]=None, ephemeral: bool=False):
 			self.content = content
@@ -103,12 +107,33 @@ class ComponentsButton(dislash.Button):
 			self.allowed_mentions = allowed_mentions
 			self.delete_after = delete_after
 			self.ephemeral = ephemeral
+			self._caller_info: 'NamedTuple' = None
 		
 		def _to_dict(self) -> dict:
 			new = {}
 			for i in self.__slots__:
 				new[i] = getattr(self, i)
 			return new
+		
+		def set_caller_details(self, func: object, *args, **kwargs):
+			"""Set the parameters for the function you set for a :class:`ComponentsButton` with the custom_id `ComponentsButton.ID_CALLER`
+			
+			func: :class:`object`
+				The function object that will be called when the associated button is clicked
+
+			*args: :class:`Any`
+				An argument list that represents the parameters of that function
+			
+			**kwargs: :class:`Any`
+				An argument list that represents the kwarg parameters of that function
+			
+			Raises
+			------
+			- `ButtonsMenuException`: Parameter "func" was not a callable object
+			"""
+			if not callable(func): raise ButtonsMenuException('Parameter "func" must be callable')
+			Details = namedtuple('Details', ['func', 'args', 'kwargs'])
+			self._caller_info = Details(func=func, args=args, kwargs=kwargs)
 	
 	@property
 	def clicked_by(self) -> Set[discord.Member]:
@@ -150,9 +175,15 @@ class ComponentsButton(dislash.Button):
 		return ids
 
 	@classmethod
-	def _get_id_name_from_id(cls, id: str) -> str:
+	def _get_id_name_from_id(cls, id_: str) -> str:
+		# if its a CALLER or SEND_MESSAGE id, convert to it's true representation, because when passed, it's form is "[ButtonID]_[unique ID]"
+		# see :meth:`_button_add_check` for details
+		CALLER_OR_SEND = re.compile(r'_\d+')
+		if re.search(CALLER_OR_SEND, id_):
+			id_ = re.sub(CALLER_OR_SEND, '', id_)
+		
 		for key, val in cls.__dict__.items():
-			if id == val:
+			if id_ == val:
 				return f'ComponentsButton.{key}'
 
 	@classmethod
