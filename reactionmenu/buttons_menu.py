@@ -643,24 +643,16 @@ class ButtonsMenu:
         
         Raises
         ------
-        - `TooManyButtons`: There are already 5 buttons on the menu
+        - `ButtonsMenuException`: The :class:`ComponentsButton` custom_id was not recognized or a :class:`ComponentsButton` with that ID has already been added
+        - `TooManyButtons`: There are already 25 buttons on the menu
         - `IncorrectType`: The values in :param:`new_pages` did not match the :class:`ButtonsMenu` menu_type. An attempt to use this method when the menu_type is `ButtonsMenu.TypeEmbedDynamic` which is not allowed. Or
         all :param:`new_buttons` values were not of type :class:`ComponentsButton`
         """
         if self._is_running:
-            # checks
+            # ----------------------- CHECKS -----------------------
+            
             if new_pages is None and new_buttons is None:
                 return
-
-            if new_buttons:
-                # NOTE: duplicate custom_id check is done when determining the action (below)
-
-                if len(new_buttons) > 5:
-                    raise TooManyButtons(f'When updating the menu, ButtonsMenu cannot have more that 5 buttons (discord limitation). Buttons currently registered: {len(self._row_of_buttons)}. Tried to add: {len(new_buttons)}')
-
-                for btn in new_buttons:
-                    if not isinstance(btn, ComponentsButton):
-                        raise IncorrectType('When updating a menu, all new_buttons must be of type ComponentsButton')
 
             if self._menu_type not in (ButtonsMenu.TypeEmbed, ButtonsMenu.TypeText):
                 raise IncorrectType('Updating a menu is only valid for a menu with menu_type ButtonsMenu.TypeEmbed or ButtonsMenu.TypeText')
@@ -675,7 +667,8 @@ class ButtonsMenu:
             
             if isinstance(new_pages, list) and len(new_pages) == 0:
                 raise ButtonsMenuException('new_pages cannot be an empty list. Must be None if no new pages should be added')
-            # ---- end checks
+            
+            # ----------------------- END CHECKS -----------------------
 
             if new_pages is not None:
                 self.__pages = new_pages
@@ -697,21 +690,23 @@ class ButtonsMenu:
             kwargs_to_pass = {}
 
             if isinstance(new_buttons, list):
+                # buttons need to be cleared regardless of removal or additions
+                self._row_of_buttons.clear()
+                
                 if len(new_buttons) == 0:
-                    self._row_of_buttons.clear()
                     kwargs_to_pass['components'] = []
                 else:
-                    # before we assign the new row of buttons, make sure there arent any duplicate custom_id's
-                    counter = collections.Counter([btn.custom_id for btn in new_buttons])
-                    if max(counter.values()) != 1:
-                        raise ButtonsMenuException('When updating the menu, new_buttons cannot contain any duplicate custom_id')
+                    for new_btn in new_buttons:
+                        # these steps are a carbon copy of :meth:`add_button`, but bypasses :dec:`ensure_not_primed`
+                        self._button_add_check(new_btn)
+                        self._maybe_unique_id(new_btn)
+                        self._row_of_buttons.append(new_btn)
                     else:
-                        self._row_of_buttons = new_buttons
-                        kwargs_to_pass['components'] = [ActionRow(*new_buttons)]
+                        kwargs_to_pass['components'] = self._initialize_action_row()
             
             # the user does not want to add any new buttons
             elif isinstance(new_buttons, type(None)):
-                kwargs_to_pass['components'] = [ActionRow(*self._row_of_buttons)]
+                kwargs_to_pass['components'] = self._initialize_action_row()
             
             if self._menu_type == ButtonsMenu.TypeEmbed:
                 kwargs_to_pass['embed'] = self.__pages[0]
@@ -724,7 +719,7 @@ class ButtonsMenu:
         """|coro| When the menu is running, update the message to reflect the buttons that were removed, disabled, or added"""
         if self._is_running:
             if self._row_of_buttons:
-                await self._msg.edit(components=[ActionRow(*self._row_of_buttons)])
+                await self._msg.edit(components=self._initialize_action_row())
             else:
                 await self._msg.edit(components=[])
     
@@ -833,7 +828,12 @@ class ButtonsMenu:
             if len(self._row_of_buttons) >= 25:
                 raise TooManyButtons('ButtonsMenu cannot have more than 25 buttons (discord limitation)')
         else:
-            raise IncorrectType(f'When adding a button to the ButtonsMenu, the button type must be ComponentsButton, not {button.__class__.__name__}')
+            raise IncorrectType(f'When adding a button to the ButtonsMenu, the button type must be ComponentsButton, got {button.__class__.__name__}')
+    
+    def _maybe_unique_id(self, button: ComponentsButton):
+        """Create a unique ID if the custom_id is ComponentsButton.ID_SEND_MESSAGE or ComponentsButton.ID_CALLER"""
+        if button.custom_id in (ComponentsButton.ID_CALLER, ComponentsButton.ID_SEND_MESSAGE):
+            button.custom_id = f'{button.custom_id}_{id(button)}'
     
     @ensure_not_primed
     def add_button(self, button: ComponentsButton):
@@ -846,14 +846,13 @@ class ButtonsMenu:
         
         Raises
         ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `ButtonsMenuException`: The custom_id for the button was not recognized. A button with that custom_id has already been added
-        - `TooManyButtons`: There are already 5 buttons on the menu
+        - `TooManyButtons`: There are already 25 buttons on the menu
         - `IncorrectType`: Parameter :param:`button` was not of type :class:`ComponentsButton`
         """
         self._button_add_check(button)
-        # create a unique ID if the custom_id is ComponentsButton.ID_SEND_MESSAGE or ComponentsButton.ID_CALLER
-        if button.custom_id in (ComponentsButton.ID_CALLER, ComponentsButton.ID_SEND_MESSAGE):
-            button.custom_id = f'{button.custom_id}_{id(button)}'
+        self._maybe_unique_id(button)
         self._row_of_buttons.append(button)
     
     def get_button(self, identity: str, *, search_by: str='label') -> Union[ComponentsButton, List[ComponentsButton], None]:
@@ -1068,14 +1067,9 @@ class ButtonsMenu:
                     await self._msg.delete()
                 
                 elif disable_buttons:
-                    def disable_and_return():
-                        """Disable all the buttons registered to the menu and return them for use"""
-                        for i in self._row_of_buttons:
-                            i.disabled = True
-                        return self._row_of_buttons
-                    
                     if not self._row_of_buttons: return # if there are no buttons (they've all been removed) to disable, skip this step
-                    await self._msg.edit(components=[ActionRow(*disable_and_return())])
+                    self.disable_all_buttons()
+                    await self._msg.edit(components=self._initialize_action_row())
 
                 elif remove_buttons:
                     if not self._row_of_buttons: return # if there are no buttons to remove (they've already been removed), skip this step
@@ -1112,7 +1106,7 @@ class ButtonsMenu:
                         ))
                 self._main_session_task.cancel()
     
-    def _initialize_action_row(self):
+    def _initialize_action_row(self) -> List[ActionRow]:
         """Create the :class:`ActionRow` for the registered buttons. Handles button count of <= 5 as well as <= 25"""
         if len(self._row_of_buttons) <= 5:
             return [ActionRow(*self._row_of_buttons)]
