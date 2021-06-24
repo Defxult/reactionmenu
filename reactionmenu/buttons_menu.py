@@ -572,7 +572,7 @@ class ButtonsMenu:
                             raise ButtonsMenuException(call_failed_error_msg)
                         else:
                             if cmp_btn.followup:
-                                # if the executes, the user doesn't want to respond with a message, only with the caller function (already called ^)
+                                # if this executes, the user doesn't want to respond with a message, only with the caller function (already called ^)
                                 if all((cmp_btn.followup.content is None, cmp_btn.followup.embed is None, cmp_btn.followup.file is None)):
                                     continue
                                 else:
@@ -608,7 +608,7 @@ class ButtonsMenu:
                         await inter.reply(**followup_kwargs)
                     
                     else:
-                        # this shouldnt execute because of :meth:`_button_add_check`, but just in case i missed something, throw the appropriate error
+                        # this shouldnt execute because of :meth:`_button_add_check`, but just in case i missed something, raise the appropriate error
                         raise ButtonsMenuException('ComponentsButton custom_id was not recognized')
 
     def _done_callback(self, task: asyncio.Task):
@@ -977,7 +977,7 @@ class ButtonsMenu:
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `MenuSettingsMismatch`: This method was called but the menus `menu_type` was not `ButtonsMenu.TypeEmbedDynamic`
-        - `MissingSetting`: `ButtonsMenu` kwarg "rows_requested" (int) has not been set
+        - `MissingSetting`: :class:`ButtonsMenu` kwarg "rows_requested" (int) has not been set
         """
         if self._menu_type == ButtonsMenu.TypeEmbedDynamic:
             if self.__rows_requested:
@@ -1001,7 +1001,7 @@ class ButtonsMenu:
         - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `ButtonsMenu.TypeEmbedDynamic`
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `ButtonsMenuException`: The "embeds" parameter was empty. At least one value is needed
-        - `IncorrectType`: All values in the argument list were not of type `discord.Embed`
+        - `IncorrectType`: All values in the argument list were not of type :class:`discord.Embed`
         """
         if not embeds: raise ButtonsMenuException('The argument list when setting main pages was empty')
         if not all([isinstance(e, discord.Embed) for e in embeds]): raise IncorrectType('All values in the argument list when setting main pages were not of type discord.Embed')
@@ -1027,7 +1027,7 @@ class ButtonsMenu:
         - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `ButtonsMenu.TypeEmbedDynamic`
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `ButtonsMenuException`: The "embeds" parameter was empty. At least one value is needed
-        - `IncorrectType`: All values in the argument list were not of type `discord.Embed`
+        - `IncorrectType`: All values in the argument list were not of type :class:`discord.Embed`
         """
         if not embeds: raise ButtonsMenuException('The argument list when setting main pages was empty')
         if not all([isinstance(e, discord.Embed) for e in embeds]): raise IncorrectType('All values in the argument list when setting main pages were not of type discord.Embed')
@@ -1097,7 +1097,7 @@ class ButtonsMenu:
                         warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}'
                         warnings.warn(inspect.cleandoc(
                             f"""
-                            UserWarning: The function you have set in method ButtonsMenu.set_on_timeout() raised on error
+                            UserWarning: The function you have set in method ButtonsMenu.set_on_timeout() raised an error
 
                             -> {error.__class__.__name__}: {error}
                             
@@ -1148,7 +1148,7 @@ class ButtonsMenu:
         - `MissingSetting`: The "components" kwarg is missing from the `Messageable.send()` method (the menu was not initialized with `ButtonsMenu.initialize(...)`)
         - `NoPages`: The menu was started when no pages have been added
         - `NoButtons`: Attempted to start the menu when no Buttons have been registered
-        - `ButtonsMenuException`: The `ButtonsMenu` menu_type was not recognized or there was an issue with locating the :param:`send_to` channel if set
+        - `ButtonsMenuException`: The :class:`ButtonsMenu` menu_type was not recognized or there was an issue with locating the :param:`send_to` channel if set
         - `DescriptionOversized`: When using a menu_type of `ButtonsMenu.TypeEmbedDynamic`, the embed description was over discords size limit
         - `IncorrectType`: Parameter :param:`send_to` was not :class:`str`, :class:`int`, or :class:`discord.TextChannel`
         """
@@ -1162,6 +1162,8 @@ class ButtonsMenu:
         # ensure at least 1 page exists before starting the menu
         if self._menu_type in (ButtonsMenu.TypeEmbed, ButtonsMenu.TypeText) and not self.__pages:
             raise NoPages("You cannot start a ButtonsMenu when you haven't added any pages")
+        
+        # NOTE: at least 1 page check for add_row is done in "(dynamic menu)"
         
         # ensure at least 1 button exists before starting the menu
         if not self._row_of_buttons:
