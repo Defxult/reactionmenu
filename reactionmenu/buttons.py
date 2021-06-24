@@ -138,6 +138,66 @@ class ComponentsButton(dislash.Button):
 			Details = namedtuple('Details', ['func', 'args', 'kwargs'])
 			self._caller_info = Details(func=func, args=args, kwargs=kwargs)
 	
+	@classmethod
+	def basic_back(cls) -> 'ComponentsButton':
+		"""|class method| A factory method that returns a :class:`ComponentsButton` with the following parameters set:
+		
+		- style: `ComponentsButton.style.gray`
+		- label: "Back"
+		- custom_id: `ComponentsButton.ID_PREVIOUS_PAGE`
+		"""
+		return cls(style=ComponentsButton.style.gray, label='Back', custom_id=ComponentsButton.ID_PREVIOUS_PAGE)
+	
+	@classmethod
+	def basic_next(cls) -> 'ComponentsButton':
+		"""|class method| A factory method that returns a :class:`ComponentsButton` with the following parameters set:
+		
+		- style: `ComponentsButton.style.gray`
+		- label: "Next"
+		- custom_id: `ComponentsButton.ID_NEXT_PAGE`
+		"""
+		return cls(style=ComponentsButton.style.gray, label='Next', custom_id=ComponentsButton.ID_NEXT_PAGE)
+	
+	@classmethod
+	def basic_go_to_first_page(cls) -> 'ComponentsButton':
+		"""|class method| A factory method that returns a :class:`ComponentsButton` with the following parameters set:
+		
+		- style: `ComponentsButton.style.gray`
+		- label: "First Page"
+		- custom_id: `ComponentsButton.ID_GO_TO_FIRST_PAGE`
+		"""
+		return cls(style=ComponentsButton.style.gray, label='First Page', custom_id=ComponentsButton.ID_GO_TO_FIRST_PAGE)
+	
+	@classmethod
+	def basic_go_to_last_page(cls) -> 'ComponentsButton':
+		"""|class method| A factory method that returns a :class:`ComponentsButton` with the following parameters set:
+		
+		- style: `ComponentsButton.style.gray`
+		- label: "Last Page"
+		- custom_id: `ComponentsButton.ID_GO_TO_LAST_PAGE`
+		"""
+		return cls(style=ComponentsButton.style.gray, label='Last Page', custom_id=ComponentsButton.ID_GO_TO_LAST_PAGE)
+	
+	@classmethod
+	def basic_go_to_page(cls) -> 'ComponentsButton':
+		"""|class method| A factory method that returns a :class:`ComponentsButton` with the following parameters set:
+		
+		- style: `ComponentsButton.style.gray`
+		- label: "Page Selection"
+		- custom_id: `ComponentsButton.ID_GO_TO_PAGE`
+		"""
+		return cls(style=ComponentsButton.style.gray, label='Page Selection', custom_id=ComponentsButton.ID_GO_TO_PAGE)
+	
+	@classmethod
+	def basic_end_session(cls) -> 'ComponentsButton':
+		"""|class method| A factory method that returns a :class:`ComponentsButton` with the following parameters set:
+		
+		- style: `ComponentsButton.style.gray`
+		- label: "Close"
+		- custom_id: `ComponentsButton.ID_END_SESSION`
+		"""
+		return cls(style=ComponentsButton.style.gray, label='Close', custom_id=ComponentsButton.ID_END_SESSION)
+	
 	@property
 	def clicked_by(self) -> Set[discord.Member]:
 		"""
