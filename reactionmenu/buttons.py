@@ -60,6 +60,23 @@ class ComponentsButton(dislash.Button):
 	EMOJI_END_SESSION = 	'❌'
 
 	def __init__(self, *, style: dislash.ButtonStyle, label: str, custom_id: str=None, emoji: Union[discord.PartialEmoji, str]=None, url: str=None, disabled: bool=False, followup: 'ComponentsButton.Followup'=None):
+		"""
+			.. Breakdown ::
+				the following if statement prevents the custom_id from being :class:`None` when its not a link button but also raises an informative error. if the user was to set a style thats not "link" and forget to put the
+				custom_id (because it defaults to :class:`None`) it is possible that it would raise the error "A ComponentsButton with custom_id 'ComponentsButton.ID_NEXT_PAGE' has already been added" because its
+				going off the str representation of the style. which technically is "correct" because dislash handles all custom_ids as str. but that error wouldnt make sense to the user because to them, that button
+				was not added by them. this check just prevents alot of confusion and raises an informative error
+			
+			.. Example of how the un-informative error could be reproduced ::
+				menu.add_button(ComponentsButton(style=ComponentsButton.style.red, label='Next', custom_id=ComponentsButton.ID_NEXT_PAGE)) <-- ID_NEXT_PAGE = '0'
+				menu.add_button(ComponentsButton(style=ComponentsButton.style.red, label='Back')) <-- forgot to put custom_id, :class:`None` is converted by dislash to '0'
+
+				.. Error ::
+					Command raised an exception: ButtonsMenuException: A ComponentsButton with custom_id 'ComponentsButton.ID_NEXT_PAGE' has already been added
+		"""
+		if style != dislash.ButtonStyle.link and custom_id is None: 
+			raise ButtonsMenuException('If the ComponentsButton "style" is not "ComponentsButton.style.link", the custom_id must be set')
+		
 		self.followup = followup
 		self.__clicked_by = set()
 		self.__total_clicks = 0
