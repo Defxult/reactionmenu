@@ -85,7 +85,8 @@ pip install reactionmenu
     * [Updating a Button](#updating-a-button)
     * [Updating Pages and Buttons](#updating-pages-and-buttons)
   * [Starting/Stopping the ButtonsMenu](#startingstopping-the-buttonsmenu)
-  * [ButtonsMenu Full Example](#buttonsmenu-full-example)
+  * [All attributes for ButtonsMenu](#all-attributes-for-buttonsmenu)
+  * [All methods for ButtonsMenu](#all-methods-for-buttonsmenu)
 </details>
 
 ---
