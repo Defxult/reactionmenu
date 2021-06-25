@@ -926,4 +926,91 @@ Only one option is available when stopping the menu. If you have multiple parame
 
 </details>
 
+## All methods for ButtonsMenu
+<details>
+    <summary>Click to show all methods</summary>
+
+* `ButtonsMenu.add_button(button: ComponentsButton)`
+  * Register a button to the menu
+---
+* `ButtonsMenu.add_page(page: Union[Embed, str])`
+  * Add a page to the menu
+---
+* `ButtonsMenu.add_row(data: str)`
+  * Add text to the embed page by rows of data
+---
+* `ButtonsMenu.clear_all_pages()`
+  * Remove all pages from the menu
+---
+* `ButtonsMenu.clear_all_row_data()`
+  * Delete all the data thats been added using `ButtonsMenu.add_row()`
+---
+* `ButtonsMenu.disable_all_buttons()`
+  * Disable all buttons on the menu
+---
+* `ButtonsMenu.disable_button(button: ComponentsButton)`
+  * Disable a button on the menu
+---
+* `ButtonsMenu.enable_all_buttons()`
+  * Enable all buttons on the menu
+---
+* `ButtonsMenu.enable_button(button: ComponentsButton)`
+  * Enable the specified button
+---
+* `ButtonsMenu.get_all_sessions() -> Union[List[ButtonsMenu], None]`
+  * *class method* Get all active menu sessions
+---
+* `ButtonsMenu.get_button(identity: str, *, search_by='label') -> Union[ComponentsButton, List[ComponentsButton], None]`
+  * Get a button that has been registered to the menu by it's label or custom_id
+---
+* `ButtonsMenu.get_menu_from_message(message_id: int) -> Union[ButtonsMenu, None]`
+  * *class method* Return the `ButtonsMenu` object associated with the message with the given ID
+---
+* `ButtonsMenu.get_session(name: str) -> Union[ButtonsMenu, List[ButtonsMenu], None]`
+  * *class method* Get a `ButtonsMenu` instance by its name
+---
+* `ButtonsMenu.get_sessions_count() -> int`
+  * *class method* Get the amount of active menu sessions
+---
+* `ButtonsMenu.initialize(bot: Union[Bot, AutoShardedBot])`
+  * *static method* The initial setup needed in order to use Discord Components (Buttons)
+---
+* `await ButtonsMenu.refresh_menu_buttons()`
+  * When the menu is running, update the message to reflect the buttons that were removed, disabled, or added
+---
+* `ButtonsMenu.remove_all_buttons()`
+  * Remove all buttons from the menu
+---
+* `ButtonsMenu.remove_button(button: ComponentsButton)`
+  * Remove a button from the menu
+---
+* `ButtonsMenu.remove_page(page_number: int)`
+  * Remove a page from the menu
+---
+* `ButtonsMenu.set_last_pages(*embeds: Embed)`
+  * On a menu with a menu_type of `ButtonsMenu.TypeEmbedDynamic`, set the pages you would like to show last. These embeds will be shown after the embeds that contain your data
+---
+* `ButtonsMenu.set_main_pages(*embeds: Embed)`
+  * On a menu with a menu_type of `ButtonsMenu.TypeEmbedDynamic`, set the pages you would like to show first. These embeds will be shown before the embeds that contain your data
+---
+* `ButtonsMenu.set_on_timeout(func: object)`
+  * Set the function to be called when the menu times out
+---
+* `await ButtonsMenu.start(*, send_to=None)`
+  * Start the menu
+---
+* `await ButtonsMenu.stop(*, delete_menu_message=False, remove_buttons=False, disable_buttons=False)`
+  * Stops the process of the menu with the option of deleting the menu's message, removing the buttons, or disabling the buttons upon stop
+---
+* `await ButtonsMenu.stop_all_sessions()`
+  * *class method* Stop all active menu sessions
+---
+* `await ButtonsMenu.stop_session(name: str, include_all=False)`
+  * *class method* Stop a menu session by it's name
+---
+* `await ButtonsMenu.update(new_pages: Union[List[Union[Embed, str]], None], new_buttons: Union[List[ComponentsButton], None])`
+  * When the menu is running, update the pages or buttons
+
+</details>
+
 [Jump to top](#github-updates-vs-pypi-updates)
