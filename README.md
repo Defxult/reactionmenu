@@ -680,6 +680,16 @@ ButtonsMenu.initialize(bot) # <-------- THIS IS REQUIRED
 
 bot.run(...)
 ```
+### Important note for initial setup
+If you're using dislash.py separately, there's no need to call `ButtonsMenu.initialize(..)` at all since the discord.py `Messageable.send` has already been altered by `SlashClient`
+```py
+# dislash.py example
+bot = commands.Bot(command_prefix="!")
+SlashClient(bot)
+
+# ButtonsMenu.initialize(bot) <----- NOT needed
+```
+
 ---
 ## Parameters of the ButtonsMenu constructor
 * `ctx` The `discord.ext.commands.Context` object
