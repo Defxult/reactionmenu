@@ -154,7 +154,12 @@ class ButtonsMenu:
         - `IncorrectType`: Parameter :param:`bot` was not of type :class:`discord.ext.commands.Bot` or :class:`discord.ext.commands.AutoShardedBot`
         """
         if isinstance(bot, (Bot, AutoShardedBot)):
-            SlashClient(bot)
+            msg_send_info = inspect.getfullargspec(discord.abc.Messageable.send)
+            if 'components' in msg_send_info.kwonlyargs:
+                # Messageable.send/discord.Message.edit has already been altered so theres no need to do anything
+                return
+            else:
+                SlashClient(bot)
         else:
             raise IncorrectType(f'When initializing the ButtonsMenu, discord.ext.commands.Bot or discord.ext.commands.AutoShardedBot is required, got {bot.__class__.__name__}')
     
