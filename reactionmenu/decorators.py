@@ -88,7 +88,7 @@ def ensure_not_primed(func):
     """Check to make sure certain methods cannot be ran once the menu has been fully started
     
         .. changes::
-            v1.1.0
+            v2.0.0
                 Added inst name check so this decorator is compatible with :class:`ButtonsMenu`
     """
     if asyncio.iscoroutinefunction(func):

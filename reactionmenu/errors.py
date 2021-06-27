@@ -27,7 +27,7 @@ import inspect
 class ButtonsMenuException(Exception):
 	"""Base :class:`ButtonsMenu` exception
 	
-		.. added:: v1.1.0
+		.. added:: v2.0.0
 	"""
 	pass
 

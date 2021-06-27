@@ -131,7 +131,7 @@ class ReactionMenu(abc.Menu):
 				This class now inherits from :abc:`Menu`
 				
 				A sizeable amount of methods and properties were moved from here to abc.py to support :class:`TextMenu`
-            v1.1.0
+            v2.0.0
                 Added initialization of :attr:`_menu_owner` to the `__init__` instead of the execute session method, etc.
 				Added :attr:_on_timeout_details
 				Added :attr:_menu_timed_out
@@ -690,7 +690,7 @@ class ReactionMenu(abc.Menu):
 					- Instead of calling str() everytime on every button emoji check, just store it in a variable to access and check later
 					- Moved to ABC
 					- Fixed issue associated with `ButtonType.GO_TO_PAGE` and kwarg `send_to` in :meth:`ReactionMenu.start`
-				v1.1.0
+				v2.0.0
 					Removed initialization of :attr:`ReactionMenu._menu_owner`. Makes more sense to set it in the `__init__`
 		"""
 		while self._is_running:
@@ -869,7 +869,7 @@ class ReactionMenu(abc.Menu):
 					- Removed [else] from ReactionMenu.STATIC/DYNAMIC check
 					- Moved #[core menu initialization] from both STATIC and DYNAMIC if checks to only one at the bottom. Having both was redundant because regardless of configuration both have the same #[core menu initialization]
 					- Now raises :exc:`NoButtons` (from decorator `menu_verification`)
-				v1.1.0
+				v2.0.0
 					Added handling for per limit type
 		"""
 		# check if the menu is limited

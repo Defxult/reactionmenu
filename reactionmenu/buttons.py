@@ -38,7 +38,7 @@ from .errors import ButtonsMenuException
 class ComponentsButton(dislash.Button):
 	"""A helper class for :class:`ButtonsMenu`. Determines the generic action a components button can perform. This should *NOT* be used with :class:`ReactionMenu` or :class:`TextMenu`
 
-		.. added:: v1.1.0
+		.. added:: v2.0.0
 	"""
 	style = dislash.ButtonStyle
 

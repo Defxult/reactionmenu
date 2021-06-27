@@ -39,7 +39,7 @@ from .errors import *
 class _PageController:
     """An helper class to control the pagination process
     
-        .. added:: v1.1.0
+        .. added:: v2.0.0
     """
 
     __slots__ = ('pages', 'total_pages', 'index')
@@ -88,7 +88,7 @@ class Menu(metaclass=abc.ABCMeta):
         .. added:: v1.0.9
 
         .. changes::
-            v1.1.0
+            v2.0.0
                 Moved session limit class variables here (.core and .text use to have their own)
                 Added :attr:`_sessions_limit_details` (used to be :attr:`_limit_message` and `_sessions_limit`)
                 Replaced :meth:`_is_currently_limited` with :meth:`_handle_session_limits` to support different types of limits
@@ -116,7 +116,7 @@ class Menu(metaclass=abc.ABCMeta):
             .. added:: v1.0.9
         
             .. changes::
-                v1.1.0
+                v2.0.0
                     Added owner
         """
         class_name = self.__class__.__name__
@@ -130,7 +130,7 @@ class Menu(metaclass=abc.ABCMeta):
         Union[:class:`discord.Member`, :class:`discord.User`]:
             The owner of the menu (the person that started the menu). If the menu was started in a DM, this will return `discord.User`
         
-            .. added:: v1.1.0
+            .. added:: v2.0.0
         """
         return self._menu_owner
     
@@ -644,7 +644,7 @@ class Menu(metaclass=abc.ABCMeta):
         -------
         The menu object. Can be :class:`None` if the menu is not found in this list of active menu sessions
             
-            .. added:: v1.1.0
+            .. added:: v2.0.0
         """
         for menu in cls._active_sessions:
             if menu._msg.id == message_id:
@@ -655,7 +655,7 @@ class Menu(metaclass=abc.ABCMeta):
     def remove_limit(cls):
         """|class method| Remove the limits currently set for reaction menu's
         
-            .. added:: v1.1.0
+            .. added:: v2.0.0
         """
         cls._sessions_limited = False
         cls._sessions_limit_details = None
@@ -669,7 +669,7 @@ class Menu(metaclass=abc.ABCMeta):
         :class:`list`:
             Can return :class:`None` if the there are no active DM sessions
 
-            .. added:: v1.1.0
+            .. added:: v2.0.0
         """
         dm_sessions = [session for session in cls._active_sessions if session.message.guild is None]
         return dm_sessions if dm_sessions else None
@@ -714,7 +714,7 @@ class Menu(metaclass=abc.ABCMeta):
             .. added:: v1.0.9
 
             .. changes::
-                v1.1.0
+                v2.0.0
                     Changed return type from :class:`list` to :class:`None` if list is empty
         """
         return cls._active_sessions if cls._active_sessions else None
@@ -793,7 +793,7 @@ class Menu(metaclass=abc.ABCMeta):
                 v1.0.9
                     Replaced now removed class :meth:`_cancel_all_sessions` with class :meth:`_force_stop`
                     Added :exc:`IncorrectType`
-                v1.1.0
+                v2.0.0
                     Added :param:`per` and initialization of new limits
         """
         if len(cls._active_sessions) != 0:
@@ -904,7 +904,7 @@ class Menu(metaclass=abc.ABCMeta):
     async def _handle_session_limits(self) -> bool:
         """|coro| Determine if the menu session is currently limited, if so, send the error message and return `False` indicating that further code execution (starting the menu) should be cancelled
         
-            .. added:: v1.1.0
+            .. added:: v2.0.0
 
             .. note:: use to be :meth:`_is_currently_limited`
         """
@@ -1225,7 +1225,7 @@ class Menu(metaclass=abc.ABCMeta):
         ------
         - `ReactionMenuException`: Parameter "func" was not a callable object
 
-            ..added:: v1.1.0
+            ..added:: v2.0.0
         """
         if not callable(func): raise ReactionMenuException('Parameter "func" must be callable')
         self._on_timeout_details = func
@@ -1364,7 +1364,7 @@ class Menu(metaclass=abc.ABCMeta):
 
                         - Removed ID handling for static/dynamic task names (:meth:`_get_proper_task`)
                         - Moved to ABC
-                    v1.1.0
+                    v2.0.0
                         Added handling for on_timeout setting
         """
         if self._is_running:

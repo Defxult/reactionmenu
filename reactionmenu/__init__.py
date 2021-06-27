@@ -14,5 +14,5 @@ from .buttons_menu import ButtonsMenu
 from .core import ReactionMenu
 from .text import TextMenu
 
-__version__ = '1.1.0'
+__version__ = '2.0.0'
 __source__ = 'https://github.com/Defxult/reactionmenu'
