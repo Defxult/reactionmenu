@@ -11,11 +11,8 @@ pip install git+https://github.com/Defxult/reactionmenu.git
 ```
 You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the Github version of this package. If you are using the PyPI version of this package, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
 
-* `Github: v1.1.0.dev`
-* `PyPI: v1.0.9`
-
-If you are using `v1.1.0.dev` and discover any bugs, please don't hesitate to put them in [issues](https://github.com/Defxult/reactionmenu/issues) so they can be fixed before release 😀
-
+* `Github: v1.1.0`
+* `PyPI: v1.1.0`
 ---
 ## Now featuring Buttons! 
 ![buttons_row](https://cdn.discordapp.com/attachments/655186216060321816/855045265793744916/unknown.png)
