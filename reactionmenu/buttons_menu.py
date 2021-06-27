@@ -346,9 +346,11 @@ class ButtonsMenu:
                     # before we continue, check if there are any duplicate named channels/no matching names found if a str was provided
                     if isinstance(send_to, str):
                         matched_channels = [ch for ch in self._ctx.guild.text_channels if ch.name == send_to]
-                        NO_CHANNELS_ERROR = f'When using parameter "send_to" in ButtonsMenu.start(), there were no channels with the name {send_to!r}'
-                        MULTIPLE_CHANNELS_ERROR = f'When using parameter "send_to" in ButtonsMenu.start(), there were {len(matched_channels)} channels with the name {send_to!r}. With multiple channels having the same name, the intended channel is unknown'  
-                        raise ButtonsMenuException(NO_CHANNELS_ERROR if len(matched_channels) == 0 else MULTIPLE_CHANNELS_ERROR)
+                        if len(matched_channels) == 0:
+                            raise ButtonsMenuException(f'When using parameter "send_to" in ButtonsMenu.start(), there were no channels with the name {send_to!r}')
+                        
+                        elif len(matched_channels) >= 2:
+                            raise ButtonsMenuException(f'When using parameter "send_to" in ButtonsMenu.start(), there were {len(matched_channels)} channels with the name {send_to!r}. With multiple channels having the same name, the intended channel is unknown')
                     
                     for channel in self._ctx.guild.text_channels:
                         if isinstance(send_to, str):
