@@ -153,6 +153,7 @@ class ComponentsButton(dislash.Button):
 			"""
 			if not callable(func): raise ButtonsMenuException('Parameter "func" must be callable')
 			Details = namedtuple('Details', ['func', 'args', 'kwargs'])
+			func = func.callback if isinstance(func, Command) else func
 			self._caller_info = Details(func=func, args=args, kwargs=kwargs)
 	
 	@classmethod
