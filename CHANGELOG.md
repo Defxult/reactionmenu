@@ -3,7 +3,7 @@
 * `RM` = `ReactionMenu`
 * `TM` = `TextMenu`
 
-## v2.0.0 » Upcoming release
+## v2.0.0 » Jun. 27, 2021
 #### New Features
 * Added new type of menu (`ButtonsMenu`). Discords new [Buttons](https://support.discord.com/hc/en-us/articles/1500012250861-Bots-Buttons) feature
 * `RM|TM` Added the ability to call a function upon menu timeout
