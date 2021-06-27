@@ -3,6 +3,10 @@
 * `RM` = `ReactionMenu`
 * `TM` = `TextMenu`
 
+## v2.0.1 » Future release
+#### Bug Fixes
+* `BM` Fixed an issue where a button with `ComponentsButton.ID_CALLER` could not call discord.py commands
+
 ## v2.0.0 » Jun. 27, 2021
 #### New Features
 * Added new type of menu (`ButtonsMenu`). Discords new [Buttons](https://support.discord.com/hc/en-us/articles/1500012250861-Bots-Buttons) feature
