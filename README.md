@@ -787,7 +787,12 @@ The following are the rules set by Discord for Buttons:
   * `ComponentsButton.ID_END_SESSION`
   * `ComponentsButton.ID_CALLER`
   * `ComponentsButton.ID_SEND_MESSAGE`
+  * `ComponentsButton.ID_CUSTOM_EMBED` (only valid with menu type `ButtonsMenu.TypeEmbed`)
 * `emoji` (`discord.PartialEmoji`) Emoji used for the button
+  * `ComponentsButton(..., emoji='😄')` 
+  * `ComponentsButton(..., emoji='<:miscTwitter:705423192818450453>')`
+  * `ComponentsButton(..., emoji='\U000027a1')`
+  * `ComponentsButton(..., emoji='\N{winking face}')`
 * `url` (`str`) URL for a button with style `ComponentsButton.style.link`
 * `disabled` (`bool`) If the button should be disabled
 * `followup` (`ComponentsButton.Followup`) The message sent after the button is clicked. Only available for buttons that have a `custom_id` of `ComponentsButton.ID_CALLER` or `ComponentsButton.ID_SEND_MESSAGE`. `ComponentsButton.Followup` is a class that has parameters similiar to discord.py's `Messageable.send()`, and is used to control if a message is ephemeral (hidden), contains a file, embed, tts, etc...
@@ -818,10 +823,8 @@ next_button = ComponentsButton(style=ComponentsButton.style.secondary, label='Ne
 # All other ComponentsButton are created the same way as the last 2 EXCEPT
 # 1 - ComponentsButton.ID_CALLER
 # 2 - ComponentsButton.ID_SEND_MESSAGE
+# 3 - ComponentsButton.ID_CUSTOM_EMBED
 
-# ComponentsButton.ID_SEND_MESSAGE
-message_followup = ComponentsButton.Followup('This message is hidden!', ephemeral=True)
-message_button = ComponentsButton(style=ComponentsButton.style.green, label='Message', custom_id=ComponentsButton.ID_SEND_MESSAGE, followup=message_followup)
 
 # ComponentsButton.ID_CALLER
 def say_hello(name: str):
@@ -831,14 +834,22 @@ call_followup = ComponentsButton.Followup()
 call_followup.set_caller_details(say_hello, 'John')
 caller_button = ComponentsButton(style=ComponentsButton.style.red, label='Say Hi', custom_id=ComponentsButton.ID_CALLER, followup=call_followup)
 
+# ComponentsButton.ID_SEND_MESSAGE
+message_followup = ComponentsButton.Followup('This message is hidden!', ephemeral=True)
+message_button = ComponentsButton(style=ComponentsButton.style.green, label='Message', custom_id=ComponentsButton.ID_SEND_MESSAGE, followup=message_followup)
+
+# ComponentsButton.ID_CUSTOM_EMBED
+custom_embed_button = ComponentsButton(style=ComponentsButton.style.blurple, label='Social Media Info', custom_id=ComponentsButton.ID_CUSTOM_EMBED, followup=ComponentsButton.Followup(embed=discord.Embed(...)))
+
 menu.add_button(link_button)
 menu.add_button(back_button)
 menu.add_button(next_button)
-menu.add_button(message_button)
 menu.add_button(caller_button)
+menu.add_button(message_button)
+menu.add_button(custom_embed_button)
 ```
 ---
-> **NOTE:** When it comes to buttons with a `custom_id` of `ComponentsButton.ID_CALLER`, `ComponentsButton.ID_SEND_MESSAGE`, or link buttons, you can add as many as you'd like as long as in total it's 25 buttons or less. For all other button ID's, each menu can only have one.
+> **NOTE:** When it comes to buttons with a `custom_id` of `ComponentsButton.ID_CALLER`, `ComponentsButton.ID_SEND_MESSAGE`, `ComponentsButton.ID_CUSTOM_EMBED`, or link buttons, you can add as many as you'd like as long as in total it's 25 buttons or less. For all other button ID's, each menu can only have one.
 
 ## Updating ComponentsButton and Pages
 * Associated methods
@@ -881,6 +892,45 @@ await menu.update(new_pages=[hello_embed, goodbye_embed], new_buttons=[link_butt
 
 > **NOTE**: When using `ButtonsMenu.update(...)`, there is no need to use `ButtonsMenu.refresh_menu_buttons()` because they are updated during the update call. 
 
+---
+##### ComponentsButton Methods
+The `ComponentsButton` class comes with a set factory methods (class methods) that returns a `ComponentsButton` with parameters set according to their `custom_id`.
+
+* `ComponentsButton.basic_back()`
+  * `style`: `ComponentsButton.style.gray`
+  * `label`: "Back"
+  * `custom_id`: `ComponentsButton.ID_PREVIOUS_PAGE`
+* `ComponentsButton.basic_next()`
+	* `style`: `ComponentsButton.style.gray`
+	* `label`: "Next"
+	* `custom_id`: `ComponentsButton.ID_NEXT_PAGE`
+* `ComponentsButton.basic_go_to_first_page()`
+	* `style`: `ComponentsButton.style.gray`
+	* `label`: "First Page"
+	* `custom_id`: `ComponentsButton.ID_GO_TO_FIRST_PAGE`
+* `ComponentsButton.basic_go_to_last_page()`
+	* `style`: `ComponentsButton.style.gray`
+	* `label`: "Last Page"
+	* `custom_id`: `ComponentsButton.ID_GO_TO_LAST_PAGE`
+* `ComponentsButton.basic_go_to_page()`
+	* `style`: `ComponentsButton.style.gray`
+	* `label`: "Page Selection"
+	* `custom_id`: `ComponentsButton.ID_GO_TO_PAGE`
+* `ComponentsButton.basic_end_session()`
+	* style: `ComponentsButton.style.gray`
+	* label: "Close"
+	* custom_id: `ComponentsButton.ID_END_SESSION`
+
+```py
+menu = ButtonsMenu(ctx, ...)
+menu.add_page(...)
+menu.add_page(...)
+
+menu.add_button(ComponentsButton.basic_back())
+menu.add_button(ComponentsButton.basic_next())
+
+await menu.start()
+```
 ---
 ## Starting/Stopping the ButtonsMenu
 * Associated methods
