@@ -39,10 +39,18 @@ class ComponentsButton(dislash.Button):
 	"""A helper class for :class:`ButtonsMenu`. Determines the generic action a components button can perform. This should *NOT* be used with :class:`ReactionMenu` or :class:`TextMenu`
 
 		.. added:: v2.0.0
+
+		.. changes::
+			v2.0.1
+				Added :attr:`ID_CUSTOM_EMBED`
+				Added :attr:`_RE_IDs`
+				Added :attr:`_RE_UNIQUE_ID_SET`
+				Removed :meth:`_get_all_ids`. Was insufficient because buttons that were not base navigation buttons, there ID is dynamically created
+				Removed :meth:`_to_dict_ids`. Unused
 	"""
 	style = dislash.ButtonStyle
 
-	ID_NEXT_PAGE =          '0'
+	ID_NEXT_PAGE =          '0' # this is dislash.py's :class:`None` if custom_id=None (handler already made, see __init__ for details)
 	ID_PREVIOUS_PAGE =      '1'
 	ID_GO_TO_FIRST_PAGE =   '2'
 	ID_GO_TO_LAST_PAGE =    '3'
@@ -50,6 +58,7 @@ class ComponentsButton(dislash.Button):
 	ID_END_SESSION =        '5'
 	ID_CALLER =             '6'
 	ID_SEND_MESSAGE =       '7'
+	ID_CUSTOM_EMBED = 		'8'
 
 	# would have imported from .abc, but circular imports
 	EMOJI_BACK_BUTTON = 	'◀️'
@@ -58,6 +67,9 @@ class ComponentsButton(dislash.Button):
 	EMOJI_LAST_PAGE =   	'⏩'
 	EMOJI_GO_TO_PAGE =  	'🔢'
 	EMOJI_END_SESSION = 	'❌'
+
+	_RE_IDs = r'[0-8]|[0-8]_\d+'
+	_RE_UNIQUE_ID_SET = r'_\d+'
 
 	def __init__(self, *, style: dislash.ButtonStyle, label: str, custom_id: str=None, emoji: Union[discord.PartialEmoji, str]=None, url: str=None, disabled: bool=False, followup: 'ComponentsButton.Followup'=None):
 		"""
@@ -96,7 +108,7 @@ class ComponentsButton(dislash.Button):
 			Message to send (defaults to :class:`None`)
 
 		embed: :class:`discord.Embed`
-			Embed to send (defaults to :class:`None`)
+			Embed to send. Can also bet set for buttons with a custom_id of `ComponentsButton.ID_CUSTOM_EMBED` (defaults to :class:`None`)
 
 		file: :class:`discord.File`
 			File to send (defaults to :class:`None`) *NOTE* If the :class:`ComponentsButton` custom_id is `ComponentsButton.ID_SEND_MESSAGE`, the file will be ignored because of discord API limitations
@@ -127,6 +139,7 @@ class ComponentsButton(dislash.Button):
 			self._caller_info: 'NamedTuple' = None
 		
 		def _to_dict(self) -> dict:
+			"""This is a :class:`ComponentsButton.Followup` method"""
 			new = {}
 			for i in self.__slots__:
 				new[i] = getattr(self, i)
@@ -150,6 +163,10 @@ class ComponentsButton(dislash.Button):
 			Raises
 			------
 			- `ButtonsMenuException`: Parameter "func" was not a callable object
+
+				.. changes::
+					v2.0.1
+						Added func.callback check (ComponentsButton.ID_CALLER fix if func is a discord.py command)
 			"""
 			if not callable(func): raise ButtonsMenuException('Parameter "func" must be callable')
 			Details = namedtuple('Details', ['func', 'args', 'kwargs'])
@@ -247,34 +264,16 @@ class ComponentsButton(dislash.Button):
 		return self.__last_clicked
 
 	@classmethod
-	def _all_ids(cls) -> List[int]:
-		ids = []
-		for key, val in cls.__dict__.items():
-			key = str(key) # str() because of ButtonStyle
-			if key.startswith('ID_'):
-				ids.append(val)
-		return ids
-
-	@classmethod
 	def _get_id_name_from_id(cls, id_: str) -> str:
-		# if its a CALLER or SEND_MESSAGE id, convert to it's true representation, because when passed, it's form is "[ButtonID]_[unique ID]"
-		# see :meth:`_button_add_check` for details
-		CALLER_OR_SEND = re.compile(r'_\d+')
-		if re.search(CALLER_OR_SEND, id_):
-			id_ = re.sub(CALLER_OR_SEND, '', id_)
+		# if its a CALLER, SEND_MESSAGE, or CUSTOM_EMBED id, convert to it's true representation, because when passed, it's form is "[ButtonID]_[unique ID]"
+		# see :meth:`_button_add_check` or :meth:`_maybe_custom_id` for details
+		unique_id_set = re.compile(ComponentsButton._RE_UNIQUE_ID_SET)
+		if re.search(unique_id_set, id_):
+			id_ = re.sub(unique_id_set, '', id_)
 		
 		for key, val in cls.__dict__.items():
 			if id_ == val:
 				return f'ComponentsButton.{key}'
-
-	@classmethod
-	def _to_dict_ids(cls) -> dict:
-		new = {}
-		for key, val in cls.__dict__.items():
-			key = str(key) # str() because of ButtonStyle
-			if key.startswith('ID_'):
-				new[key] = val
-		return new
 
 class ButtonType(Enum):
 	"""A helper class for :class:`ReactionMenu` and :class:`TextMenu`. Determines the generic action a button can perform. This should *NOT* be used with :class:`ButtonsMenu`
