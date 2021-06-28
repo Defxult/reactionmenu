@@ -477,7 +477,12 @@ class ButtonsMenu:
         return kwargs
 
     async def _execute_interactive_session(self):
-        """|coro| Handles all processing of the pagination session"""
+        """|coro| Handles all processing of the pagination session
+        
+            .. changes::
+                v2.0.1
+                    Added handling for `ComponentsButton.ID_CUSTOM_EMBED`
+        """
         ButtonsMenu._active_sessions.append(self)
         while self._is_running:
             try:
@@ -614,6 +619,15 @@ class ButtonsMenu:
                         followup_kwargs['type'] = ResponseType.ChannelMessageWithSource
                         await inter.reply(**followup_kwargs)
                     
+                    elif btn.custom_id.startswith(ComponentsButton.ID_CUSTOM_EMBED):
+                        if self._menu_type != ButtonsMenu.TypeEmbed:
+                            raise ButtonsMenuException('Buttons with custom_id ComponentsButton.ID_CUSTOM_EMBED can only be used when the menu_type is ButtonsMenu.TypeEmbed')
+                        else:
+                            if cmp_btn.followup is None or cmp_btn.followup.embed is None:
+                                raise ButtonsMenuException('ComponentsButton custom_id was set as ComponentsButton.ID_CUSTOM_EMBED but the "followup" kwargs for that ComponentsButton was not set or the "embed" kwarg for the followup was not set')
+                            
+                            await inter.reply(embed=cmp_btn.followup.embed, type=ResponseType.UpdateMessage)
+                    
                     else:
                         # this shouldnt execute because of :meth:`_button_add_check`, but just in case i missed something, raise the appropriate error
                         raise ButtonsMenuException('ComponentsButton custom_id was not recognized')
@@ -692,6 +706,11 @@ class ButtonsMenu:
                     self._refresh_page_director_info(ButtonsMenu.TypeEmbed, self.__pages)
                 else:
                     self._refresh_page_director_info(ButtonsMenu.TypeText, self.__pages)
+            else:
+                # page controller needs to be reset because even though there are no new pages. the page index is still in the location BEFORE the update
+                # EXAMPLE: 5 page menu > click Next button  (on page 2) > update menu no new pages > click Next button (on page 3)
+                # that makes no sense and resetting the page controller fixes that issue 
+                self._pc = _PageController(self.__pages)
             
             # determine the action the user wants for new_buttons
             kwargs_to_pass = {}
@@ -723,7 +742,7 @@ class ButtonsMenu:
             await self._msg.edit(**kwargs_to_pass)
     
     async def refresh_menu_buttons(self):
-        """|coro| When the menu is running, update the message to reflect the buttons that were removed, disabled, or added"""
+        """|coro| When the menu is running, update the message to reflect the buttons that were removed, enabled, or disabled"""
         if self._is_running:
             if self._row_of_buttons:
                 await self._msg.edit(components=self._initialize_action_row())
@@ -814,19 +833,25 @@ class ButtonsMenu:
         self._on_timeout_details = func
     
     def _button_add_check(self, button: ComponentsButton):
-        """A set of checks to ensure the proper button is being added"""
+        """A set of checks to ensure the proper button is being added
+        
+            .. changes::
+                Replaced :meth:`_get_all_ids` with re handling
+        """
         # ensure they are using only the ComponentsButton and not ReactionMenus :class:`Button` / :class:`ButtonType`
         if isinstance(button, ComponentsButton):
 
             # ensure the button custom_id is a valid one
-            if button.custom_id not in ComponentsButton._all_ids():
+            # NOTE: this needs to be an re search because of buttons with an ID of "[ID]_[unique ID]"
+            if not re.search(ComponentsButton._RE_IDs, button.custom_id):
                 if button.style == ComponentsButton.style.link:
                     pass
                 else:
                     raise ButtonsMenuException(f'ComponentsButton custom_id {button.custom_id!r} was not recognized')
 
-            # ensure there are no duplicate custom_ids, excluding ComponentsButton.ID_CALLER and ComponentsButton.ID_SEND_MESSAGE
-            active_button_ids: List[str] = [btn.custom_id for btn in self._row_of_buttons if btn.custom_id not in (ComponentsButton.ID_CALLER, ComponentsButton.ID_SEND_MESSAGE)]
+            # ensure there are no duplicate custom_ids for the base navigation buttons
+            # NOTE: there's no need to have a check for buttons that are not navigation buttons because they have a unique ID and duplicates of those are allowed
+            active_button_ids: List[str] = [btn.custom_id for btn in self._row_of_buttons]
             if button.custom_id in active_button_ids:
                 name = ComponentsButton._get_id_name_from_id(button.custom_id)
                 raise ButtonsMenuException(f'A ComponentsButton with custom_id {name!r} has already been added')
@@ -838,8 +863,13 @@ class ButtonsMenu:
             raise IncorrectType(f'When adding a button to the ButtonsMenu, the button type must be ComponentsButton, got {button.__class__.__name__}')
     
     def _maybe_unique_id(self, button: ComponentsButton):
-        """Create a unique ID if the custom_id is ComponentsButton.ID_SEND_MESSAGE or ComponentsButton.ID_CALLER"""
-        if button.custom_id in (ComponentsButton.ID_CALLER, ComponentsButton.ID_SEND_MESSAGE):
+        """Create a unique ID if the custom_id is ComponentsButton.ID_SEND_MESSAGE, ComponentsButton.ID_CALLER, or ComponentsButton.ID_CUSTOM_EMBED
+        
+            .. changes::
+                v2.0.1
+                    Added handling for :attr:`ComponentsButton.ID_CUSTOM_EMBED`
+        """
+        if button.custom_id in (ComponentsButton.ID_CALLER, ComponentsButton.ID_SEND_MESSAGE, ComponentsButton.ID_CUSTOM_EMBED):
             button.custom_id = f'{button.custom_id}_{id(button)}'
     
     @ensure_not_primed
@@ -1158,6 +1188,10 @@ class ButtonsMenu:
         - `ButtonsMenuException`: The :class:`ButtonsMenu` menu_type was not recognized or there was an issue with locating the :param:`send_to` channel if set
         - `DescriptionOversized`: When using a menu_type of `ButtonsMenu.TypeEmbedDynamic`, the embed description was over discords size limit
         - `IncorrectType`: Parameter :param:`send_to` was not :class:`str`, :class:`int`, or :class:`discord.TextChannel`
+        
+            .. changes::
+                v2.0.1
+                    Added handling for buttons with custom_id ComponentsButton.ID_CUSTOM_EMBED
         """
         # ------------------------------- CHECKS -------------------------------
 
@@ -1166,9 +1200,7 @@ class ButtonsMenu:
         if 'components' not in send_info.kwonlyargs:
             raise MissingSetting('The "components" kwarg is missing from the .send() method. Did you forget to initialize the menu first using static method ButtonsMenu.initialize(...)?')
 
-        # ensure at least 1 page exists before starting the menu
-        if self._menu_type in (ButtonsMenu.TypeEmbed, ButtonsMenu.TypeText) and not self.__pages:
-            raise NoPages("You cannot start a ButtonsMenu when you haven't added any pages")
+        # NOTE: each at least 1 page check is done in it's own if statement to avoid clashing between pages and custom embeds
         
         # NOTE: at least 1 page check for add_row is done in "(dynamic menu)"
         
@@ -1185,8 +1217,55 @@ class ButtonsMenu:
         # add page (normal menu)
         if self._menu_type == ButtonsMenu.TypeEmbed:
             self._refresh_page_director_info(ButtonsMenu.TypeEmbed, self.__pages)
-            self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], components=self._initialize_action_row()) # allowed_mentions not needed in embeds
-        
+
+            base_nav_btns_ids = (ComponentsButton.ID_PREVIOUS_PAGE, ComponentsButton.ID_NEXT_PAGE, ComponentsButton.ID_GO_TO_FIRST_PAGE, ComponentsButton.ID_GO_TO_LAST_PAGE, ComponentsButton.ID_GO_TO_PAGE)
+            navigation_btns = [btn for btn in self._row_of_buttons if btn.custom_id in base_nav_btns_ids]
+
+            # an re search is required here because buttons with ID_CUSTOM_EMBED dont have a normal ID, the ID is "8_[unique ID]"
+            custom_embed_btns = [btn for btn in self._row_of_buttons if re.search(r'8_\d+', btn.custom_id)]
+
+            if all([not self.__pages, not custom_embed_btns]):
+                raise NoPages("You cannot start a ButtonsMenu when you haven't added any pages")
+
+            # normal pages, no custom embeds
+            if self.__pages and not custom_embed_btns:
+                self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], components=self._initialize_action_row()) # allowed_mentions not needed in embeds
+            
+            # only custom embeds
+            elif not self.__pages and custom_embed_btns:
+                # since there are only custom embeds, there is no need for base navigation buttons, so remove them if any
+                for nav_btn in navigation_btns:
+                    if nav_btn in self._row_of_buttons:
+                        self._row_of_buttons.remove(nav_btn)
+                
+                # ensure all custom embed buttons have the proper values set
+                for custom_btn in custom_embed_btns:
+                    if custom_btn.followup is None or custom_btn.followup.embed is None:
+                        raise ButtonsMenuException('ComponentsButton custom_id was set as ComponentsButton.ID_CUSTOM_EMBED but the "followup" kwargs for that ComponentsButton was not set or the "embed" kwarg for the followup was not set')
+                
+                # since there are only custom embeds, self.__pages is still set to :class:`None`, so set the embed in `.send()` to the first custom embed in the list
+                self._msg = await self._handle_send_to(send_to).send(embed=custom_embed_btns[0].followup.embed, components=self._initialize_action_row())
+            
+            # normal pages and custom embeds
+            else:
+                # since there are custom embeds, ensure there is at least one base navigation button so they can switch between the normal pages and custom embeds
+                if not navigation_btns:
+                    error_msg = inspect.cleandoc(
+                        """
+                        Since you have custom embeds set, there needs to be at least one base navigation button. Without one, there's no way to go back to the normal pages in the menu if a custom embed button is clicked.
+                        The available base navigation buttons are buttons with the custom_id:
+
+                        - ComponentsButton.ID_PREVIOUS_PAGE
+                        - ComponentsButton.ID_NEXT_PAGE
+                        - ComponentsButton.ID_GO_TO_FIRST_PAGE
+                        - ComponentsButton.ID_GO_TO_LAST_PAGE
+                        - ComponentsButton.ID_GO_TO_PAGE
+                        """
+                    )
+                    raise ButtonsMenuException(error_msg)
+                else:
+                    self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], components=self._initialize_action_row()) # allowed_mentions not needed in embeds
+
         # add row (dynamic menu)
         elif self._menu_type == ButtonsMenu.TypeEmbedDynamic:
             for data_clump in self._chunks(self._dynamic_data_builder, self.__rows_requested):
@@ -1218,6 +1297,9 @@ class ButtonsMenu:
         
         # add page (text menu)
         else:
+            if not self.__pages:
+                raise NoPages("You cannot start a ButtonsMenu when you haven't added any pages")
+            
             self._refresh_page_director_info(ButtonsMenu.TypeText, self.__pages)
             self._msg = await self._handle_send_to(send_to).send(content=self.__pages[0], components=self._initialize_action_row(), allowed_mentions=self.allowed_mentions)
         
