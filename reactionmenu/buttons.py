@@ -45,6 +45,7 @@ class ComponentsButton(dislash.Button):
 				Added :attr:`ID_CUSTOM_EMBED`
 				Added :attr:`_RE_IDs`
 				Added :attr:`_RE_UNIQUE_ID_SET`
+				Added :attr:`__menu`
 				Removed :meth:`_get_all_ids`. Was insufficient because buttons that were not base navigation buttons, there ID is dynamically created
 				Removed :meth:`_to_dict_ids`. Unused
 	"""
@@ -93,6 +94,7 @@ class ComponentsButton(dislash.Button):
 		self.__clicked_by = set()
 		self.__total_clicks = 0
 		self.__last_clicked: datetime = None
+		self.__menu: 'ButtonsMenu' = None
 		super().__init__(style=style, label=label, emoji=emoji, custom_id=custom_id, url=url, disabled=disabled)
 
 	def __repr__(self):
@@ -243,6 +245,17 @@ class ComponentsButton(dislash.Button):
 		"""
 		return self.__clicked_by
 
+	@property
+	def menu(self) -> 'ButtonsMenu':
+		"""
+		Returns
+		-------
+		:class:`ButtonsMenu`: The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
+		
+			.. added:: v2.0.1
+		"""
+		return self.__menu
+	
 	@property
 	def total_clicks(self) -> int:
 		"""
