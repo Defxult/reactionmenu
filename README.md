@@ -82,6 +82,7 @@ pip install reactionmenu
   * [Updating ComponentsButton and Pages](#updating-componentsbutton-and-pages)
     * [Updating a Button](#updating-a-button)
     * [Updating Pages and Buttons](#updating-pages-and-buttons)
+  * [ButtonsMenu Relays](#buttonsmenu-relays)
   * [Starting/Stopping the ButtonsMenu](#startingstopping-the-buttonsmenu)
   * [All attributes for ButtonsMenu](#all-attributes-for-buttonsmenu)
   * [All methods for ButtonsMenu](#all-methods-for-buttonsmenu)
@@ -98,6 +99,13 @@ This package comes with several methods and options in order to make a discord r
 ```py
 menu = ReactionMenu(ctx, back_button='◀️', next_button='▶️', config=ReactionMenu.STATIC) 
 ```
+---
+## Intents
+If your discord.py version is 1.5.0+, in order for the `ReactionMenu` to function normally, the following intents are needed
+```py
+bot = commands.Bot(..., intents=discord.Intents(messages=True, reactions=True, guilds=True, members=True))
+```
+
 ---
 ## Parameters of the ReactionMenu constructor
 * `ctx` The `discord.ext.commands.Context` object
@@ -350,6 +358,7 @@ await menu.start()
 Menu relays are functions that are called anytime a reaction that is apart of a menu is pressed. It is considered as an extension of a `Button` with `ButtonType.CALLER`. Unlike `ButtonType.CALLER` which provides no details about the interactions on the menu, relays do.
 * Associated method
   * `ReactionMenu.set_relay(Callable[[NamedTuple], None])`
+  * `ReactionMenu.remove_relay()`
 
 When creating a function for your relay, that function must contain a single positional argument. When a reaction is pressed, a `RelayPayload` object (a named tuple) is passed to that function. The attributes of `RelayPayload` are:
 * member (`discord.Member`) The person who pressed the reaction
@@ -530,6 +539,9 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 ---
 * `ReactionMenu.remove_page(page_number: int)`
   * On a static menu, delete a certain page that has been added
+---
+* `ReactionMenu.remove_relay()`
+  * Remove the relay that's been set
 ---
 * `ReactionMenu.set_as_auto_paginator(turn_every: Union[int, float])`
   * Set the menu to turn pages on it's own every x seconds. If this is set, reactions will not be applied to the menu
@@ -804,6 +816,7 @@ The following attributes (properties) are made specifically for a `ComponentsBut
 | `clicked_by` | `Set[discord.Member]` | The members who clicked the button
 | `total_clicks` | `int` | Amount of clicks from the button
 | `last_clicked` | `datetime` | The time in UTC for when the button was last clicked
+| `menu` | `ButtonsMenu` | The menu the button is attached to
 
 ##### Adding a ComponentsButton
 ```py
@@ -932,6 +945,28 @@ menu.add_button(ComponentsButton.basic_next())
 await menu.start()
 ```
 ---
+## ButtonsMenu Relays
+Menu relays are functions that are called anytime a button that is apart of a menu is clicked. It is considered as an extension of a `ComponentsButton` with an ID of `ComponentsButton.ID_CALLER`. Unlike caller buttons which provides no details about the interactions on the menu, relays do.
+* Associated methods
+  * `ButtonsMenu.set_relay()`
+  * `ButtonsMenu.remove_relay()`
+
+When creating a function for your relay, that function must contain a single positional argument. When a button is clicked, a `RelayPayload` object (a named tuple) is passed to that function. The attributes of RelayPayload are:
+* `member` (`discord.Member`) The person who clicked the button
+* `button` (`ComponentsButton`) The [button](#componentsbutton) that was clicked
+
+Example:
+```py
+async def enter_giveaway(payload):
+    member = payload.member
+    channel = payload.button.menu.message.channel
+    await channel.send(f"{member.mention}, you've entered the giveaway!")
+
+menu = ButtonsMenu(ctx, ...)
+menu.set_relay(enter_giveaway)
+```
+
+---
 ## Starting/Stopping the ButtonsMenu
 * Associated methods
   * `await ButtonsMenu.start(*, send_to=None)`
@@ -1046,6 +1081,9 @@ Only one option is available when stopping the menu. If you have multiple parame
 * `ButtonsMenu.remove_page(page_number: int)`
   * Remove a page from the menu
 ---
+* `ButtonsMenu.remove_relay()`
+  * Remove the relay that's been set
+---
 * `ButtonsMenu.set_last_pages(*embeds: Embed)`
   * On a menu with a menu_type of `ButtonsMenu.TypeEmbedDynamic`, set the pages you would like to show last. These embeds will be shown after the embeds that contain your data
 ---
@@ -1054,6 +1092,9 @@ Only one option is available when stopping the menu. If you have multiple parame
 ---
 * `ButtonsMenu.set_on_timeout(func: object)`
   * Set the function to be called when the menu times out
+---
+* `ButtonsMenu.set_relay(func: object)`
+  * Set a function to be called with a given set of information when a button is clicked on the menu
 ---
 * `await ButtonsMenu.start(*, send_to=None)`
   * Start the menu
