@@ -32,7 +32,7 @@ from typing import List, Union
 
 import discord
 from discord.ext.commands import AutoShardedBot, Bot, Context
-from dislash import ActionRow, MessageInteraction, ResponseType, SlashClient
+from dislash import ActionRow, ButtonStyle, MessageInteraction, ResponseType, SlashClient
 
 from .abc import _PageController
 from .buttons import ComponentsButton
@@ -123,6 +123,9 @@ class ButtonsMenu:
         self._menu_timed_out = False
         self._main_page_contents = collections.deque()
         self._last_page_contents = collections.deque()
+        self._relay_function: 'function' = None
+
+        self._bypass_primed = False # used in :meth:`update()`
 
         # kwargs
         self.wrap_in_codeblock: Union[str, None] = options.get('wrap_in_codeblock')
@@ -482,6 +485,7 @@ class ButtonsMenu:
             .. changes::
                 v2.0.1
                     Added handling for `ComponentsButton.ID_CUSTOM_EMBED`
+                    Added handling for relays
         """
         ButtonsMenu._active_sessions.append(self)
         while self._is_running:
@@ -503,17 +507,21 @@ class ButtonsMenu:
                 
                 if btn.custom_id == ComponentsButton.ID_NEXT_PAGE:
                     await inter.reply(**self._decide_kwargs(button_id=btn.custom_id))
+                    await self._contact_relay(inter.author, cmp_btn)
                 
                 elif btn.custom_id == ComponentsButton.ID_PREVIOUS_PAGE:
                     await inter.reply(**self._decide_kwargs(button_id=btn.custom_id))
+                    await self._contact_relay(inter.author, cmp_btn)
                     
                 elif btn.custom_id == ComponentsButton.ID_GO_TO_FIRST_PAGE:
                     self._pc.index = 0
                     await inter.reply(**self._decide_kwargs(button_id=btn.custom_id))
+                    await self._contact_relay(inter.author, cmp_btn)
 
                 elif btn.custom_id == ComponentsButton.ID_GO_TO_LAST_PAGE:
                     self._pc.index = self._pc.total_pages
                     await inter.reply(**self._decide_kwargs(button_id=btn.custom_id))
+                    await self._contact_relay(inter.author, cmp_btn)
                     
                 elif btn.custom_id == ComponentsButton.ID_GO_TO_PAGE:
                     await inter.reply(f'{self._ctx.author.name}, what page what you like to go to?', type=ResponseType.ChannelMessageWithSource)
@@ -548,12 +556,14 @@ class ButtonsMenu:
                                         del kwargs[key]
                             else:
                                 await self._msg.edit(**kwargs)
+                                await self._contact_relay(inter.author, cmp_btn)
 
                                 if self.delete_interactions:
                                     await user_response.delete()
                                     await inter.delete()
                     
                 elif btn.custom_id == ComponentsButton.ID_END_SESSION:
+                    await self._contact_relay(inter.author, cmp_btn)
                     await self.stop(delete_menu_message=True)
                 
                 else:
@@ -583,6 +593,7 @@ class ButtonsMenu:
                             )
                             raise ButtonsMenuException(call_failed_error_msg)
                         else:
+                            await self._contact_relay(inter.author, cmp_btn)
                             if cmp_btn.followup:
                                 # if this executes, the user doesn't want to respond with a message, only with the caller function (already called ^)
                                 if all((cmp_btn.followup.content is None, cmp_btn.followup.embed is None, cmp_btn.followup.file is None)):
@@ -618,6 +629,7 @@ class ButtonsMenu:
                         
                         followup_kwargs['type'] = ResponseType.ChannelMessageWithSource
                         await inter.reply(**followup_kwargs)
+                        await self._contact_relay(inter.author, cmp_btn)
                     
                     elif btn.custom_id.startswith(ComponentsButton.ID_CUSTOM_EMBED):
                         if self._menu_type != ButtonsMenu.TypeEmbed:
@@ -627,6 +639,7 @@ class ButtonsMenu:
                                 raise ButtonsMenuException('ComponentsButton custom_id was set as ComponentsButton.ID_CUSTOM_EMBED but the "followup" kwargs for that ComponentsButton was not set or the "embed" kwarg for the followup was not set')
                             
                             await inter.reply(embed=cmp_btn.followup.embed, type=ResponseType.UpdateMessage)
+                            await self._contact_relay(inter.author, cmp_btn)
                     
                     else:
                         # this shouldnt execute because of :meth:`_button_add_check`, but just in case i missed something, raise the appropriate error
@@ -650,6 +663,83 @@ class ButtonsMenu:
         for i in range(0, len(list_), n):
             yield list_[i:i + n]
     
+    async def _contact_relay(self, member: discord.Member, button: ComponentsButton):
+        """Dispatch the information to the relay function if a relay has been set
+
+            .. added:: v2.0.1
+        """
+        if self._relay_function:
+            RelayPayload = collections.namedtuple('RelayPayload', ['member', 'button'])
+            relay = RelayPayload(member=member, button=button)
+            try:
+                if asyncio.iscoroutinefunction(self._relay_function):
+                    await self._relay_function(relay)
+                else:
+                    self._relay_function(relay)
+            except TypeError:
+                raise ButtonsMenuException('When setting a relay, the relay function must have exactly one positional argument')
+    
+    def set_relay(self, func: object):
+        """Set a function to be called with a given set of information when a button is clicked on the menu. The information passed is `RelayPayload`, a named tuple object. The
+        named tuple contains the following attributes:
+
+        - `member`: The :class:`discord.Member` object of the member who clicked the button. Could be :class:`discord.User` if the menu button was clicked in a direct message
+        - `button`: The :class:`ComponentsButton` object of the button that was clicked
+
+        Parameters
+        ---------
+        func: Callable[[:class:`NamedTuple`], :class:`None`]
+            The function should only contain a single positional argument. Discord.py command functions (`@bot.command()`) not supported
+        
+        Raises
+        ------
+        - `IncorrectType`: The argument provided was not callable
+        
+            .. added:: v2.0.1
+        """
+        if callable(func):
+            self._relay_function = func
+        else:
+            raise IncorrectType('When setting the relay, argument "func" must be callable')
+    
+    def remove_relay(self):
+        """Remove the relay that's been set
+
+            .. added:: v2.0.1
+        """
+        self._relay_function = None
+    
+    def _remove_director(self, page: Union[discord.Embed, str]):
+        """Removes the page director contents from the page
+        
+            .. added:: v2.0.1
+        """
+        style = self.style
+        if style is None:
+            style = 'Page $/&'
+        
+        escaped_style = re.escape(style)
+        STYLE_PATTERN = escaped_style.replace(r'\$', r'\d{1,}').replace(r'\&', r'\d{1,}')
+        STYLE_STR_PATTERN = escaped_style.replace(r'\$', r'\d{1,}').replace(r'\&', r'(\d{1,}.*)')
+        
+        if self.show_page_director:
+            if isinstance(page, discord.Embed):
+                if page.footer.text:
+                    DIRECTOR_PATTERN = STYLE_PATTERN + r':? '
+                    if re.search(DIRECTOR_PATTERN, page.footer.text):
+                        page.set_footer(text=re.sub(DIRECTOR_PATTERN, '', page.footer.text), icon_url=page.footer.icon_url)
+
+            elif isinstance(page, str):
+                if re.search(STYLE_STR_PATTERN, page):
+                    return re.sub(STYLE_STR_PATTERN, '', page).rstrip('\n')
+                else:
+                    return page
+
+            else:
+                raise TypeError(f'_remove_director parameter "page" expected discord.Embed or str, got {page.__class__.__name__}')
+        else:
+            return page
+    
     async def update(self, new_pages: Union[List[Union[discord.Embed, str]], None], new_buttons: Union[List[ComponentsButton], None]):
         """|coro| When the menu is running, update the pages or buttons 
 
@@ -668,6 +758,11 @@ class ButtonsMenu:
         - `TooManyButtons`: There are already 25 buttons on the menu
         - `IncorrectType`: The values in :param:`new_pages` did not match the :class:`ButtonsMenu` menu_type. An attempt to use this method when the menu_type is `ButtonsMenu.TypeEmbedDynamic` which is not allowed. Or
         all :param:`new_buttons` values were not of type :class:`ComponentsButton`
+        
+            .. changes::
+                v2.0.1
+                    Add handling for the removal of the page director
+                    Various improvements (see changelog)
         """
         if self._is_running:
             # ----------------------- CHECKS -----------------------
@@ -692,19 +787,20 @@ class ButtonsMenu:
             # ----------------------- END CHECKS -----------------------
 
             if new_pages is not None:
-                self.__pages = new_pages
-                self._pc = _PageController(new_pages)
                 if self._menu_type == ButtonsMenu.TypeEmbed:
-                    # before the refresh of the director, clear all footer information first if any. if new_pages also contains pages from the old pages, director
-                    # information will stack. Also just to clear out any text that should be reformatted to fit the page director format. This also fixes the bug where
-                    # if a menu was updated multiple times in a single session, the first click would be off by 1. it catches up after the 2nd click, but this prevents
-                    # it from happening in the first place (probably because of the director? not sure though)
-                    for embed_page in new_pages:
-                        if embed_page.footer:
-                            embed_page.set_footer(text=discord.Embed.Empty, icon_url=discord.Embed.Empty)
-
+                    for new_embed_page in new_pages:
+                        self._remove_director(new_embed_page)
+                    
+                    self.__pages = new_pages.copy()
+                    self._pc = _PageController(new_pages)
                     self._refresh_page_director_info(ButtonsMenu.TypeEmbed, self.__pages)
                 else:
+                    removed_director_info = []
+                    for new_str_page in new_pages.copy():
+                        removed_director_info.append(self._remove_director(new_str_page))
+                    
+                    self.__pages = removed_director_info.copy()
+                    self._pc = _PageController(self.__pages)
                     self._refresh_page_director_info(ButtonsMenu.TypeText, self.__pages)
             else:
                 # page controller needs to be reset because even though there are no new pages. the page index is still in the location BEFORE the update
@@ -723,10 +819,14 @@ class ButtonsMenu:
                     kwargs_to_pass['components'] = []
                 else:
                     for new_btn in new_buttons:
-                        # these steps are a carbon copy of :meth:`add_button`, but bypasses :dec:`ensure_not_primed`
-                        self._button_add_check(new_btn)
-                        self._maybe_unique_id(new_btn)
-                        self._row_of_buttons.append(new_btn)
+                        # this needs to be set to `True` every loop because once the decorator has been bypassed, the decorator resets that bypass back to `False`
+                        # i could set the bypass values before and after the loop, but the time it takes for new buttons to be replaced *could* be enough time for other
+                        # calls to methods that depend on :dec:`ensure_not_primed` to be executed, which is not good . insufficient, yes i know, but its better to prevent
+                        # unwanted successful calls to methods that are decorated with :dec:`ensure_not_primed`. the benefits outweigh the costs. not to mention it's
+                        # better to have this simply call :meth:`add_button()` instead of copying the contents of :meth:`add_button()` to bypass :dec:`ensure_not_primed`
+                        self._bypass_primed = True
+                        
+                        self.add_button(new_btn)
                     else:
                         kwargs_to_pass['components'] = self._initialize_action_row()
             
@@ -760,14 +860,26 @@ class ButtonsMenu:
         Raises
         ------
         - `ButtonNotFound`: The provided button was not found in the list of buttons on the menu
+        
+            .. changes::
+                v2.0.1
+                    Added reset of button.__menu (set to :class:`None`)
         """
         if button in self._row_of_buttons:
+            button._ComponentsButton__menu = None
             self._row_of_buttons.remove(button)
         else:
             raise ButtonNotFound(f'Cannot remove a button that is not registered')
     
     def remove_all_buttons(self):
-        """Remove all buttons from the menu"""
+        """Remove all buttons from the menu
+        
+            .. changes::
+                v2.0.1
+                    Added reset of button.__menu (set to :class:`None`)
+        """
+        for btn in self._row_of_buttons:
+            btn._ComponentsButton__menu = None
         self._row_of_buttons.clear()
     
     def disable_button(self, button: ComponentsButton):
@@ -841,12 +953,12 @@ class ButtonsMenu:
         # ensure they are using only the ComponentsButton and not ReactionMenus :class:`Button` / :class:`ButtonType`
         if isinstance(button, ComponentsButton):
 
-            # ensure the button custom_id is a valid one
-            # NOTE: this needs to be an re search because of buttons with an ID of "[ID]_[unique ID]"
-            if not re.search(ComponentsButton._RE_IDs, button.custom_id):
-                if button.style == ComponentsButton.style.link:
-                    pass
-                else:
+            # ensure the button custom_id is a valid one, but skip this check if its a link button because they dont have custom_ids
+            if button.style == ComponentsButton.style.link:
+                pass
+            else:
+                # NOTE: this needs to be an re search because of buttons with an ID of "[ID]_[unique ID]"
+                if not re.search(ComponentsButton._RE_IDs, button.custom_id):
                     raise ButtonsMenuException(f'ComponentsButton custom_id {button.custom_id!r} was not recognized')
 
             # ensure there are no duplicate custom_ids for the base navigation buttons
@@ -887,9 +999,15 @@ class ButtonsMenu:
         - `ButtonsMenuException`: The custom_id for the button was not recognized. A button with that custom_id has already been added
         - `TooManyButtons`: There are already 25 buttons on the menu
         - `IncorrectType`: Parameter :param:`button` was not of type :class:`ComponentsButton`
+        
+            .. changes::
+                v2.0.1
+                    Added instantiation of self for :class:`ComponentsButton` attr `__menu`
         """
         self._button_add_check(button)
         self._maybe_unique_id(button)
+
+        button._ComponentsButton__menu = self
         self._row_of_buttons.append(button)
     
     def get_button(self, identity: str, *, search_by: str='label') -> Union[ComponentsButton, List[ComponentsButton], None]:
@@ -1222,7 +1340,7 @@ class ButtonsMenu:
             navigation_btns = [btn for btn in self._row_of_buttons if btn.custom_id in base_nav_btns_ids]
 
             # an re search is required here because buttons with ID_CUSTOM_EMBED dont have a normal ID, the ID is "8_[unique ID]"
-            custom_embed_btns = [btn for btn in self._row_of_buttons if re.search(r'8_\d+', btn.custom_id)]
+            custom_embed_btns = [btn for btn in self._row_of_buttons if btn.style != ButtonStyle.link and re.search(r'8_\d+', btn.custom_id)]
 
             if all([not self.__pages, not custom_embed_btns]):
                 raise NoPages("You cannot start a ButtonsMenu when you haven't added any pages")
@@ -1252,7 +1370,7 @@ class ButtonsMenu:
                 if not navigation_btns:
                     error_msg = inspect.cleandoc(
                         """
-                        Since you have custom embeds set, there needs to be at least one base navigation button. Without one, there's no way to go back to the normal pages in the menu if a custom embed button is clicked.
+                        Since you've added pages and custom embeds, there needs to be at least one base navigation button. Without one, there's no way to go back to the normal pages in the menu if a custom embed button is clicked.
                         The available base navigation buttons are buttons with the custom_id:
 
                         - ComponentsButton.ID_PREVIOUS_PAGE
