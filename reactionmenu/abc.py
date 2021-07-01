@@ -1242,7 +1242,7 @@ class Menu(metaclass=abc.ABCMeta):
         Parameter
         ---------
         func: Callable[[:class:`NamedTuple`], :class:`None`]
-            The function should only contain a single positional argument
+            The function should only contain a single positional argument. Discord.py command functions (`@bot.command()`) not supported
         
         Raises
         ------
@@ -1254,6 +1254,13 @@ class Menu(metaclass=abc.ABCMeta):
             self._relay_function = func
         else:
             raise IncorrectType('When setting the relay, argument "func" must be callable')
+    
+    def remove_relay(self):
+        """Remove the relay that's been set
+
+            .. added:: v2.0.1
+        """
+        self._relay_function = None
     
     @ensure_not_primed
     def set_as_auto_paginator(self, turn_every: Union[int, float]):
