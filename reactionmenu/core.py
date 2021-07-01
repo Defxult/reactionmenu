@@ -135,6 +135,8 @@ class ReactionMenu(abc.Menu):
                 Added initialization of :attr:`_menu_owner` to the `__init__` instead of the execute session method, etc.
 				Added :attr:_on_timeout_details
 				Added :attr:_menu_timed_out
+			v2.0.1
+				Added :attr:`_bypass_primed`
 
 	"""
 	STATIC = 0
@@ -161,6 +163,8 @@ class ReactionMenu(abc.Menu):
 		self._relay_function = None
 		self._on_timeout_details: 'function' = None
 		self._menu_timed_out = False
+
+		self._bypass_primed = False
 
 		# auto-pagination
 		self._menu_owner = ctx.author
