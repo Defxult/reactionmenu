@@ -5,12 +5,21 @@
 
 ## v2.0.1 » Future release
 #### New Features
-* `BM` Added a `ComponentsButton.ID_CUSTOM_EMBED` for `ComponentsButton`. Buttons that go to the specified embed when clicked and are not apart of the normal pagination process
+* `BM` Added `ComponentsButton.ID_CUSTOM_EMBED` for `ComponentsButton`. Buttons that go to the specified embed when clicked and are not apart of the normal pagination process
+* `BM` Added the ability to get the `ButtonsMenu` instance from a `ComponentsButton`
+  * `ComponentsButton.menu`
+* `BM` Added the ability to call a function when buttons are pressed
+  * `ButtonsMenu.set_relay()`
+  * `ButtonsMenu.remove_relay()`
+* `RM|TM` Added the ability to remove relays that have been set
+  * `ReactionMenu.remove_relay()`
 
 #### Bug Fixes
 * `BM` Fixed an issue where a button with `ComponentsButton.ID_CALLER` could not call discord.py command functions
-* `BM` Fixed an issue where if a button with `ComponentsButton.ID_CALLER` was already registered to the menu and an attempt to reuse that button during a `ButtonsMenu.update()` call, an error would occur
-* `BM` Fixed an issue where if a menu was updated via `ButtonsMenu.update()` and there were no `new_pages`, the page index value would still be from before the update, and clicking a next/back button would go to the wrong page
+* `BM` Fixes for method `ButtonsMenu.update()`
+  * Fixed an issue where if a button with `ComponentsButton.ID_CALLER` or `ComponentsButton.ID_SEND_MESSAGE` was already registered to the menu and an attempt to reuse that button during a `ButtonsMenu.update()` call, an error would occur
+  * Fixed an issue where if a menu was updated and there were no `new_pages`, the page index value would still be from before the update, and clicking a back/next button would go to the wrong page
+  * Fixed an issue where if a menu was updated and there were `new_pages` (embeds) that contained footers, the footer information would be removed
 
 ## v2.0.0 » Jun. 27, 2021
 #### New Features
