@@ -90,12 +90,16 @@ def ensure_not_primed(func):
         .. changes::
             v2.0.0
                 Added inst name check so this decorator is compatible with :class:`ButtonsMenu`
+            v2.0.1
+                Added handling for `inst._bypass_primed`
     """
     if asyncio.iscoroutinefunction(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             inst = args[0]
-            if not inst._is_running:
+            if not inst._is_running or inst._bypass_primed:
+                if inst._bypass_primed:
+                    inst._bypass_primed = False
                 return await func(*args, **kwargs)
             else:
                 raise MenuAlreadyRunning(f'You cannot use method "{func.__name__}" after the menu has started. Menu name: {inst._name}')
@@ -104,7 +108,9 @@ def ensure_not_primed(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             inst = args[0]
-            if not inst._is_running:
+            if not inst._is_running or inst._bypass_primed:
+                if inst._bypass_primed:
+                    inst._bypass_primed = False
                 func(*args, **kwargs)
             else:
                 if inst.__class__.__name__ == 'ButtonsMenu':
