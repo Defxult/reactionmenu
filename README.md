@@ -1112,5 +1112,3 @@ Only one option is available when stopping the menu. If you have multiple parame
   * When the menu is running, update the pages or buttons
 
 </details>
-
-[Jump to top](#github-updates-vs-pypi-updates)
