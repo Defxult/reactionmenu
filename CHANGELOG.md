@@ -5,6 +5,7 @@
 
 ## v2.0.1 » Future release
 #### New Features
+* Not a new feature, but Discord has increased the embed description length limit from 2048 to 4096. Exception `DescriptionOversized`, typically raised when using a dynamic menu and the amount of `rows_requested` is too large for the amount of information received, has been updated to reflect that change
 * `BM` Added `ComponentsButton.ID_CUSTOM_EMBED` for `ComponentsButton`. Buttons that go to the specified embed when clicked and are not apart of the normal pagination process
 * `BM` Added the ability to get the `ButtonsMenu` instance from a `ComponentsButton`
   * `ComponentsButton.menu`

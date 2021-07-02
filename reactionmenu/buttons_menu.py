@@ -1388,7 +1388,7 @@ class ButtonsMenu:
         elif self._menu_type == ButtonsMenu.TypeEmbedDynamic:
             for data_clump in self._chunks(self._dynamic_data_builder, self.__rows_requested):
                 joined_data = '\n'.join(data_clump)
-                if len(joined_data) <= 2000:
+                if len(joined_data) <= 4096:
                     possible_block = f"```{self.wrap_in_codeblock}\n{joined_data}```"
                     embed = discord.Embed() if self.custom_embed is None else self.custom_embed.copy()
                     embed.description = joined_data if not self.wrap_in_codeblock else possible_block

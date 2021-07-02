@@ -490,12 +490,12 @@ class ReactionMenu(abc.Menu):
 		------
 		- `MenuSettingsMismatch`: Tried to use method on a dynamic menu
 		- `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-		- `DescriptionOversized`: Description length is over discords character limit
+		
+			.. changes::
+				v2.0.1
+					Removed embed description length check, :exc:`DescriptionOversized` was made for dynamic menus, not individual checks
 		"""
-		if len(embed.description) <= 2000:
-			self._static_completed_pages.append(embed)
-		else:
-			raise DescriptionOversized('When adding a page, your embed description was over the size limit allowed by Discord. Reduce the amount of text in your embed description')
+		self._static_completed_pages.append(embed)
 
 	@ensure_not_primed
 	def add_button(self, button: Button): 
@@ -963,7 +963,7 @@ class ReactionMenu(abc.Menu):
 			for data_clump in self._chunks(self._dynamic_data_builder, self._rows_requested):
 				embed = self._maybe_custom_embed()
 				joined_data = '\n'.join(data_clump)
-				if len(joined_data) <= 2000:
+				if len(joined_data) <= 4096:
 					possible_block = f"```{self._wrap_in_codeblock}\n{joined_data}```"			
 					embed.description = joined_data if not self._wrap_in_codeblock else possible_block
 					self._dynamic_completed_pages.append(embed)

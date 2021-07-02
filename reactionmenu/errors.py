@@ -60,7 +60,7 @@ class SingleUseOnly(ReactionMenuException):
 	pass
 	
 class DescriptionOversized(ReactionMenuException):
-	"""The content of the menu has a character size >= 2000"""
+	"""The content of the menu has a character size > 4096"""
 	pass
 
 class MenuSettingsMismatch(ReactionMenuException):
