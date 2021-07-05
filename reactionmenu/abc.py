@@ -25,7 +25,6 @@ DEALINGS IN THE SOFTWARE.
 import abc
 import asyncio
 import collections
-import itertools
 import warnings
 from datetime import datetime
 from typing import List, Union

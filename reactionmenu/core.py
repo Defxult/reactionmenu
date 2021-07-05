@@ -25,7 +25,6 @@ DEALINGS IN THE SOFTWARE.
 import asyncio
 import collections
 import itertools
-from enum import Enum, auto
 from typing import Deque, List, Union
 
 from discord import Embed, Member, Role, TextChannel

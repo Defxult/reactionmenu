@@ -23,7 +23,6 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import asyncio
-import collections
 import inspect
 import itertools
 import re
