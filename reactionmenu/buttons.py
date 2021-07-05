@@ -26,7 +26,7 @@ import re
 from collections import namedtuple
 from datetime import datetime
 from enum import Enum, auto
-from typing import List, Set, Union
+from typing import Set, Union
 
 import discord
 import dislash

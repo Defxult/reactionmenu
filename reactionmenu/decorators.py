@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 import asyncio
 from functools import wraps
 
-from .errors import MenuSettingsMismatch, MenuAlreadyRunning, ReactionMenuException, NoButtons
+from .errors import MenuSettingsMismatch, MenuAlreadyRunning, NoButtons
 
 __all__ = ('menu_verification', 'dynamic_only', 'static_only', 'ensure_not_primed')
 

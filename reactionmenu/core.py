@@ -27,7 +27,7 @@ import collections
 import itertools
 from typing import Deque, List, Union
 
-from discord import Embed, Member, Role, TextChannel
+from discord import Embed, Role, TextChannel
 from discord.ext.commands import Context
 
 from . import abc

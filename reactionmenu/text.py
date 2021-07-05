@@ -28,13 +28,13 @@ import itertools
 import re
 from typing import List, Union
 
-from discord import AllowedMentions, Member, Role, TextChannel
+from discord import AllowedMentions, Role, TextChannel
 from discord.ext.commands import Context
 
 from . import abc
 from .buttons import Button, ButtonType
 from .decorators import ensure_not_primed, menu_verification
-from .errors import DuplicateButton, IncorrectType, MenuAlreadyRunning, MissingSetting, ReactionMenuException, TooManyButtons
+from .errors import DuplicateButton, IncorrectType, MissingSetting, ReactionMenuException, TooManyButtons
 
 
 class TextMenu(abc.Menu):
