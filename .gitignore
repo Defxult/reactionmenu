@@ -4,3 +4,4 @@ reactionmenu.egg-info/*
 bot_testing.py
 test.txt
 reactionmenu/__pycache__/*
+requirements.txt
