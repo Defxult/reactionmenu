@@ -48,6 +48,9 @@ class ComponentsButton(dislash.Button):
 				Added :attr:`__menu`
 				Removed :meth:`_get_all_ids`. Was insufficient because buttons that were not base navigation buttons, there ID is dynamically created
 				Removed :meth:`_to_dict_ids`. Unused
+			v2.0.2
+				Added :attr:`event`
+				Added :class:`Event`
 	"""
 	style = dislash.ButtonStyle
 
@@ -72,7 +75,7 @@ class ComponentsButton(dislash.Button):
 	_RE_IDs = r'[0-8]|[0-8]_\d+'
 	_RE_UNIQUE_ID_SET = r'_\d+'
 
-	def __init__(self, *, style: dislash.ButtonStyle, label: str, custom_id: str=None, emoji: Union[discord.PartialEmoji, str]=None, url: str=None, disabled: bool=False, followup: 'ComponentsButton.Followup'=None):
+	def __init__(self, *, style: dislash.ButtonStyle, label: str, custom_id: str=None, emoji: Union[discord.PartialEmoji, str]=None, url: str=None, disabled: bool=False, followup: 'ComponentsButton.Followup'=None, event: 'ComponentsButton.Event'=None):
 		"""
 			.. Breakdown ::
 				the following if statement prevents the custom_id from being :class:`None` when its not a link button but also raises an informative error. if the user was to set a style thats not "link" and forget to put the
@@ -91,6 +94,7 @@ class ComponentsButton(dislash.Button):
 			raise ButtonsMenuException('If the ComponentsButton "style" is not "ComponentsButton.style.link", the custom_id must be set')
 		
 		self.followup = followup
+		self.event = event
 		self.__clicked_by = set()
 		self.__total_clicks = 0
 		self.__last_clicked: datetime = None
@@ -175,6 +179,33 @@ class ComponentsButton(dislash.Button):
 			func = func.callback if isinstance(func, Command) else func
 			self._caller_info = Details(func=func, args=args, kwargs=kwargs)
 	
+	class Event:
+		"""Set a :class:`ComponentsButton` to be disabled or removed when it has been clicked a certain amount of times
+		
+		Parameters
+		----------
+		event: :class:`str`
+			The action to take. Can either be "disable" or "remove"
+
+		value: :class:`int`
+			The amount set for the specified event. Must be >= 1. If value is <= 0, it is implicitly set to 1
+			
+			.. added:: v2.0.2
+		"""
+		_disable = 'disable'
+		_remove  = 'remove'
+
+		def __init__(self, event_type: str, value: int):
+			if value <= 0: value = 1
+			event_type = event_type.lower()
+			cls = self.__class__
+			
+			if event_type in (cls._disable, cls._remove):
+				self.event_type = event_type
+				self.value = value
+			else:
+				raise ButtonsMenuException(f'Parameter "event_type" expected "disable" or "remove", got {event_type!r}')
+	
 	@classmethod
 	def basic_back(cls) -> 'ComponentsButton':
 		"""|class method| A factory method that returns a :class:`ComponentsButton` with the following parameters set:
@@ -235,6 +266,18 @@ class ComponentsButton(dislash.Button):
 		"""
 		return cls(style=ComponentsButton.style.gray, label='Close', custom_id=ComponentsButton.ID_END_SESSION)
 	
+	@classmethod
+	def _get_id_name_from_id(cls, id_: str) -> str:
+		# if its a CALLER, SEND_MESSAGE, or CUSTOM_EMBED id, convert to it's true representation, because when passed, it's form is "[ButtonID]_[unique ID]"
+		# see :meth:`_button_add_check` or :meth:`_maybe_custom_id` for details
+		unique_id_set = re.compile(ComponentsButton._RE_UNIQUE_ID_SET)
+		if re.search(unique_id_set, id_):
+			id_ = re.sub(unique_id_set, '', id_)
+		
+		for key, val in cls.__dict__.items():
+			if id_ == val:
+				return f'ComponentsButton.{key}'
+	
 	@property
 	def clicked_by(self) -> Set[discord.Member]:
 		"""
@@ -276,17 +319,6 @@ class ComponentsButton(dislash.Button):
 		"""
 		return self.__last_clicked
 
-	@classmethod
-	def _get_id_name_from_id(cls, id_: str) -> str:
-		# if its a CALLER, SEND_MESSAGE, or CUSTOM_EMBED id, convert to it's true representation, because when passed, it's form is "[ButtonID]_[unique ID]"
-		# see :meth:`_button_add_check` or :meth:`_maybe_custom_id` for details
-		unique_id_set = re.compile(ComponentsButton._RE_UNIQUE_ID_SET)
-		if re.search(unique_id_set, id_):
-			id_ = re.sub(unique_id_set, '', id_)
-		
-		for key, val in cls.__dict__.items():
-			if id_ == val:
-				return f'ComponentsButton.{key}'
 
 class ButtonType(Enum):
 	"""A helper class for :class:`ReactionMenu` and :class:`TextMenu`. Determines the generic action a button can perform. This should *NOT* be used with :class:`ButtonsMenu`
