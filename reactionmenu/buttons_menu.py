@@ -479,6 +479,23 @@ class ButtonsMenu:
         
         return kwargs
 
+    async def _handle_event(self, button: ComponentsButton):
+        """If an event is set, disable/remove the buttons from the menu when the click requirement has been met
+
+            .. added:: v2.0.2
+        """
+        if button.event:
+            event_type = button.event.event_type
+            event_value = button.event.value
+            if button.total_clicks == event_value:
+                if event_type == ComponentsButton.Event._disable:
+                    self.disable_button(button)
+                    await self.refresh_menu_buttons()
+                
+                elif event_type == ComponentsButton.Event._remove:
+                    self.remove_button(button)
+                    await self.refresh_menu_buttons()
+    
     async def _execute_interactive_session(self):
         """|coro| Handles all processing of the pagination session
         
@@ -504,6 +521,8 @@ class ButtonsMenu:
                     cmp_btn._ComponentsButton__clicked_by.add(inter.author)
                     cmp_btn._ComponentsButton__total_clicks += 1
                     cmp_btn._ComponentsButton__last_clicked = datetime.utcnow()
+
+                    await self._handle_event(cmp_btn)
                 
                 if btn.custom_id == ComponentsButton.ID_NEXT_PAGE:
                     await inter.reply(**self._decide_kwargs(button_id=btn.custom_id))
