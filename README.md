@@ -13,8 +13,8 @@ pip install git+https://github.com/Defxult/reactionmenu.git
 ```
 You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the Github version of this package. If you are using the PyPI version of this package, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
 
-* `Github: v2.0.1`
-* `PyPI: v2.0.1`
+* `Github: v2.0.2`
+* `PyPI: v2.0.2`
 
 ---
 ## Now featuring Buttons! 
@@ -83,6 +83,8 @@ pip install reactionmenu
   * [Updating ComponentsButton and Pages](#updating-componentsbutton-and-pages)
     * [Updating a Button](#updating-a-button)
     * [Updating Pages and Buttons](#updating-pages-and-buttons)
+  * [ComponentsButton Events](#componentsbutton-events)
+    * [Parameters for ComponentsButton.Event](#parameters-for-componentsbuttonevent)
   * [ButtonsMenu Relays](#buttonsmenu-relays)
   * [Starting/Stopping the ButtonsMenu](#startingstopping-the-buttonsmenu)
   * [All attributes for ButtonsMenu](#all-attributes-for-buttonsmenu)
@@ -945,6 +947,29 @@ menu.add_button(ComponentsButton.basic_next())
 
 await menu.start()
 ```
+---
+## ComponentsButton Events
+You can set a `ComponentsButton` to be disabled or removed when it has been clicked a certain amount of times
+
+`class ComponentsButton.Event(event_type: str, value: int)`
+
+### Parameters for ComponentsButton.Event
+* `event_type` (`str`) The action to take. Can either be "disable" or "remove"
+* `value` (`int`) The amount set for the specified event. Must be >= 1. If value is <= 0, it is implicitly set to 1
+
+Example:
+```py
+menu = ButtonsMenu(ctx, ...)
+
+# disable a button after 5 clicks
+button_1 = ComponentsButton(..., event=ComponentsButton.Event('disable', 5))
+menu.add_button(button_1)
+
+# remove a button after 10 clicks
+button_2 = ComponentsButton(..., event=ComponentsButton.Event('remove', 10))
+menu.add_button(button_2)
+```
+> **NOTE:** Not valid for link buttons. Also not ideal for buttons with a `custom_id` of `ComponentsButton.ID_END_SESSION`
 ---
 ## ButtonsMenu Relays
 Menu relays are functions that are called anytime a button that is apart of a menu is clicked. It is considered as an extension of a `ComponentsButton` with an ID of `ComponentsButton.ID_CALLER`. Unlike caller buttons which provides no details about the interactions on the menu, relays do.
