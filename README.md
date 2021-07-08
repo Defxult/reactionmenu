@@ -7,11 +7,11 @@
 </div>
 
 ## Github Updates vs PyPI Updates
-The Github version of this package will always have the latest changes, fixes, and additions before the [PyPI](https://pypi.org/project/reactionmenu/) version. You can install the Github version by doing:
+The Github version of this library will always have the latest changes, fixes, and additions before the [PyPI](https://pypi.org/project/reactionmenu/) version. You can install the Github version by doing:
 ```
 pip install git+https://github.com/Defxult/reactionmenu.git
 ```
-You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the Github version of this package. If you are using the PyPI version of this package, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
+You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the Github version of this library. If you are using the PyPI version of this library, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
 
 * `Github: v2.0.2`
 * `PyPI: v2.0.2`
@@ -98,7 +98,7 @@ pip install reactionmenu
 from reactionmenu import ReactionMenu, Button, ButtonType
 ```
 
-This package comes with several methods and options in order to make a discord reaction menu simple. Once you have imported the proper classes, you will initialize the constructor like so:
+This library comes with several methods and options in order to make a discord reaction menu simple. Once you have imported the proper classes, you will initialize the constructor like so:
 ```py
 menu = ReactionMenu(ctx, back_button='◀️', next_button='▶️', config=ReactionMenu.STATIC) 
 ```
@@ -665,7 +665,7 @@ Starting/stopping the menu is the same as `ReactionMenu`. See the [Starting/Stop
 ---
 ---
 ## ButtonsMenu
-A `ButtonsMenu` is just like a reacton menu except it uses discords new Buttons feature. With buttons, you can enable and disable them, set a certain color for them with emojis, have buttons that send hidden messages, and add hyperlinks. This package offers a broader range of functionalities such as who clicked the button, how many times it was clicked and more. It uses [dislash.py](https://github.com/EQUENOS/dislash.py) to implement the Buttons functionality, but uses some of it's own methods in order to make a Button pagination menu simple.
+A `ButtonsMenu` is just like a reacton menu except it uses discords new Buttons feature. With buttons, you can enable and disable them, set a certain color for them with emojis, have buttons that send hidden messages, and add hyperlinks. This library offers a broader range of functionalities such as who clicked the button, how many times it was clicked and more. It uses [dislash.py](https://github.com/EQUENOS/dislash.py) to implement the Buttons functionality, but uses some of it's own methods in order to make a Button pagination menu simple.
 
 ## Showcase
 ![buttons_showcase](https://cdn.discordapp.com/attachments/655186216060321816/855818139450081280/buttons_showcase_reduced.gif)
@@ -676,7 +676,7 @@ A `ButtonsMenu` is just like a reacton menu except it uses discords new Buttons 
 ```py
 from reactionmenu import ButtonsMenu, ComponentsButton
 ```
-It should be noted that those two classes are the only classes that should be used when creating a Buttons pagination menu. All other classes in this package are *not* related and should not be used when creating a `ButtonsMenu`
+It should be noted that those two classes are the only classes that should be used when creating a Buttons pagination menu. All other classes in this library are *not* related and should not be used when creating a `ButtonsMenu`
 
 ```py
 menu = ButtonsMenu(ctx, menu_type=ButtonsMenu.TypeEmbed)

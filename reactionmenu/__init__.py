@@ -2,7 +2,7 @@
 reactionmenu • discord.py pagination
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A package to create a discord.py paginator. Supports pagination with Discords Buttons feature and reactions.
+A library to create a discord.py paginator. Supports pagination with Discords Buttons feature and reactions.
 
 :copyright: (c) 2021 Defxult#8269
 :license: MIT
