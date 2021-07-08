@@ -782,7 +782,7 @@ Buttons are what you use to interact with the menu. Unlike reactions, they look 
 ## ComponentsButton
 A `ComponentsButton` is a class that represents the discord button. It is a subclass of [dislash.py's](https://github.com/EQUENOS/dislash.py) `Button`.
 ```
-class ComponentsButton(*, style: ButtonStyle, label: str, custom_id=None, emoji=None, url=None, disabled=False, followup=None)
+class ComponentsButton(*, style: ButtonStyle, label: str, custom_id=None, emoji=None, url=None, disabled=False, followup=None, event=None)
 ```
 The following are the rules set by Discord for Buttons:
 * Link buttons don't send interactions to the Discord App, so link button statistics (it's properties) are not tracked
@@ -811,6 +811,7 @@ The following are the rules set by Discord for Buttons:
 * `url` (`str`) URL for a button with style `ComponentsButton.style.link`
 * `disabled` (`bool`) If the button should be disabled
 * `followup` (`ComponentsButton.Followup`) The message sent after the button is clicked. Only available for buttons that have a `custom_id` of `ComponentsButton.ID_CALLER` or `ComponentsButton.ID_SEND_MESSAGE`. `ComponentsButton.Followup` is a class that has parameters similiar to discord.py's `Messageable.send()`, and is used to control if a message is ephemeral (hidden), contains a file, embed, tts, etc...
+* `event` (`ComponentsButton.Event`) Set a button to be disabled or removed when it has been clicked a certain amount of times
 
 ##### Attributes for ComponentsButton
 The following attributes (properties) are made specifically for a `ComponentsButton`
