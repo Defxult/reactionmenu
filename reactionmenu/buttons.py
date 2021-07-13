@@ -75,7 +75,7 @@ class ComponentsButton(dislash.Button):
 	_RE_IDs = r'[0-8]|[0-8]_\d+'
 	_RE_UNIQUE_ID_SET = r'_\d+'
 
-	def __init__(self, *, style: dislash.ButtonStyle, label: str, custom_id: str=None, emoji: Union[discord.PartialEmoji, str]=None, url: str=None, disabled: bool=False, followup: 'ComponentsButton.Followup'=None, event: 'ComponentsButton.Event'=None):
+	def __init__(self, *, style: dislash.ButtonStyle, label: str, custom_id: str=None, emoji: Union[str, discord.PartialEmoji, str]=None, url: str=None, disabled: bool=False, followup: 'ComponentsButton.Followup'=None, event: 'ComponentsButton.Event'=None):
 		"""
 			.. Breakdown ::
 				the following if statement prevents the custom_id from being :class:`None` when its not a link button but also raises an informative error. if the user was to set a style thats not "link" and forget to put the
@@ -318,7 +318,6 @@ class ComponentsButton(dislash.Button):
 			The time in UTC for when the button was last clicked. Can be :class:`None` if the button has not been clicked
 		"""
 		return self.__last_clicked
-
 
 class ButtonType(Enum):
 	"""A helper class for :class:`ReactionMenu` and :class:`TextMenu`. Determines the generic action a button can perform. This should *NOT* be used with :class:`ButtonsMenu`
