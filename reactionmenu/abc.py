@@ -1224,7 +1224,7 @@ class Menu(metaclass=abc.ABCMeta):
         ------
         - `ReactionMenuException`: Parameter "func" was not a callable object
 
-            ..added:: v2.0.0
+            .. added:: v2.0.0
         """
         if not callable(func): raise ReactionMenuException('Parameter "func" must be callable')
         self._on_timeout_details = func
@@ -1404,10 +1404,10 @@ class Menu(metaclass=abc.ABCMeta):
                     except Exception as error:
                         warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}'
                         
-                        # NOTE" inspect imported with "from .errors import *"
+                        # NOTE: inspect imported with "from .errors import *"
                         warnings.warn(inspect.cleandoc(
                             f"""
-                            UserWarning: The function you have set in method ReactionMenu.set_on_timeout() raised on error
+                            UserWarning: The function you have set in method ReactionMenu.set_on_timeout() raised an error
 
                             -> {error.__class__.__name__}: {error}
                             
