@@ -347,7 +347,7 @@ class ReactionMenu(abc.Menu):
 	@dynamic_only
 	@ensure_not_primed
 	def add_row(self, data: str):
-		"""Used when the menu is set to dynamic. Apply the data recieved to a row in the embed page
+		"""Used when the menu is set to dynamic. Apply the data received to a row in the embed page
 
 		Parameter
 		---------
@@ -498,7 +498,7 @@ class ReactionMenu(abc.Menu):
 
 	@ensure_not_primed
 	def add_button(self, button: Button): 
-		"""Adds a button to the menu. Buttons can also be linked to custom embeds. So when you click the emoji you've assigned, it goes to that page and is seperate from the normal menu
+		"""Adds a button to the menu. Buttons can also be linked to custom embeds. So when you click the emoji you've assigned, it goes to that page and is separate from the normal menu
 		
 		Parameter
 		---------
@@ -530,7 +530,7 @@ class ReactionMenu(abc.Menu):
 			if button.linked_to is not ButtonType.CUSTOM_EMBED and button.custom_embed:
 				raise MenuSettingsMismatch('Button is not set as "ButtonType.CUSTOM_EMBED" but the embed kwarg of that button was set')
 
-			# if the Button has a name, make sure its not a dupliate name
+			# if the Button has a name, make sure its not a duplicate name
 			if button.name in [btn.name for btn in self._all_buttons if btn.name]:
 				raise ReactionMenuException('There cannot be duplicate names when setting the name for a Button')
 
@@ -947,7 +947,7 @@ class ReactionMenu(abc.Menu):
 				self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
 			
 			if not self._auto_paginator:
-				# initiaze end session buttons if any
+				# initialize end session buttons if any
 				end_buttons = self.end_session_buttons
 				if end_buttons:
 					for end_session_btn in end_buttons:
@@ -958,7 +958,7 @@ class ReactionMenu(abc.Menu):
 			if len(self._dynamic_data_builder) == 0 and len(self._dynamic_completed_pages) == 0:
 				raise NoPages
 
-			# compile all the data that was recieved and add them as embed pages 
+			# compile all the data that was received and add them as embed pages 
 			for data_clump in self._chunks(self._dynamic_data_builder, self._rows_requested):
 				embed = self._maybe_custom_embed()
 				joined_data = '\n'.join(data_clump)
@@ -967,7 +967,7 @@ class ReactionMenu(abc.Menu):
 					embed.description = joined_data if not self._wrap_in_codeblock else possible_block
 					self._dynamic_completed_pages.append(embed)
 				else:
-					raise DescriptionOversized('With the amount of data that was recieved, the embed description is over discords size limit. Lower the amount of "rows_requested" to solve this problem')
+					raise DescriptionOversized('With the amount of data that was received, the embed description is over discords size limit. Lower the amount of "rows_requested" to solve this problem')
 			else:
 				self._maybe_last_pages()
 				worker = self._dynamic_completed_pages
@@ -985,7 +985,7 @@ class ReactionMenu(abc.Menu):
 					self._msg = await self._ctx.send(embed=worker[0]) if self._send_to_channel is None else await self._send_to_channel.send(embed=worker[0])
 				
 				if not self._auto_paginator:
-					# initiaze end session buttons if any
+					# initialize end session buttons if any
 					end_buttons = self.end_session_buttons
 					if end_buttons:
 						for end_session_btn in end_buttons:

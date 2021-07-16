@@ -80,8 +80,8 @@ class ComponentsButton(dislash.Button):
 			.. Breakdown ::
 				the following if statement prevents the custom_id from being :class:`None` when its not a link button but also raises an informative error. if the user was to set a style thats not "link" and forget to put the
 				custom_id (because it defaults to :class:`None`) it is possible that it would raise the error "A ComponentsButton with custom_id 'ComponentsButton.ID_NEXT_PAGE' has already been added" because its
-				going off the str representation of the style. which technically is "correct" because dislash handles all custom_ids as str. but that error wouldnt make sense to the user because to them, that button
-				was not added by them. this check just prevents alot of confusion and raises an informative error
+				going off the str representation of the style. which technically is "correct" because dislash handles all custom_ids as str. but that error wouldn't make sense to the user because to them, that button
+				was not added by them. this check just prevents a lot of confusion and raises an informative error
 			
 			.. Example of how the un-informative error could be reproduced ::
 				menu.add_button(ComponentsButton(style=ComponentsButton.style.red, label='Next', custom_id=ComponentsButton.ID_NEXT_PAGE)) <-- ID_NEXT_PAGE = '0'
@@ -105,7 +105,7 @@ class ComponentsButton(dislash.Button):
 	    return f'<ComponentsButton label={self.label!r} custom_id={self._get_id_name_from_id(self.custom_id)} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled} total_clicks={self.__total_clicks}>'
 
 	class Followup:
-		"""A class that represents the message sent using a :class:`ComponentsButton`. Contains parameters similiar to discord.py's `Messageable.send`. Only to be used with :class:`ComponentsButton` kwarg "followup".
+		"""A class that represents the message sent using a :class:`ComponentsButton`. Contains parameters similar to discord.py's `Messageable.send`. Only to be used with :class:`ComponentsButton` kwarg "followup".
 		It is to be noted that this should not be used with :class:`ComponentsButton` with a "style" of `ComponentsButton.style.link` because link buttons do not send interaction events.
 		
 		Parameters

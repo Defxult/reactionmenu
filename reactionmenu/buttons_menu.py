@@ -328,7 +328,7 @@ class ButtonsMenu:
         """
         Returns
         -------
-        A list of either :class:`discord.Embed` if the menu_type is :attr:`ButtonsMenu.TypeEmbed` / :attr:`ButtonsEmbed.TypeEmbedDynamc`. Or :class:`str` if :attr:`ButtonsMenu.TypeText`. Can return :class:`None` if there are no pages
+        A list of either :class:`discord.Embed` if the menu_type is :attr:`ButtonsMenu.TypeEmbed` / :attr:`ButtonsEmbed.TypeEmbedDynamic`. Or :class:`str` if :attr:`ButtonsMenu.TypeText`. Can return :class:`None` if there are no pages
         """
         return self.__pages if self.__pages else None
     
@@ -661,7 +661,7 @@ class ButtonsMenu:
                             await self._contact_relay(inter.author, cmp_btn)
                     
                     else:
-                        # this shouldnt execute because of :meth:`_button_add_check`, but just in case i missed something, raise the appropriate error
+                        # this shouldn't execute because of :meth:`_button_add_check`, but just in case i missed something, raise the appropriate error
                         raise ButtonsMenuException('ComponentsButton custom_id was not recognized')
 
     def _done_callback(self, task: asyncio.Task):
@@ -1413,7 +1413,7 @@ class ButtonsMenu:
                     embed.description = joined_data if not self.wrap_in_codeblock else possible_block
                     self.__pages.append(embed)
                 else:
-                    raise DescriptionOversized('With the amount of data that was recieved, the embed description is over discords size limit. Lower the amount of "rows_requested" to solve this problem')
+                    raise DescriptionOversized('With the amount of data that was received, the embed description is over discords size limit. Lower the amount of "rows_requested" to solve this problem')
             else:
                 # set the main/last pages if any
                 if any((self._main_page_contents, self._last_page_contents)):

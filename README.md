@@ -137,7 +137,7 @@ menu.set_main_pages(welcome_embed, announcement_embed)
 for data in get_information():
     menu.add_row(data)
 
-menu.set_last_pages(additonal_info_embed)
+menu.set_last_pages(additional_info_embed)
 # NOTE: setting main/last pages can be set in any order
 ```
 ---
@@ -175,7 +175,7 @@ Buttons/button types are used when you want to add a reaction to the menu that d
 | Name | Type | Default Value | Used for
 |------|------|---------------|----------
 | `name` | `str` |`None` | The name of the button object
-| `embed` | `discord.Embed` | `None` | When the reaction is pressed, go to the specifed embed. 
+| `embed` | `discord.Embed` | `None` | When the reaction is pressed, go to the specified embed. 
 | `details` | [more info](#buttons-with-buttontypecaller) | `None` | Assigns the function and it's arguments to call when a `Button` with `ButtonType.CALLER` is pressed
 
 > **NOTE:** All `Button` kwargs can also be set using an instance of `Button`
@@ -426,13 +426,13 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
     <summary>Click to show all methods</summary>
 
 * `ReactionMenu.add_button(button: Button)`
-  * Adds a button to the menu. Buttons can also be linked to custom embeds. So when you click the emoji you've assigned, it goes to that page and is seperate from the normal menu
+  * Adds a button to the menu. Buttons can also be linked to custom embeds. So when you click the emoji you've assigned, it goes to that page and is separate from the normal menu
 ---
 * `ReactionMenu.add_page(embed: Embed)`
   * On a static menu, add a page
 ---
 * `ReactionMenu.add_row(data: str)`
-  * Used when the menu is set to dynamic. Apply the data recieved to a row in the embed page
+  * Used when the menu is set to dynamic. Apply the data received to a row in the embed page
 ---
 * `ReactionMenu.change_appear_order(*emoji_or_button: Union[str, Button])`
   * Change the order of the reactions you want them to appear in on the menu
@@ -529,7 +529,7 @@ When stopping the menu, you have two options. Delete the reaction menu by settin
 ---
 ---
 ## TextMenu
-A `TextMenu` is a text based version of `ReactionMenu`. No embeds are involved in the pagination process, only plain text is used. Has limited capabilites compared to `ReactionMenu`. One of the limitations of a `TextMenu` is the `ButtonType` that can be used when adding a `Button`. `ButtonType.CUSTOM_EMBED` is not valid for a `TextMenu`
+A `TextMenu` is a text based version of `ReactionMenu`. No embeds are involved in the pagination process, only plain text is used. Has limited capabilities compared to `ReactionMenu`. One of the limitations of a `TextMenu` is the `ButtonType` that can be used when adding a `Button`. `ButtonType.CUSTOM_EMBED` is not valid for a `TextMenu`
 ```py
 txt = TextMenu(ctx, back_button='◀️', next_button='▶️') 
 ```
@@ -565,7 +565,7 @@ Those kwargs are **NOT** valid for a `TextMenu`
 ##### Methods
 There are only a few methods that are specific to a `TextMenu`
 * `TextMenu.add_content(content: str)`
-  * This is similiar to adding a page to a `ReactionMenu`, but each addition is text
+  * This is similar to adding a page to a `ReactionMenu`, but each addition is text
 * `TextMenu.clear_all_contents()`
   * Delete everything that has been added to the list of contents
 
@@ -604,7 +604,7 @@ Starting/stopping the menu is the same as `ReactionMenu`. See the [Starting/Stop
 ---
 ---
 ## ButtonsMenu
-A `ButtonsMenu` is just like a reacton menu except it uses discords new Buttons feature. With buttons, you can enable and disable them, set a certain color for them with emojis, have buttons that send hidden messages, and add hyperlinks. This library offers a broader range of functionalities such as who clicked the button, how many times it was clicked and more. It uses [dislash.py](https://github.com/EQUENOS/dislash.py) to implement the Buttons functionality, but uses some of it's own methods in order to make a Button pagination menu simple.
+A `ButtonsMenu` is just like a reaction menu except it uses discords new Buttons feature. With buttons, you can enable and disable them, set a certain color for them with emojis, have buttons that send hidden messages, and add hyperlinks. This library offers a broader range of functionalities such as who clicked the button, how many times it was clicked and more. It uses [dislash.py](https://github.com/EQUENOS/dislash.py) to implement the Buttons functionality, but uses some of it's own methods in order to make a Button pagination menu simple.
 
 ## Showcase
 ![buttons_showcase](https://cdn.discordapp.com/attachments/655186216060321816/855818139450081280/buttons_showcase_reduced.gif)
@@ -660,7 +660,7 @@ SlashClient(bot)
 | `remove_buttons_on_timeout` | `bool` | `False` | `All menu types` | Remove the buttons on the menu when the menu times out
 | `only_roles` | `List[discord.Role]` | `None` | `All menu types` | If set, only members with any of the given roles are allowed to control the menu. The menu owner can always control the menu
 | `timeout` | `Union[int, float, None]` | `60.0` | `All menu types` | The timer for when the menu times out. Can be `None` for no timeout
-| `show_page_director` | `bool` | `True` | `All menu types` | Shown at the botttom of each embed page. "Page 1/20"
+| `show_page_director` | `bool` | `True` | `All menu types` | Shown at the bottom of each embed page. "Page 1/20"
 | `name` | `str` | `None` | `All menu types` | A name you can set for the menu
 | `style` | `str` | `"Page $/&"` | `All menu types` | A custom page director style you can select. "$" represents the current page, "&" represents the total amount of pages. Example: `ButtonsMenu(ctx, ..., style='On $ out of &')`
 | `all_can_click` | `bool` | `False` | `All menu types` | Sets if everyone is allowed to control when pages are 'turned' when buttons are clicked
@@ -749,7 +749,7 @@ The following are the rules set by Discord for Buttons:
   * `ComponentsButton(..., emoji='\N{winking face}')`
 * `url` (`str`) URL for a button with style `ComponentsButton.style.link`
 * `disabled` (`bool`) If the button should be disabled
-* `followup` (`ComponentsButton.Followup`) The message sent after the button is clicked. Only available for buttons that have a `custom_id` of `ComponentsButton.ID_CALLER` or `ComponentsButton.ID_SEND_MESSAGE`. `ComponentsButton.Followup` is a class that has parameters similiar to discord.py's `Messageable.send()`, and is used to control if a message is ephemeral (hidden), contains a file, embed, tts, etc...
+* `followup` (`ComponentsButton.Followup`) The message sent after the button is clicked. Only available for buttons that have a `custom_id` of `ComponentsButton.ID_CALLER` or `ComponentsButton.ID_SEND_MESSAGE`. `ComponentsButton.Followup` is a class that has parameters similar to discord.py's `Messageable.send()`, and is used to control if a message is ephemeral (hidden), contains a file, embed, tts, etc...
 * `event` (`ComponentsButton.Event`) Set a button to be disabled or removed when it has been clicked a certain amount of times
 
 ##### Attributes for ComponentsButton

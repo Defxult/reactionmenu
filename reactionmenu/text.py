@@ -250,7 +250,7 @@ class TextMenu(abc.Menu):
         """
         if button.emoji not in self._extract_all_emojis():
             
-            # if the Button has a name, make sure its not a dupliate name
+            # if the Button has a name, make sure its not a duplicate name
             if button.name in [btn.name for btn in self._all_buttons if btn.name]:
                 raise ReactionMenuException('There cannot be duplicate names when setting the name for a Button')
             

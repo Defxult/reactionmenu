@@ -911,7 +911,7 @@ class Menu(metaclass=abc.ABCMeta):
         details: 'NamedTuple' = cls._sessions_limit_details
         can_proceed = True
         
-        # if the menu is in a DM, handle it seperatly
+        # if the menu is in a DM, handle it separately
         if self._ctx.guild is None:
             dm_sessions = cls.get_all_dm_sessions()
             if dm_sessions:
@@ -1002,7 +1002,7 @@ class Menu(metaclass=abc.ABCMeta):
 
             .. changes::
                 v1.0.9
-                    Added if check for `counter.values()`. This was added because by default, the :class:`ReactionMenu` constuctor parameters `back_button` and `next_button` already have a name. If the buttons were all removed and more
+                    Added if check for `counter.values()`. This was added because by default, the :class:`ReactionMenu` constructor parameters `back_button` and `next_button` already have a name. If the buttons were all removed and more
                     buttons were added, it is possible for those buttons to not have a name, thus resulting in an empty sequence error when checked in `max()`. This checks if all/any the new buttons have a name and if not, ignore this check
         """
         counter = collections.Counter([btn.name.lower() for btn in self._all_buttons if btn.name is not None])
@@ -1357,7 +1357,7 @@ class Menu(metaclass=abc.ABCMeta):
                             Before, the call to [session_task.cancel()] was the first execution in this method; and in <= v1.0.8, that was okay because a call to this method would only happen externally. Meaning only the user
                             could call this method. Now in v1.0.9, this method can be called internally. The main internal call is from the [asyncio.TimeoutError] section in :meth:`_execute_session`. Now that
                             this method is called from :meth:`_execute_session`, that means this method is now being kept alive by the main session task. Before, [asyncio.TimeoutError] would do its own thing, that thing being
-                            handling the removal of reactions/deleting the menu message from a *seperate task*.
+                            handling the removal of reactions/deleting the menu message from a *separate task*.
                             
                             Now in v1.0.9, this method is apart of the [asyncio.TimeoutError] process, so if I call [session_task.cancel()] first, this method could be cancelled because it was called from a method (:meth:`_execute_session`)
                             who's life cycle is dependant on the session task (see below for a more clear explanation). The main thing that needs to occur when this method is called from :meth:`_execute_session` ([asyncio.TimeoutError])
