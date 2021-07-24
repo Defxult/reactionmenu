@@ -318,10 +318,7 @@ class ButtonsMenu:
         :class:`bool`:
             If the menu was started in a DM
         """
-        if self._ctx.guild is None:
-            return True
-        else:
-            return False
+        return self._ctx.guild is None
     
     @property
     def pages(self) -> list:
