@@ -314,7 +314,7 @@ class ComponentsButton(dislash.Button):
 		"""
 		Returns
 		-------
-		:class:`datetime`:
+		:class:`datetime.datetime`:
 			The time in UTC for when the button was last clicked. Can be :class:`None` if the button has not been clicked
 		"""
 		return self.__last_clicked
