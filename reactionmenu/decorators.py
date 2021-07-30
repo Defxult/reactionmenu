@@ -67,7 +67,7 @@ def dynamic_only(func):
         inst = args[0]
         from . import ReactionMenu # circular import
         if inst._config == ReactionMenu.DYNAMIC:
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
         else:
             raise MenuSettingsMismatch(f'Method "{func.__name__}" can only be used on a dynamic menu')
     return wrapper   
@@ -79,7 +79,7 @@ def static_only(func):
         inst = args[0]
         from . import ReactionMenu # circular import
         if inst._config == ReactionMenu.STATIC:
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
         else:
             raise MenuSettingsMismatch(f'Method "{func.__name__}" can only be used on a static menu')
     return wrapper
@@ -111,7 +111,7 @@ def ensure_not_primed(func):
             if not inst._is_running or inst._bypass_primed:
                 if inst._bypass_primed:
                     inst._bypass_primed = False
-                func(*args, **kwargs)
+                return func(*args, **kwargs)
             else:
                 if inst.__class__.__name__ == 'ButtonsMenu':
                     menu_name = inst.name
