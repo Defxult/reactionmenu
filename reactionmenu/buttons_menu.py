@@ -48,7 +48,7 @@ class ButtonsMenu:
     ctx: :class:`discord.ext.commands.Context`
         The Context object. You can get this using a command or if in `discord.on_message`
 
-    menu_type: :class:`int`:
+    menu_type: :class:`int`
         The configuration of the menu. Class variables :attr:`ButtonsMenu.TypeEmbed`, :attr:`ButtonsMenu.TypeEmbedDynamic`, or :attr:`ButtonsMenu.TypeText`
     
     Options [kwargs]
@@ -870,7 +870,7 @@ class ButtonsMenu:
 
         Parameters
         ----------
-        button: :class:`ComponentsButton`:
+        button: :class:`ComponentsButton`
             The button to remove
         
         Raises
@@ -903,7 +903,7 @@ class ButtonsMenu:
 
         Parameters
         ----------
-        button: :class:`ComponentsButton`:
+        button: :class:`ComponentsButton`
             The button to disable
         
         Raises
@@ -1080,7 +1080,7 @@ class ButtonsMenu:
 
         Parameters
         ----------
-        page_number: :class:`int`:
+        page_number: :class:`int`
             The page to remove
         
         Raises
