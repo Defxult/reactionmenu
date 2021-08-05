@@ -403,9 +403,9 @@ class Button:
 	def __init__(self, *, emoji: str, linked_to: ButtonType, **options):
 		self.emoji = emoji
 		self.linked_to = linked_to
-		self.custom_embed = options.get('embed')
-		self.details = options.get('details')
-		self.name = options.get('name')
+		self.custom_embed: discord.Embed = options.get('embed')
+		self.details: tuple = options.get('details')
+		self.name: str = options.get('name')
 		if self.name:
 			self.name = str(self.name).lower()
 	
