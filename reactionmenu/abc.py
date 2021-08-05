@@ -104,7 +104,7 @@ class Menu(metaclass=abc.ABCMeta):
     EMOJI_FIRST_PAGE =  '⏪'
     EMOJI_LAST_PAGE =   '⏩'
     EMOJI_GO_TO_PAGE =  '🔢'
-    EMOJI_END_SESSION = '❌'
+    EMOJI_END_SESSION = '⏹️'
 
     _sessions_limited = False
     _sessions_limit_details = None 

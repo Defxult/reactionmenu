@@ -162,7 +162,7 @@ menu = ReactionMenu(ctx, back_button=ReactionMenu.EMOJI_BACK_BUTTON, next_button
 * ⏪ as `ReactionMenu.EMOJI_FIRST_PAGE `
 * ⏩ as `ReactionMenu.EMOJI_LAST_PAGE`
 * 🔢 as `ReactionMenu.EMOJI_GO_TO_PAGE`
-* ❌ as `ReactionMenu.EMOJI_END_SESSION`
+* ⏹️ as `ReactionMenu.EMOJI_END_SESSION`
 ---
 ## What are Buttons and ButtonTypes?
 Buttons/button types are used when you want to add a reaction to the menu that does a certain function. Buttons and button types work together to achieve the desired action.
@@ -217,7 +217,7 @@ lpb = Button(emoji='⏩', linked_to=ButtonType.GO_TO_LAST_PAGE)
 gtpb = Button(emoji='🔢', linked_to=ButtonType.GO_TO_PAGE)
 
 # end session
-esb = Button(emoji='❌', linked_to=ButtonType.END_SESSION)
+esb = Button(emoji='⏹️', linked_to=ButtonType.END_SESSION)
 
 # custom embed
 ceb = Button(emoji='😎', linked_to=ButtonType.CUSTOM_EMBED, embed=discord.Embed(title='Hello'))
@@ -257,7 +257,7 @@ cb = Button(emoji='🚗', linked_to=ButtonType.CALLER, details=ButtonType.caller
 It is possible to change the order the reactions appear in on the menu.
 ```py
 first_button = Button(emoji='⏪', linked_to=ButtonType.GO_TO_FIRST_PAGE)
-close_menu_button = Button(emoji='❌', linked_to=ButtonType.END_SESSION, name='end')
+close_menu_button = Button(emoji='⏹️', linked_to=ButtonType.END_SESSION, name='end')
 
 # NOTE 1: When changing the order, you need to include the default back and next buttons because they are there by default. Access the default back/next buttons with menu attributes
 # NOTE 2: You can use the emoji or button object 

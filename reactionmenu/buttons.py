@@ -70,7 +70,7 @@ class ComponentsButton(dislash.Button):
 	EMOJI_FIRST_PAGE =  	'⏪'
 	EMOJI_LAST_PAGE =   	'⏩'
 	EMOJI_GO_TO_PAGE =  	'🔢'
-	EMOJI_END_SESSION = 	'❌'
+	EMOJI_END_SESSION = 	'⏹️'
 
 	_RE_IDs = r'[0-8]|[0-8]_\d+'
 	_RE_UNIQUE_ID_SET = r'_\d+'
