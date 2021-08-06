@@ -91,7 +91,7 @@ def ensure_not_primed(func):
             v2.0.0
                 Added inst name check so this decorator is compatible with :class:`ButtonsMenu`
             v2.0.1
-                Added handling for `inst._bypass_primed`
+                Added handling for :attr:`inst._bypass_primed`
     """
     if asyncio.iscoroutinefunction(func):
         @wraps(func)

@@ -324,10 +324,10 @@ class ButtonType(Enum):
 	
 		.. changes::
 			v1.0.1
-				Added :attr:ButtonType.GO_TO_PAGE
+				Added :attr:`ButtonType.GO_TO_PAGE`
 			v1.0.3
-				Added :attr:ButtonType.CALLER
-				Added :meth:caller_details
+				Added :attr:`ButtonType.CALLER`
+				Added :meth:`caller_details`
 	"""
 	NEXT_PAGE = auto()
 	PREVIOUS_PAGE = auto()
@@ -395,7 +395,7 @@ class Button:
 
 		.. changes::
 			v1.0.3
-				Added :attr:details
+				Added :attr:`details`
 			v2.0.3
 				Added :attr:`__clicked_by`
 				Added :attr:`__total_clicks`

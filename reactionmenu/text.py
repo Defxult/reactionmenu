@@ -92,8 +92,8 @@ class TextMenu(abc.Menu):
         .. changes ::
             v2.0.0
                 Added initialization of :attr:`_menu_owner` to the `__init__` instead of the execute session method, etc.
-                Added :attr:_on_timeout_details
-                Added :attr:_menu_timed_out
+                Added :attr:`_on_timeout_details`
+                Added :attr:`_menu_timed_out`
             v2.0.1
 				Added :attr:`_bypass_primed`
             v2.0.3

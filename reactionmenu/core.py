@@ -96,35 +96,35 @@ class ReactionMenu(abc.Menu):
 
 		.. changes::
 			v1.0.1
-				Added :attr:_active_sessions
-				Added :attr:_sessions_limit
-				Added :attr:_task_sessions_pool
+				Added :attr:`_active_sessions`
+				Added :attr:`_sessions_limit`
+				Added :attr:`_task_sessions_pool`
 			v1.0.2
-				Added :attr:_delete_interactions
+				Added :attr:`_delete_interactions`
 			v1.0.5
-				Added :attr:_navigation_speed
-				Added :attr:NORMAL
-				Added :attr:FAST
+				Added :attr:`_navigation_speed`
+				Added :attr:`NORMAL`
+				Added :attr:`FAST`
 			v1.0.6
-				Added :attr:_custom_embed_set
-				Added :attr:_send_to_channel
+				Added :attr:`_custom_embed_set`
+				Added :attr:`_send_to_channel`
 			v1.0.8
-				Added :attr:_delete_on_timeout
+				Added :attr:`_delete_on_timeout`
 			v1.0.9
-				Added :attr:_only_roles
-				Added :attr:_menu_owner
-				Added :attr:_auto_paginator
-				Added :attr:_auto_turn_every
-				Added :attr:_auto_worker
-				Added :attr:_main_session_task
-				Added :attr:_runtime_tracking_task
-				Added :attr:_countdown_task
-				Added :attr:_limit_message
-				Added :attr:_default_back_button
-				Added :attr:_default_next_button
-				Added :attr:_all_buttons_removed
-				Added :attr:_is_dm_session
-				Added :attr:_relay_function
+				Added :attr:`_only_roles`
+				Added :attr:`_menu_owner`
+				Added :attr:`_auto_paginator`
+				Added :attr:`_auto_turn_every`
+				Added :attr:`_auto_worker`
+				Added :attr:`_main_session_task`
+				Added :attr:`_runtime_tracking_task`
+				Added :attr:`_countdown_task`
+				Added :attr:`_limit_message`
+				Added :attr:`_default_back_button`
+				Added :attr:`_default_next_button`
+				Added :attr:`_all_buttons_removed`
+				Added :attr:`_is_dm_session`
+				Added :attr:`_relay_function`
 
 				
 				This class now inherits from :abc:`Menu`
@@ -132,8 +132,8 @@ class ReactionMenu(abc.Menu):
 				A sizeable amount of methods and properties were moved from here to abc.py to support :class:`TextMenu`
             v2.0.0
                 Added initialization of :attr:`_menu_owner` to the `__init__` instead of the execute session method, etc.
-				Added :attr:_on_timeout_details
-				Added :attr:_menu_timed_out
+				Added :attr:`_on_timeout_details`
+				Added :attr:`_menu_timed_out`
 			v2.0.1
 				Added :attr:`_bypass_primed`
 			v2.0.3
@@ -519,7 +519,7 @@ class ReactionMenu(abc.Menu):
 		Raises
 		------
 		- `MenuAlreadyRunning`: Attempted to call this method after the menu has started
-		- `MissingSetting`: Set the Button :param:`linked_to` as `ButtonType.CUSTOM_EMBED`/`ButtonType.CALLER` but did not assign the Button kwarg "embed"/"details" a value
+		- `MissingSetting`: Set the Button :param:`linked_to` as `ButtonType.CUSTOM_EMBED` / `ButtonType.CALLER` but did not assign the Button kwarg "embed" / "details" a value
 		- `DuplicateButton`: The emoji used is already registered as a button
 		- `TooManyButtons`: More than 20 buttons were added. Discord has a reaction limit of 20
 		- `ReactionMenuException`: A name used for the Button is already registered
