@@ -3,6 +3,15 @@
 * `RM` = `ReactionMenu`
 * `TM` = `TextMenu`
 
+## v2.0.3 » Future release
+#### New Features
+* `RM|TM` The `Button` class now has similar attributes to `ComponentsButton`
+  * `Button.menu`
+  * `Button.clicked_by`
+  * `Button.total_clicks`
+  * `Button.last_clicked`
+* `BM|RM|TM` `ReactionMenu.EMOJI_END_SESSION` is now ⏹️ instead of ❌
+
 ## v2.0.2 » Jul. 6, 2021
 #### New Features
 * `BM` Added the ability to disable or remove a button from the menu when it has been clicked x amount of times

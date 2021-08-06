@@ -900,6 +900,15 @@ class Menu(metaclass=abc.ABCMeta):
             session = cls._active_sessions[0]
             await session.stop()
 
+    def _update_button_statistics(self, button: Button, member: discord.Member):
+        """Update the statistical attributes associated with the button
+
+            .. added:: v2.0.3
+        """
+        button._Button__clicked_by.add(member)
+        button._Button__total_clicks += 1
+        button._Button__last_clicked = datetime.utcnow()
+    
     async def _handle_session_limits(self) -> bool:
         """|coro| Determine if the menu session is currently limited, if so, send the error message and return `False` indicating that further code execution (starting the menu) should be cancelled
         
@@ -1427,7 +1436,11 @@ class Menu(metaclass=abc.ABCMeta):
             .. changes::
                 v1.0.9
                     Added instantiation of :attr:`Menu._all_buttons_removed`
+                v2.0.3
+                    Added loop and instantiation of :attr:`Button.menu`
         """
+        for btn in self._all_buttons:
+            btn._Button__menu = None
         self._all_buttons.clear()
         self._all_buttons_removed = True
 
@@ -1447,11 +1460,14 @@ class Menu(metaclass=abc.ABCMeta):
             .. changes::
                 v1.0.9
                     Added if check for :attr:`_all_buttons` and instantiation for :attr:`_all_buttons_removed`
+                v2.0.3
+                    Added instantiation of :attr:`Button.menu`
         """
         if isinstance(identity, str):
             btn_name = identity.lower()
             for btn in self._all_buttons:
                 if btn.name == btn_name:
+                    btn._Button__menu = None
                     self._all_buttons.remove(btn)
                     break
             else:
@@ -1459,6 +1475,7 @@ class Menu(metaclass=abc.ABCMeta):
 
         elif isinstance(identity, Button):
             if identity in self._all_buttons:
+                identity._Button__menu = None
                 self._all_buttons.remove(identity)
             else:
                 raise ButtonNotFound(f'Button {identity}, ({repr(identity)}) Could not be found in the list of active buttons')

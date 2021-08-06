@@ -396,9 +396,12 @@ class Button:
 		.. changes::
 			v1.0.3
 				Added :attr:details
+			v2.0.3
+				Added :attr:`__clicked_by`
+				Added :attr:`__total_clicks`
+				Added :attr:`__last_clicked`
+				Removed `__slots__`
 	"""
-
-	__slots__ = ('emoji', 'linked_to', 'custom_embed', 'details', 'name')
 
 	def __init__(self, *, emoji: str, linked_to: ButtonType, **options):
 		self.emoji = emoji
@@ -408,6 +411,11 @@ class Button:
 		self.name: str = options.get('name')
 		if self.name:
 			self.name = str(self.name).lower()
+		
+		self.__clicked_by = set()
+		self.__total_clicks = 0
+		self.__last_clicked: datetime = None
+		self.__menu = None
 	
 	def __str__(self):
 		return self.emoji
@@ -419,3 +427,51 @@ class Button:
 					Replaced old string formatting (%s) with fstring
 		"""
 		return f'<Button emoji={self.emoji!r} linked_to={self.linked_to} custom_embed={self.custom_embed} details={self.details} name={self.name!r}>'
+	
+	@property
+	def menu(self):
+		"""
+		Returns
+		-------
+		The instance of the menu that the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
+		
+			.. added:: v2.0.3
+		"""
+		return self.__menu
+	
+	@property
+	def clicked_by(self) -> Set[discord.Member]:
+		"""
+		Returns
+		-------
+		Set[:class:`discord.Member`]:
+			The members who clicked the button
+		
+			.. added:: v2.0.3
+		"""
+		return self.__clicked_by
+	
+	@property
+	def total_clicks(self) -> int:
+		"""
+		Returns
+		-------
+		:class:`int`:
+			The amount of clicks on the button
+		
+			.. added:: v2.0.3
+		"""
+		return self.__total_clicks
+
+	@property
+	def last_clicked(self) -> datetime:
+		"""
+		Returns
+		-------
+		:class:`datetime.datetime`:
+			The time in UTC for when the button was last clicked. Can be :class:`None` if the button has not been clicked
+		
+			.. added:: v2.0.3
+		"""
+		return self.__last_clicked
+	

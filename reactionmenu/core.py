@@ -136,6 +136,8 @@ class ReactionMenu(abc.Menu):
 				Added :attr:_menu_timed_out
 			v2.0.1
 				Added :attr:`_bypass_primed`
+			v2.0.3
+				Added instantiation of :attr:`Button.menu`
 
 	"""
 	STATIC = 0
@@ -151,9 +153,18 @@ class ReactionMenu(abc.Menu):
 		self._loop = ctx.bot.loop
 		self._msg = None
 		self._is_running = False
-		self._default_back_button: Button = Button(emoji=back_button, linked_to=ButtonType.PREVIOUS_PAGE, name='default back button')
-		self._default_next_button: Button = Button(emoji=next_button, linked_to=ButtonType.NEXT_PAGE, name='default next button')
+		
+		# set the :attr:`Button.menu` for the buttons
+		# NOTE: i preferred doing it like this instead of using :meth:`ReactionMenu.add_button`
+		# that method does a lot of necessary checks, but is unnecessary for this particular instance
+		back_obj = Button(emoji=back_button, linked_to=ButtonType.PREVIOUS_PAGE, name='default back button')
+		next_obj = Button(emoji=next_button, linked_to=ButtonType.NEXT_PAGE, name='default next button')
+		back_obj._Button__menu = self
+		next_obj._Button__menu = self
+		self._default_back_button: Button = back_obj
+		self._default_next_button: Button = next_obj
 		self._all_buttons: List[Button] = [self._default_back_button, self._default_next_button]
+		
 		self._current_page = 0
 		self._last_page = 0
 		self._run_time = 0
@@ -519,6 +530,8 @@ class ReactionMenu(abc.Menu):
 				v1.0.9
 					Added if check for :attr:`_all_buttons_removed`
 					Moved to ABC
+				v2.0.3
+					Addded instantiation of :attr:`Button.menu`
 		"""
 		if button.emoji not in self._extract_all_emojis():
 			if button.linked_to is ButtonType.CUSTOM_EMBED and not button.custom_embed:
@@ -543,6 +556,8 @@ class ReactionMenu(abc.Menu):
 
 			if self._all_buttons_removed:
 				self._all_buttons_removed = False
+			
+			button._Button__menu = self
 		else:
 			raise DuplicateButton(f'The emoji {tuple(button.emoji)} has already been registered as a button')
 	
@@ -715,6 +730,7 @@ class ReactionMenu(abc.Menu):
 					if emoji == btn.emoji and btn.linked_to is ButtonType.PREVIOUS_PAGE:
 						self._current_page -= 1
 						self._set_proper_page()
+						self._update_button_statistics(btn, user)
 						await self._execute_navigation_type(worker, btn.emoji)
 						await self._contact_relay(user, btn)
 						break
@@ -723,6 +739,7 @@ class ReactionMenu(abc.Menu):
 					elif emoji == btn.emoji and btn.linked_to is ButtonType.NEXT_PAGE:
 						self._current_page += 1
 						self._set_proper_page()
+						self._update_button_statistics(btn, user)
 						await self._execute_navigation_type(worker, btn.emoji)
 						await self._contact_relay(user, btn)
 						break
@@ -730,6 +747,7 @@ class ReactionMenu(abc.Menu):
 					# first page
 					elif emoji == btn.emoji and btn.linked_to is ButtonType.GO_TO_FIRST_PAGE:
 						self._current_page = 0
+						self._update_button_statistics(btn, user)
 						await self._execute_navigation_type(worker, btn.emoji)
 						await self._contact_relay(user, btn)
 						break
@@ -737,6 +755,7 @@ class ReactionMenu(abc.Menu):
 					# last page
 					elif emoji == btn.emoji and btn.linked_to is ButtonType.GO_TO_LAST_PAGE:
 						self._current_page = self._last_page
+						self._update_button_statistics(btn, user)
 						await self._execute_navigation_type(worker, btn.emoji)
 						await self._contact_relay(user, btn)
 						break
@@ -775,6 +794,7 @@ class ReactionMenu(abc.Menu):
 							else:
 								if requested_page >= 1 and requested_page <= self.total_pages:
 									self._current_page = requested_page - 1
+									self._update_button_statistics(btn, user)
 									await self._execute_navigation_type(worker, btn.emoji)
 									await self._contact_relay(user, btn)
 									if self._delete_interactions:
@@ -784,6 +804,7 @@ class ReactionMenu(abc.Menu):
 					
 					# custom buttons
 					elif emoji == btn.emoji and btn.linked_to is ButtonType.CUSTOM_EMBED:
+						self._update_button_statistics(btn, user)
 						await self._execute_navigation_type(btn.custom_embed, btn.emoji, from_custom_button=True)
 						await self._contact_relay(user, btn)
 						break
@@ -805,7 +826,8 @@ class ReactionMenu(abc.Menu):
 							except TypeError as invalid_args:
 								raise ReactionMenuException(f'{ERROR_MESSAGE}: {invalid_args}')
 						
-						# worker param is :class:`None` just as a placeholder. It is not handled in the call			
+						# worker param is :class:`None` just as a placeholder. It is not handled in the call
+						self._update_button_statistics(btn, user)
 						await self._execute_navigation_type(None, btn.emoji, from_caller_button=True)
 						await self._contact_relay(user, btn)
 						break

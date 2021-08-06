@@ -180,6 +180,14 @@ Buttons/button types are used when you want to add a reaction to the menu that d
 
 > **NOTE:** All `Button` kwargs can also be set using an instance of `Button`
 
+##### Attributes for Button
+| Property | Return Type | Info
+|----------|-------------|------
+| `clicked_by` | `Set[discord.Member]` | The members who clicked the button
+| `total_clicks` | `int` | Amount of clicks from the button
+| `last_clicked` | `datetime` | The time in UTC for when the button was last clicked
+| `menu` | `ReactionMenu` | The menu the button is attached to
+
 * Associated methods
     * `ReactionMenu.add_button(button: Button)`
     * `ReactionMenu.clear_all_buttons()`
@@ -753,7 +761,6 @@ The following are the rules set by Discord for Buttons:
 * `event` (`ComponentsButton.Event`) Set a button to be disabled or removed when it has been clicked a certain amount of times
 
 ##### Attributes for ComponentsButton
-The following attributes (properties) are made specifically for a `ComponentsButton`
 | Property | Return Type | Info
 |----------|-------------|------
 | `clicked_by` | `Set[discord.Member]` | The members who clicked the button
