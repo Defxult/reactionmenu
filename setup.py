@@ -57,5 +57,5 @@ setup(
     license='MIT',
     keywords=tags,
     packages=find_packages(),
-    install_requires=['discord.py>=1.4.0', 'dislash.py>=1.1.0']
+    install_requires=['discord.py>=2.0.0']
 )
