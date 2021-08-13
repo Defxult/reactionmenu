@@ -54,7 +54,7 @@ class _PageController:
         return self.pages[self.index]
     
     def next(self) -> Union[discord.Embed, str]:
-        """Go to the next page in the pagination process"""
+        """Return the next page in the pagination process"""
         try:
             self.index += 1
             temp = self.pages[self.index]
@@ -68,7 +68,7 @@ class _PageController:
             return self.pages[self.index]
     
     def prev(self) -> Union[discord.Embed, str]:
-        """Go to the last page in the pagination process"""
+        """Return the previous page in the pagination process"""
         try:
             self.index -= 1
             temp = self.pages[self.index]
@@ -80,6 +80,22 @@ class _PageController:
                 self.index = self.total_pages
         finally:
             return self.pages[self.index]
+    
+    def first_page(self) -> Union[discord.Embed, str]:
+        """Return the first page in the pagination process
+        
+            .. added:: v3.0.0
+        """
+        self.index = 0
+        return self.pages[self.index]
+
+    def last_page(self) -> Union[discord.Embed, str]:
+        """Return the last page in the pagination process
+        
+            .. added:: v3.0.0
+        """
+        self.index = self.total_pages
+        return self.pages[self.index]
 
 class Menu(metaclass=abc.ABCMeta):
     """Abstract base class for :class:`ReactionMenu` and :class:`TextMenu`
