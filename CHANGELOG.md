@@ -19,7 +19,7 @@ Discords Buttons feature has been implemented using discord.py instead of a 3rd 
   * `ViewButton.end_session()` replaced `ComponentsButton.basic_end_session()`
 
 
-## v2.0.3 » Future release
+<!-- ## v2.0.3 » Future release
 #### New Features
 * `RM|TM` The `Button` class now has similar attributes to `ComponentsButton`
   * `Button.menu`
@@ -183,4 +183,4 @@ Discords Buttons feature has been implemented using discord.py instead of a 3rd 
 * Added new `ButtonType` (`ButtonType.GO_TO_PAGE`)
 * Added `go_to_page_buttons` property
 * Added `total_pages` property
-* Added class method `ReactionMenu.cancel_all_sessions()` (**removed since** `v1.0.9`)
+* Added class method `ReactionMenu.cancel_all_sessions()` (**removed since** `v1.0.9`) -->
