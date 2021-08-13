@@ -1,5 +1,5 @@
 ## Notice
-This branch is in development for discord.py 2.0 and should **NOT** be used. No documentation will be provided until compatibility is complete.
+This branch is in development for discord.py 2.0 and should **NOT** be used. No documentation will be provided until compatibility is complete. This will end up being reactionmenu 3.0
 
 <!-- ![logo](https://cdn.discordapp.com/attachments/655186216060321816/820162226316378162/discord.jpg)
 <div align="center">
