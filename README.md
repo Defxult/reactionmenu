@@ -1,4 +1,7 @@
-![logo](https://cdn.discordapp.com/attachments/655186216060321816/820162226316378162/discord.jpg)
+## Notice
+This branch is in development for discord.py 2.0 and should **NOT** be used. No documentation will be provided until compatibility is complete.
+
+<!-- ![logo](https://cdn.discordapp.com/attachments/655186216060321816/820162226316378162/discord.jpg)
 <div align="center">
 
 [![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/month)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/week)](https://pepy.tech/project/reactionmenu)
@@ -1084,4 +1087,4 @@ Only one option is available when stopping the menu. If you have multiple parame
 * `await ButtonsMenu.update(new_pages: Union[List[Union[Embed, str]], None], new_buttons: Union[List[ComponentsButton], None])`
   * When the menu is running, update the pages or buttons
 
-</details>
+</details> -->
