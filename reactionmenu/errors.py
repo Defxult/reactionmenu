@@ -24,10 +24,10 @@ DEALINGS IN THE SOFTWARE.
 
 import inspect
 
-class ButtonsMenuException(Exception):
-	"""Base :class:`ButtonsMenu` exception
+class ViewMenuException(Exception):
+	"""Base :class:`ViewMenu` exception
 	
-		.. added:: v2.0.0
+		.. added:: v3.0.0
 	"""
 	pass
 
