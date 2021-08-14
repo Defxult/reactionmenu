@@ -5,19 +5,33 @@
 
 ## v3.0.0 » After discord.py 2.0 officially releases
 #### Breaking Changes
-Discords Buttons feature has been implemented using discord.py instead of a 3rd party library. Meaning this library is now only dependent on discord.py. With that said, two classes have been renamed/removed to support discord.py's `Views`
+Discords Buttons feature has been implemented using discord.py instead of a 3rd party library. Meaning this library is now only dependent on discord.py. With that said, two classes have been renamed/removed to support discord.py's `View`
 * *removed* `ButtonsMenu` class
   * This has been replaced with `ViewMenu`
 * *removed* `ComponentsButton` class
   * This has been replaced with `ViewButton`
 * *removed* All `ComponentsButton` factory methods. They've been renamed and are now apart of the `ViewButton` class
-  * `ViewButton.back()` replaced `ComponentsButton.basic_back()`
-  * `ViewButton.next()` replaced `ComponentsButton.basic_next()`
-  * `ViewButton.go_to_first_page()` replaced `ComponentsButton.basic_go_to_first_page()`
-  * `ViewButton.go_to_last_page()` replaced `ComponentsButton.basic_go_to_last_page()`
-  * `ViewButton.go_to_page()` replaced `ComponentsButton.basic_go_to_page()`
-  * `ViewButton.end_session()` replaced `ComponentsButton.basic_end_session()`
+```diff
+- ComponentsButton.basic_back()
++ ViewButton.back()
 
+- ComponentsButton.basic_next()
++ ViewButton.next()
+
+- ComponentsButton.basic_go_to_first_page()
++ ViewButton.go_to_first_page()
+
+- ComponentsButton.basic_go_to_last_page()
++ ViewButton.go_to_last_page()
+
+- ComponentsButton.basic_go_to_page()
++ ViewButton.go_to_page()
+
+- ComponentsButton.basic_end_session()
++ ViewButton.end_session()
+```
+* Added the ability to remove the timeout method if you have one set
+  * `ViewMenu.remove_on_timeout()`
 
 <!-- ## v2.0.3 » Future release
 #### New Features
