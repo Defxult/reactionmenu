@@ -28,10 +28,13 @@ import re
 from collections import namedtuple
 from datetime import datetime
 from enum import Enum, auto
-from typing import Set, Union, Tuple
+from typing import Set, Tuple, Union
 
 import discord
 from discord.ext.commands import Command
+
+
+from .errors import ViewMenuException
 
 
 class ViewButton(discord.ui.Button):
@@ -69,14 +72,98 @@ class ViewButton(discord.ui.Button):
 		followup: ViewButton.Followup=None,
 		event: ViewButton.Event=None
 		):
+		self.followup = followup
+		self.event = event
+		self.__clicked_by = set()
+		self.__total_clicks = 0
+		self.__last_clicked: datetime = None
 		self._rm_viewmenu: 'ViewMenu' = None
 		super().__init__(style=style, label=label, disabled=disabled, custom_id=custom_id, url=url, emoji=emoji, row=row)
+
 	
 	class Event:
+		# TODO:
 		...
 
 	class Followup:
-		...
+		"""A class that represents the message sent using a :class:`ViewButton`. Contains parameters similar to discord.py's `Messageable.send`. Only to be used with :class:`ViewButton` kwarg "followup".
+		It is to be noted that this should not be used with :class:`ViewButton` with a "style" of `discord.ButtonStyle.link` because link buttons do not send interaction events.
+		
+		Parameters
+		----------
+		content: :class:`str`
+			Message to send (defaults to :class:`None`)
+		
+		embed: :class:`discord.Embed`
+			Embed to send. Can also bet set for buttons with a custom_id of `ViewButton.ID_CUSTOM_EMBED` (defaults to :class:`None`)
+		
+		file: :class:`discord.File`
+			File to send (defaults to :class:`None`) *NOTE* If the :class:`ViewButton` custom_id is `ViewButton.ID_SEND_MESSAGE`, the file will be ignored because of discord API limitations
+		
+		tts: :class:`bool`
+			If discord should read the message aloud (defaults to `False`) *NOTE* Not valid for `ephemeral` messages
+		
+		allowed_mentions: :class:`discord.AllowedMentions`
+			Controls the mentions being processed in the menu message (defaults to :class:`None`) *NOTE* Not valid for `ephemeral` messages
+		
+		delete_after: Union[:class:`int`, :class:`float`]
+			Amount of time to wait before the message is deleted (defaults to :class:`None`) *NOTE* Not valid for `ephemeral` messages
+		
+		ephemeral: :class:`bool`
+			If the message will be hidden from everyone except the person that clicked the button (defaults to `False`) *NOTE* This is only valid for a :class:`ViewButton` with custom_id `ViewButton.ID_SEND_MESSAGE`
+		"""
+		
+		__slots__ = ('content', 'embed', 'file', 'tts', 'allowed_mentions', 'delete_after', 'ephemeral', '_caller_info')
+
+		def __init__(
+			self,
+			content: str=None, 
+			*,
+			embed: discord.Embed=None,
+			file: discord.File=None,
+			tts: bool=False,
+			allowed_mentions: discord.AllowedMentions=None,
+			delete_after: Union[int, float]=None,
+			ephemeral: bool=False
+			):
+			self.content = content
+			self.embed = embed
+			self.file = file
+			self.tts = tts
+			self.allowed_mentions = allowed_mentions
+			self.delete_after = delete_after
+			self.ephemeral = ephemeral
+			self._caller_info: 'NamedTuple' = None
+		
+		def _to_dict(self) -> dict:
+			"""This is a :class:`ViewButton.Followup` method"""
+			new = {}
+			for i in self.__slots__:
+				new[i] = getattr(self, i)
+			return new
+		
+		def set_caller_details(self, func: object, *args, **kwargs):
+			"""Set the parameters for the function you set for a :class:`ViewButton` with the custom_id `ViewButton.ID_CALLER`
+			
+			Parameters
+			----------
+			func: :class:`object`
+				The function object that will be called when the associated button is clicked
+			
+			*args: :class:`Any`
+				An argument list that represents the parameters of that function
+			
+			**kwargs: :class:`Any`
+				An argument list that represents the kwarg parameters of that function
+			
+			Raises
+			------
+			- `ViewMenuException`: Parameter "func" was not a callable object
+			"""
+			if not callable(func): raise ViewMenuException('Parameter "func" must be callable')
+			Details = namedtuple('Details', ['func', 'args', 'kwargs'])
+			func = func.callback if isinstance(func, Command) else func
+			self._caller_info = Details(func=func, args=args, kwargs=kwargs)
 
 	@classmethod
 	def _base_nav_buttons(cls) -> Tuple[str]:
@@ -153,6 +240,52 @@ class ViewButton(discord.ui.Button):
 		- custom_id: `ViewButton.ID_END_SESSION`
 		"""
 		return cls(style=discord.ButtonStyle.gray, label='Close', custom_id=ViewButton.ID_END_SESSION)
+	
+	@property
+	def clicked_by(self) -> Set[discord.Member]:
+		"""
+		Returns
+		-------
+		Set[:class:`discord.Member`]:
+			The members who clicked the button
+		"""
+		return self.__clicked_by
+
+	@property
+	def menu(self) -> 'ViewMenu':
+		"""
+		Returns
+		-------
+		:class:`ViewMenu`: The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
+		
+			.. added:: v2.0.1
+		"""
+		return self.__menu
+
+	@property
+	def total_clicks(self) -> int:
+		"""
+		Returns
+		-------
+		:class:`int`:
+			The amount of clicks on the button
+		"""
+		return self.__total_clicks
+
+	@property
+	def last_clicked(self) -> datetime:
+		"""
+		Returns
+		-------
+		:class:`datetime.datetime`:
+			The time in UTC for when the button was last clicked. Can be :class:`None` if the button has not been clicked
+		"""
+		return self.__last_clicked
+	
+	def _update_statistics(self, user: Union[discord.Member, discord.User]):
+		self.__clicked_by.add(user)
+		self.__total_clicks += 1
+		self.__last_clicked = datetime.utcnow()
 
 	async def callback(self, interaction: discord.Interaction):
 		await self._rm_viewmenu._paginate(self, interaction)
