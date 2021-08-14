@@ -922,9 +922,69 @@ class ViewMenu:
             await self.stop(delete_menu_message=True)
 
     async def stop(self, *, delete_menu_message: bool=False, remove_buttons: bool=False, disable_buttons: bool=False):
-        # TODO:
-        self._view.stop()
-        self._is_running = False
+        """|coro| Stops the process of the menu with the option of deleting the menu's message, removing the buttons, or disabling the buttons upon stop
+        
+        Parameters
+        ----------
+        delete_menu_message: :class:`bool`
+            (optional) Delete the message the menu is operating from (defaults to `False`)
+
+        remove_buttons: :class:`bool`
+            (optional) Remove the buttons from the menu (defaults to `False`)
+
+        disable_buttons: :class:`bool`
+            (optional) Disable the buttons on the menu (defaults to `False`)
+
+        Parameter Hierarchy
+        -------------------
+        Only one option is available when stopping the menu. If you have multiple parameters as `True`, only one will execute
+        - `delete_menu_message` > `disable_buttons`
+        - `disable_buttons` > `remove_buttons`
+        """
+        if self._is_running:
+            try:
+                if delete_menu_message:
+                    await self._msg.delete()
+                
+                elif disable_buttons:
+                    if not self._buttons: return # if there are no buttons (they've all been removed) to disable, skip this step
+                    self.disable_all_buttons()
+                    await self._msg.edit(view=self._view)
+
+                elif remove_buttons:
+                    if not self._buttons: return # if there are no buttons to remove (they've already been removed), skip this step
+                    self.disable_all_buttons()
+                    await self._msg.edit(view=self._view)
+            
+            except discord.DiscordException as dpy_error:
+                raise dpy_error
+            
+            finally:
+                self._view.stop()
+                self._is_running = False
+
+                if self in ViewMenu._active_sessions:
+                    ViewMenu._active_sessions.remove(self)
+                
+                # handle `on_timeout`
+                if self._on_timeout_details and self._menu_timed_out:
+                    func = self._on_timeout_details
+                    
+                    # call the timeout function but ignore any and all exceptions that may occur during the function timeout call.
+                    # the most important thing here is to ensure the menu is properly gracefully while displaying a formatted error mesage
+                    try:
+                        if asyncio.iscoroutinefunction(func): await func(self)
+                        else: func(self)
+                    except Exception as error:
+                        warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}'
+                        warnings.warn(inspect.cleandoc(
+                            f"""
+                            UserWarning: The function you have set in method ViewMenu.set_on_timeout() raised an error
+                            -> {error.__class__.__name__}: {error}
+                            
+                            This error has been ignored so the menu timeout process can complete
+                            """
+                        ))
     
     async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None):
         # ---------------------
