@@ -26,12 +26,12 @@ from __future__ import annotations
 
 import asyncio
 import collections
-import re
-from typing import List, Union
 import inspect
+import re
+import warnings
+from typing import List, NamedTuple, Union
 
 import discord
-from discord import ui
 from discord.ext.commands import Context
 
 from . import ViewButton
@@ -39,6 +39,7 @@ from .abc import _PageController
 from .decorators import ensure_not_primed
 from .errors import (
     ButtonNotFound,
+    DescriptionOversized,
     ImproperStyleFormat,
     IncorrectType,
     MenuSettingsMismatch,
@@ -46,8 +47,7 @@ from .errors import (
     NoButtons,
     NoPages,
     TooManyButtons,
-    ViewMenuException,
-    DescriptionOversized
+    ViewMenuException
 )
 
 
@@ -63,17 +63,15 @@ class ViewMenu:
         self._menu_type = menu_type
         
         self._msg: discord.Message = None
-        self._loop: asyncio.AbstractEventLoop = ctx.bot.loop
         self._buttons: List[ViewButton] = []
         self._pc: _PageController = None
-        self._view = discord.ui.View()
         self._is_running = False
-        self._main_session_task: asyncio.Task = None
         self._main_page_contents = collections.deque()
         self._last_page_contents = collections.deque()
         self._dynamic_data_builder: List[str] = []
-        self._relay_function: 'function' = None
+        self._relay_info: NamedTuple = None
         self._on_timeout_details: 'function' = None
+        self._menu_timed_out = False
         self._bypass_primed = False # used in :meth:`update()`
         self.__pages: List[Union[discord.Embed, str]] = []
 
@@ -84,14 +82,22 @@ class ViewMenu:
         self.disable_buttons_on_timeout: bool = kwargs.get('disable_buttons_on_timeout', True)
         self.remove_buttons_on_timeout: bool = kwargs.get('remove_buttons_on_timeout', False)
         self.only_roles: Union[List[discord.Role], None] = kwargs.get('only_roles')
-        self.timeout: Union[int, float, None] = kwargs.get('timeout', 60.0)
         self.show_page_director: bool = kwargs.get('show_page_director', True)
         self.name: Union[str, None] = kwargs.get('name')
         self.style: Union[str, None] = kwargs.get('style', 'Page $/&')
         self.all_can_click: bool = kwargs.get('all_can_click', False)
         self.delete_interactions: bool = kwargs.get('delete_interactions', True)
         self.allowed_mentions: discord.AllowedMentions = kwargs.get('allowed_mentions', discord.AllowedMentions())
+        self.__timeout: Union[int, float, None] = kwargs.get('timeout', 60.0) # property get/set
         self.__rows_requested: int = kwargs.get('rows_requested')
+
+        # view
+        self._view = discord.ui.View(timeout=self.__timeout)
+        self._view.on_timeout = self._on_dpy_view_timeout
+    
+    async def _on_dpy_view_timeout(self):
+        self._menu_timed_out = True
+        await self.stop(delete_menu_message=self.delete_on_timeout, remove_buttons=self.remove_buttons_on_timeout, disable_buttons=self.disable_buttons_on_timeout)
     
     @classmethod
     async def stop_session(cls, name: str, include_all: bool=False):
@@ -121,7 +127,7 @@ class ViewMenu:
             await menu.stop()
     
     @classmethod
-    def get_menu_from_message(cls, message_id: int) -> Union['ViewMenu', None]:
+    def get_menu_from_message(cls, message_id: int) -> Union[ViewMenu, None]:
         """|class method| Return the :class:`ViewMenu` object associated with the message with the given ID
         
         Parameters
@@ -140,7 +146,7 @@ class ViewMenu:
         return None
         
     @classmethod
-    def get_all_sessions(cls) -> Union[List['ViewMenu'], None]:
+    def get_all_sessions(cls) -> Union[List[ViewMenu], None]:
         """|class method| Get all active menu sessions
         
         Returns
@@ -161,8 +167,9 @@ class ViewMenu:
         return len(cls._active_sessions)
     
     @classmethod
-    def get_session(cls, name: str) -> Union['ViewMenu', List['ViewMenu'], None]:
+    def get_session(cls, name: str) -> Union[ViewMenu, List[ViewMenu], None]:
         """|class method| Get a :class:`ViewMenu` instance by its name
+        
         Parameters
         ----------
         name: :class:`str`
@@ -184,6 +191,22 @@ class ViewMenu:
         else:
             return None
     
+    @property
+    def timeout(self):
+        """.. added:: v3.0.0"""
+        return self.__timeout
+    
+    @timeout.setter
+    def timeout(self, value):
+        """A property getter/setter for kwarg `timeout`
+        
+            .. added:: v3.0.0
+        """
+        if isinstance(value, (int, float)):
+            self._view.timeout = value
+        else:
+            raise IncorrectType(f'"timeout" expected int or float, got {value.__class__.__name__}')
+
     @property
     def is_running(self) -> bool:
         """
@@ -247,7 +270,7 @@ class ViewMenu:
         return self._ctx.guild is None
     
     @property
-    def pages(self) -> list:
+    def pages(self) -> List[Union[discord.Embed, str]]:
         """
         Returns
         -------
@@ -293,16 +316,15 @@ class ViewMenu:
                     else:
                         raise ViewMenuException(f'When using parameter "send_to" in ViewMenu.start(), the channel {send_to} was not found')
     
-    def _check(self, inter: MessageInteraction):
+    def _check(self, inter: discord.Interaction):
         """Base menu button interaction check"""
         author_pass = False
-        
-        if self._ctx.author.id == inter.author.id: author_pass = True
+        if self._ctx.author.id == inter.user.id: author_pass = True
         if self.only_roles: self.all_can_click = False
 
         if self.only_roles:
             for role in self.only_roles:
-                if role in inter.author.roles:
+                if role in inter.user.roles:
                     author_pass = True
                     break
         if self.all_can_click:
@@ -365,8 +387,6 @@ class ViewMenu:
                     else:
                         pages[idx] = f'{content}\n\n{page_info}'
                     page_count += 1
-            
-    
 
     async def _handle_event(self, button: ViewButton):
         """If an event is set, disable/remove the buttons from the menu when the click requirement has been met
@@ -385,8 +405,6 @@ class ViewMenu:
                     self.remove_button(button)
                     await self.refresh_menu_buttons()
     
-
-    
     def _chunks(self, list_, n):
         """Yield successive n-sized chunks from list. Core component of a dynamic menu"""
         for i in range(0, len(list_), n):
@@ -394,45 +412,65 @@ class ViewMenu:
     
     async def _contact_relay(self, member: discord.Member, button: ViewButton):
         """Dispatch the information to the relay function if a relay has been set
+            
             .. added:: v2.0.1
         """
-        if self._relay_function:
+        if self._relay_info:
+            func: object = self._relay_info.func
+            only: List[ViewButton] = self._relay_info.only
             RelayPayload = collections.namedtuple('RelayPayload', ['member', 'button'])
-            relay = RelayPayload(member=member, button=button)
-            try:
-                if asyncio.iscoroutinefunction(self._relay_function):
-                    await self._relay_function(relay)
-                else:
-                    self._relay_function(relay)
-            except TypeError:
-                raise ViewMenuException('When setting a relay, the relay function must have exactly one positional argument')
+            payload = RelayPayload(member=member, button=button)
+
+            async def call():
+                try:
+                    if asyncio.iscoroutinefunction(func):
+                        await func(payload)
+                    else:
+                        func(payload)
+                except TypeError:
+                    raise ViewMenuException('When setting a relay, the relay function must have exactly one positional argument')
+
+            if only:
+                if button in only:
+                    await call()
+            else:
+                await call()
     
-    def set_relay(self, func: object):
-        """Set a function to be called with a given set of information when a button is clicked on the menu. The information passed is `RelayPayload`, a named tuple object. The
-        named tuple contains the following attributes:
-        - `member`: The :class:`discord.Member` object of the member who clicked the button. Could be :class:`discord.User` if the menu button was clicked in a direct message
-        - `button`: The :class:`ViewButton` object of the button that was clicked
+    def set_relay(self, func: object, only: List[ViewButton]=None):
+        """Set a function to be called with a given set of information when a button is clicked on the menu. The information passed is `RelayPayload`, a named tuple object. The named tuple contains the following attributes:
+        - `member`: The :class:`discord.Member` that clicked the button. Could be :class:`discord.User` if the menu button was clicked in a direct message
+        - `button`: The :class:`ViewButton` that was clicked
+        
         Parameters
         ---------
         func: Callable[[:class:`NamedTuple`], :class:`None`]
             The function should only contain a single positional argument. Discord.py command functions (`@bot.command()`) not supported
+        
+        only: List[:class:`ViewButton`]
+            (optional) If this is set, only the buttons you've set in the list will be relayed (defaults to :class:`None`)
         
         Raises
         ------
         - `IncorrectType`: The argument provided was not callable
         
             .. added:: v2.0.1
+
+            .. changes::
+                v3.0.0
+                    Added :param:`only`
         """
         if callable(func):
-            self._relay_function = func
+            RelayInfo = collections.namedtuple('RelayInfo', ['func', 'only'])
+            self._relay_info = RelayInfo(func=func, only=only)
         else:
             raise IncorrectType('When setting the relay, argument "func" must be callable')
     
     def remove_relay(self):
         """Remove the relay that's been set
+            
             .. added:: v2.0.1
         """
-        self._relay_function = None
+        self._relay_info = None
     
     def _remove_director(self, page: Union[discord.Embed, str]):
         """Removes the page director contents from the page
@@ -467,6 +505,7 @@ class ViewMenu:
     
     async def update(self, new_pages: Union[List[Union[discord.Embed, str]], None], new_buttons: Union[List[ViewButton], None]):
         """|coro| When the menu is running, update the pages or buttons 
+        
         Parameters
         ----------
         new_pages: List[Union[:class:`discord.Embed`, :class:`str`]]
@@ -482,8 +521,6 @@ class ViewMenu:
         - `TooManyButtons`: There are already 25 buttons on the menu
         - `IncorrectType`: The values in :param:`new_pages` did not match the :class:`ViewMenu` menu_type. An attempt to use this method when the menu_type is `ViewMenu.TypeEmbedDynamic` which is not allowed. Or
         all :param:`new_buttons` values were not of type :class:`ViewButton`
-
-        # TODO:
         """
         if self._is_running:
             # ----------------------- CHECKS -----------------------
@@ -529,16 +566,11 @@ class ViewMenu:
                 # that makes no sense and resetting the page controller fixes that issue 
                 self._pc = _PageController(self.__pages)
             
-            # determine the action the user wants for new_buttons
-            kwargs_to_pass = {}
+            kwargs_to_pass = {'view' : self._view}
 
             if isinstance(new_buttons, list):
-                # buttons need to be cleared regardless of removal or additions
-                self._buttons.clear()
-                
-                if len(new_buttons) == 0:
-                    kwargs_to_pass['components'] = []
-                else:
+                if new_buttons:
+                    self.remove_all_buttons()
                     for new_btn in new_buttons:
                         # this needs to be set to `True` every loop because once the decorator has been bypassed, the decorator resets that bypass back to `False`
                         # i could set the bypass values before and after the loop, but the time it takes for new buttons to be replaced *could* be enough time for other
@@ -548,12 +580,6 @@ class ViewMenu:
                         self._bypass_primed = True
                         
                         self.add_button(new_btn)
-                    else:
-                        kwargs_to_pass['components'] = self._initialize_action_row()
-            
-            # the user does not want to add any new buttons
-            elif isinstance(new_buttons, type(None)):
-                kwargs_to_pass['components'] = self._initialize_action_row()
             
             if self._menu_type == ViewMenu.TypeEmbed:
                 kwargs_to_pass['embed'] = self.__pages[0]
@@ -564,15 +590,12 @@ class ViewMenu:
     
     async def refresh_menu_buttons(self):
         """|coro| When the menu is running, update the message to reflect the buttons that were removed, enabled, or disabled"""
-        # TODO:
         if self._is_running:
-            if self._buttons:
-                await self._msg.edit(components=self._initialize_action_row())
-            else:
-                await self._msg.edit(components=[])
+            await self._msg.edit(view=self._view)
     
     def remove_button(self, button: ViewButton):
         """Remove a button from the menu
+        
         Parameters
         ----------
         button: :class:`ViewButton`
@@ -625,6 +648,7 @@ class ViewMenu:
     
     def enable_button(self, button: ViewButton):
         """Enable the specified button
+        
         Parameters
         ----------
         button: :class:`ViewButton`
@@ -647,6 +671,7 @@ class ViewMenu:
     
     def set_on_timeout(self, func: object):
         """Set the function to be called when the menu times out
+        
         Parameters
         ----------
         func: :class:`object`
@@ -659,6 +684,13 @@ class ViewMenu:
         """
         if not callable(func): raise ViewMenuException('Parameter "func" must be callable')
         self._on_timeout_details = func
+    
+    def remove_on_timeout(self):
+        """Remove the timeout call to the function you have set when the menu times out
+        
+            .. added:: v3.0.0
+        """
+        self._on_timeout_details = None
     
     def _button_add_check(self, button: ViewButton):
         """A set of checks to ensure the proper button is being added
@@ -759,6 +791,7 @@ class ViewMenu:
     @ensure_not_primed
     def clear_all_pages(self):
         """Remove all pages from the menu
+        
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
@@ -768,6 +801,7 @@ class ViewMenu:
     @ensure_not_primed
     def remove_page(self, page_number: int):
         """Remove a page from the menu
+        
         Parameters
         ----------
         page_number: :class:`int`
@@ -788,10 +822,12 @@ class ViewMenu:
     @ensure_not_primed
     def add_page(self, page: Union[discord.Embed, str]):
         """Add a page to the menu
+        
         Parameters
         ----------
         page: Union[:class:`discord.Embed`, :class:`str`]
             The page to add. Can only be used when the menus `menu_type` is `ViewMenu.TypeEmbed` (adding an embed) or `ViewMenu.TypeText` (adding a str)
+        
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
@@ -849,10 +885,12 @@ class ViewMenu:
     @ensure_not_primed
     def set_main_pages(self, *embeds: discord.Embed):
         """On a menu with a menu_type of `ViewMenu.TypeEmbedDynamic`, set the pages you would like to show first. These embeds will be shown before the embeds that contain your data
+        
         Parameter
         ---------
         *embeds: :class:`discord.Embed`
             An argument list of :class:`discord.Embed` objects
+        
         Raises
         ------
         - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `ViewMenu.TypeEmbedDynamic`
@@ -873,10 +911,12 @@ class ViewMenu:
     @ensure_not_primed
     def set_last_pages(self, *embeds: discord.Embed):
         """On a menu with a menu_type of `ViewMenu.TypeEmbedDynamic`, set the pages you would like to show last. These embeds will be shown after the embeds that contain your data
+        
         Parameter
         ---------
         *embeds: :class:`discord.Embed`
             An argument list of :class:`discord.Embed` objects
+        
         Raises
         ------
         - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `ViewMenu.TypeEmbedDynamic`
@@ -902,6 +942,10 @@ class ViewMenu:
         return kwargs
 
     async def _paginate(self, button: ViewButton, inter: discord.Interaction):
+        if not self._check(inter):
+            await inter.response.defer()
+            return
+
         if button.custom_id == ViewButton.ID_PREVIOUS_PAGE:
             await inter.response.edit_message(**self._determine_action(self._pc.prev()))
         
@@ -915,11 +959,122 @@ class ViewMenu:
             await inter.response.edit_message(**self._determine_action(self._pc.last_page()))
         
         elif button.custom_id == ViewButton.ID_GO_TO_PAGE:
-            await inter.response.edit_message(**self._determine_action(self._pc.last_page()))
+            await inter.response.defer()
+            prompt: discord.Message = await self._msg.channel.send(f'{inter.user.display_name}, what page would you like to go to?')
+            try:
+                selection_message: discord.Message = await self._ctx.bot.wait_for('message', check=lambda m: all([m.channel.id == self._msg.channel.id, m.author.id == inter.user.id]), timeout=self.timeout)
+                page = int(selection_message.content)
+            except asyncio.TimeoutError:
+                return
+            except ValueError:
+                return
+            else:
+                if 1 <= page <= len(self.__pages):
+                    self._pc.index = page - 1
+                    await self._msg.edit(**self._determine_action(self._pc.current_page))
+                    if self.delete_interactions:
+                        await prompt.delete()
+                        await selection_message.delete()
         
         elif button.custom_id == ViewButton.ID_END_SESSION:
-            #? add a try/except to this?
             await self.stop(delete_menu_message=True)
+        
+        else:
+            if button.custom_id.startswith(ViewButton.ID_CALLER):
+                if button.followup is None or button.followup._caller_info is None:
+                    error_msg = 'ViewButton custom_id was set as ViewButton.ID_CALLER but the "followup" kwarg for that ViewButton was not set ' \
+                                'or method ViewButton.Followup.set_caller_details(..) was not called to set the caller information'
+                    raise ViewMenuException(error_msg)
+                
+                func = button.followup._caller_info.func
+                args = button.followup._caller_info.args
+                kwargs = button.followup._caller_info.kwargs
+
+                # reply now because we don't know how long the users function will take to execute
+                await inter.response.defer()
+
+                try:
+                    if asyncio.iscoroutinefunction(func): await func(*args, **kwargs)
+                    else: func(*args, **kwargs)
+                except Exception as err:
+                    call_failed_error_msg = inspect.cleandoc(
+                        f"""
+                        The button with custom_id ViewButton.ID_CALLER with the label "{button.label}" raised an error during it's execution
+                        -> {err.__class__.__name__}: {err}
+                        """
+                    )
+                    raise ViewMenuException(call_failed_error_msg)
+                else:
+                    if button.followup:
+                        # if this executes, the user doesn't want to respond with a message, only with the caller function (already called ^)
+                        if all((button.followup.content is None, button.followup.embed is None, button.followup.file is None)):
+                            pass
+                        else:
+                            followup_kwargs = button.followup._to_dict()
+
+                            # inter.followup() has no attribute delete_after/_caller_info, so manually delete the key/val pairs to avoid :exc:`TypeError`, got an unexpected kwarg
+                            del followup_kwargs['delete_after']
+                            del followup_kwargs['_caller_info']
+                            
+                            # if there's no file, remove it to avoid an NoneType error
+                            if followup_kwargs['file'] is None:
+                                del followup_kwargs['file']
+                            
+                            followup_message: discord.WebhookMessage = await inter.followup.send(**followup_kwargs)
+                            
+                            if button.followup.delete_after:
+                                await followup_message.delete(delay=button.followup.delete_after)
+            
+            elif button.custom_id.startswith(ViewButton.ID_SEND_MESSAGE):
+                if button.followup is None:
+                    raise ViewMenuException('ViewButton custom_id was set as ViewButton.ID_SEND_MESSAGE but the "followup" kwarg for that ViewButton was not set')
+                
+                # there must be at least 1. cannot send an empty message
+                if all((button.followup.content is None, button.followup.embed is None, button.followup.file is None)):
+                    raise ViewMenuException('When using a ViewButton with a custom_id of ViewButton.ID_SEND_MESSAGE, the followup message cannot be empty')
+                
+                followup_kwargs = button.followup._to_dict()
+
+                # inter.followup.send() has no kwarg "_caller_info"
+                del followup_kwargs['_caller_info']
+                
+                # files are ignored
+                del followup_kwargs['file']
+                
+                # inter.followup.send() has no kwarg "delete_after"
+                del followup_kwargs['delete_after']
+
+                # defer instead of inter.response.send_message() so `delete_after` and `allowed_mentions` can be used
+                await inter.response.defer()
+
+                sent_message: discord.WebhookMessage = await inter.followup.send(**followup_kwargs)
+                if button.followup.delete_after:
+                    await sent_message.delete(delay=button.followup.delete_after)
+            
+            elif button.custom_id.startswith(ViewButton.ID_CUSTOM_EMBED):
+                if self._menu_type != ViewMenu.TypeEmbed:
+                    raise ViewMenuException('Buttons with custom_id ViewButton.ID_CUSTOM_EMBED can only be used when the menu_type is ViewMenu.TypeEmbed')
+                else:
+                    if button.followup is None or button.followup.embed is None:
+                        raise ViewMenuException('ViewButton custom_id was set as ViewButton.ID_CUSTOM_EMBED but the "followup" kwargs for that ViewButton was not set or the "embed" kwarg for the followup was not set')
+                    
+                    """
+                    I would have used `inter.response.edit_message`, but for whatever reason i'm getting the error:
+                        
+                        discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+                        In components.0.components.5: The specified component exceeds the maximum width
+                    
+                    Not sure what could be causing it when that works for all base navigation buttons
+                    """
+                    await inter.response.defer()
+                    await self._msg.edit(embed=button.followup.embed, view=self._view)
+            
+            else:
+                # this shouldn't execute because of :meth:`_button_add_check`, but just in case i missed something, raise the appropriate error
+                raise ViewMenuException(f'ViewButton custom_id {button.custom_id!r} was not recognized')
+
+        button._update_statistics(inter.user)
+        await self._contact_relay(inter.user, button)
 
     async def stop(self, *, delete_menu_message: bool=False, remove_buttons: bool=False, disable_buttons: bool=False):
         """|coro| Stops the process of the menu with the option of deleting the menu's message, removing the buttons, or disabling the buttons upon stop
@@ -1090,3 +1245,4 @@ class ViewMenu:
         
         self._pc = _PageController(self.__pages)
         self._is_running = True
+        ViewMenu._active_sessions.append(self)
