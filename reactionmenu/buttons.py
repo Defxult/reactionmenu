@@ -24,20 +24,24 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Set, Tuple, Union
+
+if TYPE_CHECKING:
+	from . import ViewMenu, ReactionMenu
+
 import re
 from collections import namedtuple
 from datetime import datetime
 from enum import Enum, auto
-from typing import Set, Tuple, Union
 
 import discord
 from discord.ext.commands import Command
 
-
+from .abc import BaseButton
 from .errors import ViewMenuException
 
 
-class ViewButton(discord.ui.Button):
+class ViewButton(discord.ui.Button, BaseButton):
 	ID_NEXT_PAGE =          '0'
 	ID_PREVIOUS_PAGE =      '1'
 	ID_GO_TO_FIRST_PAGE =   '2'
@@ -47,14 +51,6 @@ class ViewButton(discord.ui.Button):
 	ID_CALLER =             '6'
 	ID_SEND_MESSAGE =       '7'
 	ID_CUSTOM_EMBED = 		'8'
-
-	# would have imported from .abc, but circular imports
-	EMOJI_BACK_BUTTON = 	'◀️'
-	EMOJI_NEXT_BUTTON = 	'▶️'
-	EMOJI_FIRST_PAGE =  	'⏪'
-	EMOJI_LAST_PAGE =   	'⏩'
-	EMOJI_GO_TO_PAGE =  	'🔢'
-	EMOJI_END_SESSION = 	'⏹️'
 
 	_RE_IDs = r'[0-8]|[0-8]_\d+'
 	_RE_UNIQUE_ID_SET = r'_\d+'
@@ -70,20 +66,20 @@ class ViewButton(discord.ui.Button):
 		emoji: Union[str, discord.PartialEmoji]=None,
 		row: int=None,
 		followup: ViewButton.Followup=None,
-		event: ViewButton.Event=None
+		event: BaseButton.Event=None,
 		):
-		self.followup = followup
-		self.event = event
-		self.__clicked_by = set()
-		self.__total_clicks = 0
-		self.__last_clicked: datetime = None
-		self._rm_viewmenu: 'ViewMenu' = None
 		super().__init__(style=style, label=label, disabled=disabled, custom_id=custom_id, url=url, emoji=emoji, row=row)
-
+		BaseButton.__init__(self)
+		self.followup = followup
+		
+		# abc
+		self._menu: ViewMenu = None
 	
-	class Event:
-		# TODO:
-		...
+	def __str__(self):
+		return self.label if self.label else self.emoji
+	
+	def __repr__(self):
+		return f'<ViewButton label={self.label!r} custom_id={ViewButton._get_id_name_from_id(self.custom_id)} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled} total_clicks={self._total_clicks}>'
 
 	class Followup:
 		"""A class that represents the message sent using a :class:`ViewButton`. Contains parameters similar to discord.py's `Messageable.send`. Only to be used with :class:`ViewButton` kwarg "followup".
@@ -181,6 +177,17 @@ class ViewButton(discord.ui.Button):
 			if id_ == val:
 				return f'ViewButton.{key}'
 	
+	@property
+	def menu(self):
+		"""
+		Returns
+		-------
+		:class:`ViewMenu`: The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
+
+			.. added:: v2.0.1
+		"""
+		return self._menu
+	
 	@classmethod
 	def back(cls) -> ViewButton:
 		"""|class method| A factory method that returns a :class:`ViewButton` with the following parameters set:
@@ -240,55 +247,9 @@ class ViewButton(discord.ui.Button):
 		- custom_id: `ViewButton.ID_END_SESSION`
 		"""
 		return cls(style=discord.ButtonStyle.gray, label='Close', custom_id=ViewButton.ID_END_SESSION)
-	
-	@property
-	def clicked_by(self) -> Set[discord.Member]:
-		"""
-		Returns
-		-------
-		Set[:class:`discord.Member`]:
-			The members who clicked the button
-		"""
-		return self.__clicked_by
-
-	@property
-	def menu(self) -> 'ViewMenu':
-		"""
-		Returns
-		-------
-		:class:`ViewMenu`: The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
-		
-			.. added:: v2.0.1
-		"""
-		return self.__menu
-
-	@property
-	def total_clicks(self) -> int:
-		"""
-		Returns
-		-------
-		:class:`int`:
-			The amount of clicks on the button
-		"""
-		return self.__total_clicks
-
-	@property
-	def last_clicked(self) -> datetime:
-		"""
-		Returns
-		-------
-		:class:`datetime.datetime`:
-			The time in UTC for when the button was last clicked. Can be :class:`None` if the button has not been clicked
-		"""
-		return self.__last_clicked
-	
-	def _update_statistics(self, user: Union[discord.Member, discord.User]):
-		self.__clicked_by.add(user)
-		self.__total_clicks += 1
-		self.__last_clicked = datetime.utcnow()
 
 	async def callback(self, interaction: discord.Interaction):
-		await self._rm_viewmenu._paginate(self, interaction)
+		await self._menu._paginate(self, interaction)
 
 class ButtonType(Enum):
 	"""A helper class for :class:`ReactionMenu` and :class:`TextMenu`. Determines the generic action a button can perform. This should *NOT* be used with :class:`ButtonsMenu`
@@ -342,8 +303,8 @@ class ButtonType(Enum):
 		func = func.callback if isinstance(func, Command) else func
 		return (func, args, kwargs)
 
-class Button:
-	"""A helper class for :class:`ReactionMenu` and :class:`TextMenu`. Represents a reaction. This should *NOT* be used with :class:`ButtonsMenu`
+class Button(BaseButton):
+	"""A helper class for :class:`ReactionMenu`. Represents a reaction. This should *NOT* be used with :class:`ViewMenu`
 	
 	Parameters
 	----------
@@ -352,6 +313,9 @@ class Button:
 
 	linked_to: :class:`ButtonType`
 		A generic action a button can perform
+	
+	event: :class:`Button.Event`
+		Determine when a button should be removed or disabled depending on the amount of clicks
 	
 	Options [kwargs]
 	----------------
@@ -368,25 +332,24 @@ class Button:
 			v1.0.3
 				Added :attr:`details`
 			v2.0.3
-				Added :attr:`__clicked_by`
-				Added :attr:`__total_clicks`
-				Added :attr:`__last_clicked`
+				Added :attr:`_clicked_by`
+				Added :attr:`_total_clicks`
+				Added :attr:`_last_clicked`
 				Removed `__slots__`
+			v3.0.0
+				Added :param:`event`
 	"""
 
-	def __init__(self, *, emoji: str, linked_to: ButtonType, **options):
+	def __init__(self, *, emoji: str, linked_to: ButtonType, event: Button.Event=None, **options):
+		super().__init__()
 		self.emoji = emoji
 		self.linked_to = linked_to
 		self.custom_embed: discord.Embed = options.get('embed')
 		self.details: tuple = options.get('details')
 		self.name: str = options.get('name')
-		if self.name:
-			self.name = str(self.name).lower()
 		
-		self.__clicked_by = set()
-		self.__total_clicks = 0
-		self.__last_clicked: datetime = None
-		self.__menu = None
+		# abc
+		self._menu: ReactionMenu = None
 	
 	def __str__(self):
 		return self.emoji
@@ -397,52 +360,18 @@ class Button:
 				v1.0.9
 					Replaced old string formatting (%s) with fstring
 		"""
-		return f'<Button emoji={self.emoji!r} linked_to={self.linked_to} custom_embed={self.custom_embed} details={self.details} name={self.name!r}>'
+		return f'<Button emoji={self.emoji!r} linked_to={self.linked_to} total_clicks={self._total_clicks} name={self.name!r}>'
 	
 	@property
-	def menu(self):
+	def menu(self) -> ReactionMenu:
 		"""
 		Returns
 		-------
-		The instance of the menu that the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
+		:class:`ReactionMenu`
+			The menu the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
 		
 			.. added:: v2.0.3
 		"""
-		return self.__menu
+		return self._menu
 	
-	@property
-	def clicked_by(self) -> Set[discord.Member]:
-		"""
-		Returns
-		-------
-		Set[:class:`discord.Member`]:
-			The members who clicked the button
-		
-			.. added:: v2.0.3
-		"""
-		return self.__clicked_by
-	
-	@property
-	def total_clicks(self) -> int:
-		"""
-		Returns
-		-------
-		:class:`int`:
-			The amount of clicks on the button
-		
-			.. added:: v2.0.3
-		"""
-		return self.__total_clicks
-
-	@property
-	def last_clicked(self) -> datetime:
-		"""
-		Returns
-		-------
-		:class:`datetime.datetime`:
-			The time in UTC for when the button was last clicked. Can be :class:`None` if the button has not been clicked
-		
-			.. added:: v2.0.3
-		"""
-		return self.__last_clicked
 	

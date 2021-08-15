@@ -59,40 +59,15 @@ class ViewMenu:
     _active_sessions: List[ViewMenu] = []
 
     def __init__(self, ctx: Context, *, menu_type: int, **kwargs):
-        self._ctx = ctx
-        self._menu_type = menu_type
-        
-        self._msg: discord.Message = None
-        self._buttons: List[ViewButton] = []
-        self._pc: _PageController = None
-        self._is_running = False
-        self._main_page_contents = collections.deque()
-        self._last_page_contents = collections.deque()
-        self._dynamic_data_builder: List[str] = []
-        self._relay_info: NamedTuple = None
-        self._on_timeout_details: 'function' = None
-        self._menu_timed_out = False
-        self._bypass_primed = False # used in :meth:`update()`
-        self.__pages: List[Union[discord.Embed, str]] = []
-
         # kwargs
-        self.wrap_in_codeblock: Union[str, None] = kwargs.get('wrap_in_codeblock')
-        self.custom_embed: Union[discord.Embed, None] = kwargs.get('custom_embed')
         self.delete_on_timeout: bool = kwargs.get('delete_on_timeout', False)
         self.disable_buttons_on_timeout: bool = kwargs.get('disable_buttons_on_timeout', True)
         self.remove_buttons_on_timeout: bool = kwargs.get('remove_buttons_on_timeout', False)
-        self.only_roles: Union[List[discord.Role], None] = kwargs.get('only_roles')
-        self.show_page_director: bool = kwargs.get('show_page_director', True)
-        self.name: Union[str, None] = kwargs.get('name')
-        self.style: Union[str, None] = kwargs.get('style', 'Page $/&')
         self.all_can_click: bool = kwargs.get('all_can_click', False)
-        self.delete_interactions: bool = kwargs.get('delete_interactions', True)
-        self.allowed_mentions: discord.AllowedMentions = kwargs.get('allowed_mentions', discord.AllowedMentions())
-        self.__timeout: Union[int, float, None] = kwargs.get('timeout', 60.0) # property get/set
-        self.__rows_requested: int = kwargs.get('rows_requested')
+        self.timeout: Union[int, float, None] = kwargs.get('timeout', 60.0) # property get/set
 
         # view
-        self._view = discord.ui.View(timeout=self.__timeout)
+        self._view = discord.ui.View(timeout=self.timeout)
         self._view.on_timeout = self._on_dpy_view_timeout
     
     async def _on_dpy_view_timeout(self):
@@ -376,7 +351,7 @@ class ViewMenu:
                     # the main purpose of the re is to decide if only 1 or 2 '\n' should be used. with codeblocks, at the end of the block there is already a new line, so there's no need to add an extra one except in
                     # the case where there is more information after the codeblock
                     
-                    # NOTE: with codeblocks, i already tried the f doc string version of this and it doesnt work because there is a spacing issue with page_info. using a normal f string with \n works as intended
+                    # Note: with codeblocks, i already tried the f doc string version of this and it doesnt work because there is a spacing issue with page_info. using a normal f string with \n works as intended
                     # f doc string version: https://github.com/Defxult/reactionmenu/blob/eb88af3a2a6dd468f7bcff38214eb77bc91b241e/reactionmenu/text.py#L288
                     
                     if re.search(CODEBLOCK, content):
@@ -390,9 +365,9 @@ class ViewMenu:
 
     async def _handle_event(self, button: ViewButton):
         """If an event is set, disable/remove the buttons from the menu when the click requirement has been met
+            
             .. added:: v2.0.2
         """
-        # TODO:
         if button.event:
             event_type = button.event.event_type
             event_value = button.event.value
@@ -607,10 +582,10 @@ class ViewMenu:
         
             .. changes::
                 v2.0.1
-                    Added reset of button.__menu (set to :class:`None`)
+                    Added reset of button._menu (set to :class:`None`)
         """
         if button in self._buttons:
-            button._rm_viewmenu = None
+            button._menu = None
             self._buttons.remove(button)
             self._view.remove_item(button)
         else:
@@ -619,7 +594,7 @@ class ViewMenu:
     def remove_all_buttons(self):
         """Remove all buttons from the menu"""
         for btn in self._buttons:
-            btn._rm_viewmenu = None
+            btn._menu = None
         self._buttons.clear()
         self._view.clear_items()
     
@@ -705,12 +680,12 @@ class ViewMenu:
             if button.style == discord.ButtonStyle.link:
                 pass
             else:
-                # NOTE: this needs to be an re search because of buttons with an ID of "[ID]_[unique ID]"
+                # Note: this needs to be an re search because of buttons with an ID of "[ID]_[unique ID]"
                 if not re.search(ViewButton._RE_IDs, button.custom_id):
                     raise ViewMenuException(f'ViewButton custom_id {button.custom_id!r} was not recognized')
             
             # ensure there are no duplicate custom_ids for the base navigation buttons
-            # NOTE: there's no need to have a check for buttons that are not navigation buttons because they have a unique ID and duplicates of those are allowed
+            # Note: there's no need to have a check for buttons that are not navigation buttons because they have a unique ID and duplicates of those are allowed
             active_button_ids: List[str] = [btn.custom_id for btn in self._buttons]
             if button.custom_id in active_button_ids:
                 name = ViewButton._get_id_name_from_id(button.custom_id)
@@ -746,7 +721,7 @@ class ViewMenu:
         self._button_add_check(button)
         self._maybe_unique_id(button)
 
-        button._rm_viewmenu = self
+        button._menu = self
         self._view.add_item(button)
         self._buttons.append(button)
     
@@ -1075,6 +1050,7 @@ class ViewMenu:
 
         button._update_statistics(inter.user)
         await self._contact_relay(inter.user, button)
+        await self._handle_event(button)
 
     async def stop(self, *, delete_menu_message: bool=False, remove_buttons: bool=False, disable_buttons: bool=False):
         """|coro| Stops the process of the menu with the option of deleting the menu's message, removing the buttons, or disabling the buttons upon stop
@@ -1143,8 +1119,8 @@ class ViewMenu:
     
     async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None):
         # ---------------------
-        # NOTE 1: each at least 1 page check is done in it's own if statement to avoid clashing between pages and custom embeds
-        # NOTE 2: at least 1 page check for add_row is done in "(dynamic menu)"
+        # Note 1: each at least 1 page check is done in it's own if statement to avoid clashing between pages and custom embeds
+        # Note 2: at least 1 page check for add_row is done in "(dynamic menu)"
         
         # ensure at least 1 button exists before starting the menu
         if not self._buttons:

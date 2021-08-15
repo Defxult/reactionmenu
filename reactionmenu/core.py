@@ -22,11 +22,14 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from __future__ import annotations
+
 import asyncio
 import collections
 import itertools
-from typing import Deque, List, Union
+from typing import Deque, List, Union, NamedTuple
 
+import discord
 from discord import Embed, Role, TextChannel
 from discord.ext.commands import Context
 
@@ -34,6 +37,432 @@ from . import abc
 from .buttons import Button, ButtonType
 from .decorators import *
 from .errors import *
+
+
+class ReactionMenu(abc.BaseMenu):
+	"""A class to create a discord.py embed pagination menu using reactions
+	
+	Parameters
+	----------
+	ctx: :class:`discord.ext.commands.Context`
+		The Context object. You can get this using a command or if in `discord.on_message`
+
+	back_button: :class:`str`
+		Button used to go to the previous page of the menu
+
+	next_button: :class:`str`
+		Button used to go to the next page of the menu
+
+	config: :class:`int`
+		The menus core function to set. Class variables :attr:`ReactionMenu.STATIC` or :attr:`ReactionMenu.DYNAMIC`
+
+	Options [kwargs]
+	----------------
+	rows_requested: :class:`int`
+		The amount of information per :meth:`ReactionMenu.add_row()` you would like applied to each embed page (dynamic only/defaults to :class:`None`)
+
+	custom_embed: :class:`discord.Embed`
+		Embed object to use when adding data with :meth:`ReactionMenu.add_row()`. Used for styling purposes (dynamic only/defaults to :class:`None`)
+
+	wrap_in_codeblock: :class:`str`
+		The discord codeblock language identifier (dynamic only/defaults to :class:`None`). Example: `ReactionMenu(ctx, ..., wrap_in_codeblock='py')`
+
+	clear_reactions_after: :class:`bool`
+		If the menu times out, remove all reactions (defaults to `True`)
+
+	timeout: Union[:class:`float`, :class:`None`]
+		Timer for when the menu should end. Can be :class:`None` for no timeout (defaults to 60.0)
+
+	show_page_director: :class:`bool`
+		Shown at the botttom of each embed page. "Page 1/20" (defaults to `True`)
+
+	name: :class:`str`
+		A name you can set for the menu (defaults to :class:`None`)
+
+	style: :class:`str`
+		A custom page director style you can select. "$" represents the current page, "&" represents the total amount of pages (defaults to "Page $/&") Example: `ReactionMenu(ctx, ..., style='On $ out of &')`
+
+	all_can_react: :class:`bool`
+		Sets if everyone is allowed to control when pages are 'turned' when buttons are pressed (defaults to `False`)
+
+	delete_interactions: :class:`bool`
+		Delete the prompt message by the bot and response message by the user when asked what page they would like to go to when using `ButtonType.GO_TO_PAGE` (defaults to `True`)
+
+	navigation_speed: :class:`str`
+		Sets if the user needs to wait for the reaction to be removed by the bot before "turning" the page. Setting the speed to :attr:`ReactionMenu.FAST` makes it so that there is no need to wait (reactions are not removed on each press) and can
+		navigate lengthy menu's more quickly (defaults to `ReactionMenu.NORMAL`)
+	
+	delete_on_timeout: :class:`bool`
+		When the menu times out, delete the menu message. This overrides :attr:`clear_reactions_after` (defaults to `False`)
+	
+	only_roles: List[:class:`discord.Role`]
+        Members with any of the provided roles are the only ones allowed to control the menu. The member who started the menu will always be able to control it. This overrides :attr:`all_can_react` (defaults to :class:`None`)
+
+		.. changes::
+			v1.0.1
+				Added :attr:`_active_sessions`
+				Added :attr:`_sessions_limit`
+				Added :attr:`_task_sessions_pool`
+			v1.0.2
+				Added :attr:`_delete_interactions`
+			v1.0.5
+				Added :attr:`_navigation_speed`
+				Added :attr:`NORMAL`
+				Added :attr:`FAST`
+			v1.0.6
+				Added :attr:`_custom_embed_set`
+				Added :attr:`_send_to_channel`
+			v1.0.8
+				Added :attr:`_delete_on_timeout`
+			v1.0.9
+				Added :attr:`_only_roles`
+				Added :attr:`_menu_owner`
+				Added :attr:`_auto_paginator`
+				Added :attr:`_auto_turn_every`
+				Added :attr:`_auto_worker`
+				Added :attr:`_main_session_task`
+				Added :attr:`_runtime_tracking_task`
+				Added :attr:`_countdown_task`
+				Added :attr:`_limit_message`
+				Added :attr:`_default_back_button`
+				Added :attr:`_default_next_button`
+				Added :attr:`_all_buttons_removed`
+				Added :attr:`_is_dm_session`
+				Added :attr:`_relay_function`
+
+				
+				This class now inherits from :abc:`Menu`
+				
+				A sizeable amount of methods and properties were moved from here to abc.py to support :class:`TextMenu`
+            v2.0.0
+                Added initialization of :attr:`_menu_owner` to the `__init__` instead of the execute session method, etc.
+				Added :attr:`_on_timeout_details`
+				Added :attr:`_menu_timed_out`
+			v2.0.1
+				Added :attr:`_bypass_primed`
+			v2.0.3
+				Added instantiation of :attr:`Button.menu`
+
+	"""
+
+	NORMAL = 'NORMAL'
+	FAST = 'FAST'
+	_task_sessions_pool: List[asyncio.Task] = []
+
+	def __init__(self, ctx: Context, *, menu_type: int, **options):
+		super().__init__(ctx, menu_type)
+		self._buttons: List[Button] = []
+		
+		#! there was a bug with this. check it later
+		self._all_buttons_removed = False
+		
+		# auto-pagination
+		self._auto_paginator = False
+		self._auto_turn_every = None
+		self._auto_worker = None
+
+		# tasks
+		self._main_session_task: asyncio.Task = None
+	
+		# misc options
+		self.clear_reactions_after: bool = options.get('clear_reactions_after', True)
+		self.timeout: Union[float, None] = options.get('timeout', 60.0)
+		self.all_can_react: bool = options.get('all_can_react', False)
+		self.__navigation_speed: str = options.get('navigation_speed', ReactionMenu.NORMAL)
+	
+	@classmethod
+	def _remove_session(cls, menu, task):
+		"""|class method| Upon session completion whether by timeout, call to :meth:`Menu.stop`, or exception in the main session task, remove it from the list of active sessions as well
+		as the task from the task pool
+		"""
+		# TODO:
+		if menu in cls._active_sessions:
+			cls._active_sessions.remove(menu)
+		if task in cls._task_sessions_pool:
+			cls._task_sessions_pool.remove(task)
+	
+	@classmethod
+	def update_all_turn_every(cls, turn_every: Union[int, float]):
+		"""|class method| Update the amount of seconds to wait before going to the next page for all active auto-paginated sessions. When updated, the new value doesn't go into effect until the last
+		round of waiting (:param:`turn_every`) completes for each menu
+
+		Warning
+		-------
+		Setting :param:`turn_every` to a number that's too low exposes you to API abuse because an edit of a message will be occurring too quickly.
+		It is your responsibility to make sure an appropriate/safe value is set, *especially* if the menu has a timeout of :class:`None`
+		
+		Parameter
+		---------
+		turn_every: Union[:class:`int`, :class:`float`]
+			The amount of seconds to wait before going to the next page
+		
+		Raises
+		------
+		- `ReactionMenuException`: Parameter :param:`turn_every` was not greater than or equal to one
+
+			.. added:: v1.0.9
+		"""
+		if turn_every >= 1:
+			auto_sessions = [session for session in cls._active_sessions if session._auto_paginator]
+			for session in auto_sessions:
+				session.update_turn_every(turn_every)
+		else:
+			raise ReactionMenuException('Parameter "turn_every" must be greater than or equal to one')
+	
+	@classmethod
+	def _force_stop(cls, target: 'Menu'):
+		"""This method is basically the safe version of now removed :meth:`Menu.cancel_all_sessions()`. Since the old way of "pulling the plug" is no longer
+		a safe way to shutdown the processing of all active menus. How this works is:
+		
+		- :attr:`_is_running` is set to `False`
+		- The menu (:param:`target`) is removed from the list of active sessions
+		- The :attr:`_main_session_task` is removed from the sessions task pool. It must be removed before its cancelled otherwise it can never be removed because it's cancelled
+		- The :attr:`_main_session_task` is cancelled
+		- From there, there being :meth:`_main_session_callback`, it stops any background tasks that may be running (timeout countdown or runtime)
+
+		This almost does the same thing as :meth:`Menu.stop()`. The only difference is that the menu message will not be deleted and reactions will not be removed
+
+		Parameter
+		---------
+		target: Union[:class:`Menu`, :class:`None`]
+			If :class:`None`, this cancels *ALL* active sessions
+
+			.. added:: v1.0.9
+		"""
+		if target:
+			for session in cls._active_sessions:
+				if session == target:
+					target._is_running = False
+					task = target._main_session_task
+					cls._active_sessions.remove(target)
+					cls._task_sessions_pool.remove(task)
+					task.cancel()
+					return
+		else:
+			for session in cls._active_sessions:
+				session._is_running = False
+				task = session._main_session_task
+				task.cancel()
+			cls._active_sessions.clear()
+			cls._task_sessions_pool.clear()
+	
+	@classmethod
+	async def stop_all_auto_sessions(cls):
+		"""|coro class method| Stops all auto-paginated sessions that are currently running
+
+			.. added:: v1.0.9
+		"""
+		auto_sessions = [session for session in cls._active_sessions if session._auto_paginator]
+		for session in auto_sessions:
+			await session.stop()
+	
+	@property
+	def auto_paginator(self) -> bool:
+		"""
+		Returns
+		-------
+		:class:`bool`:
+			`True` if the menu has been set as an auto-pagination menu, `False` otherwise
+		"""
+		return self._auto_paginator
+
+	@property
+	def auto_turn_every(self) -> int:
+		"""
+		Returns
+		-------
+		:class:`int`:   
+			The amount of time in seconds for how frequently an auto-pagination menu should turn each page. Can be :class:`None` if the menu
+			has not been set as an auto-pagination menu
+		"""
+		return self._auto_turn_every
+	
+	@property
+	def navigation_speed(self) -> str:
+		return self.__navigation_speed
+
+	@navigation_speed.setter
+	def navigation_speed(self, value):
+		"""A property getter/setter for kwarg `navigation_speed`"""
+		# TODO:
+	
+	async def _handle_fast_navigation(self):
+		"""|coro| If either of the below events are dispatched, return the result (reaction, user) of the coroutine object. Used in :meth:`Menu._execute_session` for :attr:`Menu.FAST`.
+		Can timeout, `.result()` raises :class:`asyncio.TimeoutError` but is caught in :meth:`Menu._execute_session` for proper cleanup. This is the core function as to how the 
+		navigation speed system works
+		
+			.. added:: v1.0.5
+
+				.. Note :: Handling of aws's 
+					The additional time (+ 0.1) is needed because the items in :var:`wait_for_aws` timeout at the exact same time. Meaning that there will never be an object in :var:`pending` (which is what I want)
+					which renders the ~return_when param useless because the first event that was dispatched is stored in :var:`done`. Since they timeout at the same time,
+					both aws are stored in :var:`done` upon timeout. 
+					
+					The goal is to return the result of a single :meth:`discord.Client.wait_for`, the result is returned but the :exc:`asyncio.TimeoutError`
+					exception that was raised in :meth:`asyncio.wait` (because of the timeout by the other aws) goes unhandled and the exception is raised. The additional time allows the 
+					cancellation of the task before the exception (Task exception was never retrieved) is raised 
+			
+			.. changes::
+				v1.0.7
+					Added :func:`_proper_timeout` and replaced the ~`reaction_remove` ~`timeout` value to a function that handles cases where there is a timeout vs no timeout
+		"""
+		def _proper_timeout():
+			"""In :var:`wait_for_aws`, if the menu does not have a timeout (`Menu.timeout = None`), :class:`None` + :class:`float`, the float being "`self._timeout + 0.1`" from v1.0.5, will fail for obvious reasons. This checks if there is no timeout, 
+			and instead of adding those two together, simply return :class:`None` to avoid :exc:`TypeError`. This would happen if the menu's :attr:`Menu.navigation_speed` was set to :attr:`Menu.FAST` and
+			the :attr:`Menu.timeout` was set to :class:`None`
+				
+				.. added:: v1.0.7
+			"""
+			if self._timeout is not None:
+				return self._timeout + 0.1
+			else:
+				return None
+
+		wait_for_aws = (
+			self._bot.wait_for('reaction_add', check=self._wait_check, timeout=self._timeout),
+			self._bot.wait_for('reaction_remove', check=self._wait_check, timeout=_proper_timeout()) 
+		)
+		done, pending = await asyncio.wait(wait_for_aws, return_when=asyncio.FIRST_COMPLETED)
+
+		temp_pending = list(pending)
+		temp_pending[0].cancel()
+
+		temp_done = list(done)
+		return temp_done[0].result()
+	
+	def _wait_check(self, reaction, user) -> bool:
+		"""|abc| Predicate for :meth:`discord.Client.wait_for`. This also handles :attr:`_all_can_react`
+		
+			.. changes::
+				v1.0.9
+					Added handling for :attr:`_only_roles`
+					Added handling for :attr:`_menu_owner`
+		"""
+		not_bot = False
+		correct_msg = False
+		correct_user = False
+
+		if not user.bot:
+			not_bot = True
+		
+		if reaction.message.id == self._msg.id:
+			correct_msg = True
+
+		if self._only_roles:
+			if self._all_can_react:
+				self._all_can_react = False
+			for role in self._only_roles:
+				if role in user.roles:
+					self._ctx.author = user
+					correct_user = True
+					break
+
+		if self._all_can_react:
+			self._ctx.author = user
+			correct_user = True
+		
+		if user == self._menu_owner and not correct_user:
+			self._ctx.author = user
+			correct_user = True
+
+		return all((not_bot, correct_msg, correct_user))
+	
+	def _main_session_callback(self, task: asyncio.Task):
+		"""|abc| Used for "handling" unhandled exceptions in :meth:`Menu._execute_session`. Because that method is running in the background (asyncio.create_task), a callback is needed
+		when an exception is raised or else all exceptions are suppressed/lost until the program terminates, which it won't because it's a bot. This re-raises those exceptions
+		if any so proper debugging can occur both on my end and the users end (using :attr:`ButtonType.CALLER`)
+			
+			.. added:: v1.0.3
+
+			.. changes::
+				v1.0.5
+					Added try/except to properly handle/display the appropriate tracebacks for when tasks are cancelled
+				v1.0.9
+					- Moved from :class:`ReactionMenu` to abc. Was "_asyncio_exception_callback"
+					- Added handling for background tasks
+		"""
+		try:
+			task.result()
+		except asyncio.CancelledError:
+			pass
+		finally:
+			# if this executes, the main session task ended because of an exception
+			if not task.cancelled():
+				# 1 - set the true state of `_is_running`
+				# 2 - setting this to `False` stops the run time tracking task
+				# 3 - if its an auto-pagination menu, setting this to `False` stops the auto countdown task
+				self._is_running = False
+				
+				# removing the session/session task from the list of active sessions/task pool is needed here because the menu did not end gracefully.
+				# meaning a call to :meth:`Menu.stop` was not made so the task and sessions are still in their associated lists
+				cls = self.__class__
+				cls._remove_session(self, task)
+
+	@ensure_not_primed
+	def set_as_auto_paginator(self, turn_every: Union[int, float]):
+		"""Set the menu to turn pages on it's own every x seconds. If this is set, reactions will not be applied to the menu
+		
+		Warning
+		-------
+		Setting :param:`turn_every` to a number that's too low exposes you to API abuse because an edit of a message will be occurring too quickly.
+		It is your responsibility to make sure an appropriate/safe value is set, *especially* if the menu has a timeout of :class:`None`
+		
+		Parameter
+		---------
+		turn_every: Union[:class:`int`, :class:`float`]
+			The amount of seconds to wait before going to the next page
+		
+		Raises
+		------
+		- `MenuAlreadyRunning`: Attempted to call this method after the menu has started
+		- `ReactionMenuException`: Parameter :param:`turn_every` was not greater than or equal to one
+
+			.. added:: v1.0.9
+		"""
+		if turn_every >= 1:
+			self._auto_paginator = True
+			self._auto_turn_every = turn_every
+		else:
+			raise ReactionMenuException('Parameter "turn_every" must be greater than or equal to one')
+			
+	def update_turn_every(self, turn_every: Union[int, float]):
+		"""Change the amount of seconds to wait before going to the next page. When updated, the new value doesn't go into effect until the last round of waiting (:param:`turn_every`) completes
+
+		Warning
+		-------
+		Setting :param:`turn_every` to a number that's too low exposes you to API abuse because an edit of a message will be occurring too quickly.
+		It is your responsibility to make sure an appropriate/safe value is set, *especially* if the menu has a timeout of :class:`None`
+		
+		Parameter
+		---------
+		turn_every: Union[:class:`int`, :class:`float`]
+			The amount of seconds to wait before going to the next page
+		
+		Raises
+		------
+		- `ReactionMenuException`: Parameter :param:`turn_every` was not greater than or equal to one or this method was called from a menu that was not set as an auto-pagination menu
+
+			.. added:: v1.0.9
+		"""
+		if self._auto_paginator:
+			if turn_every >= 1:
+				self._auto_turn_every = turn_every
+			else:
+				raise ReactionMenuException('Parameter "turn_every" must be greater than or equal to one')
+		else:
+			raise ReactionMenuException('Menu is not set as auto-paginator')
+
+
+
+
+
+
+
+
+
+
+
+
 
 class ReactionMenu(abc.Menu):
 	"""A class to create a discord.py embed pagination menu using reactions
@@ -159,8 +588,8 @@ class ReactionMenu(abc.Menu):
 		# that method does a lot of necessary checks, but is unnecessary for this particular instance
 		back_obj = Button(emoji=back_button, linked_to=ButtonType.PREVIOUS_PAGE, name='default back button')
 		next_obj = Button(emoji=next_button, linked_to=ButtonType.NEXT_PAGE, name='default next button')
-		back_obj._Button__menu = self
-		next_obj._Button__menu = self
+		back_obj._menu = self
+		next_obj._menu = self
 		self._default_back_button: Button = back_obj
 		self._default_next_button: Button = next_obj
 		self._all_buttons: List[Button] = [self._default_back_button, self._default_next_button]
@@ -557,7 +986,7 @@ class ReactionMenu(abc.Menu):
 			if self._all_buttons_removed:
 				self._all_buttons_removed = False
 			
-			button._Button__menu = self
+			button._menu = self
 		else:
 			raise DuplicateButton(f'The emoji {tuple(button.emoji)} has already been registered as a button')
 	

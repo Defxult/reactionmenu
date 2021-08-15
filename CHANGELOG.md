@@ -1,37 +1,57 @@
-<!-- ## Key
-* `BM` = `ButtonsMenu`
+## Key
 * `RM` = `ReactionMenu`
-* `TM` = `TextMenu` -->
+* `TM` = `TextMenu`
+* `VM` = `ViewMenu`
+* `ALL` = All menus
 
 ## v3.0.0 » After discord.py 2.0 officially releases
+
+#### New Features
+* `ALL`Added the ability for relay functions to relay only the buttons of your choice instead of relaying all buttons
+  * Before: `ReactionMenu.set_relay(func)`
+  * After: `ReactionMenu.set_relay(func, only: List[ViewButton]=None)`
+* `ALL` Added the ability to remove the timeout method if you have one set
+  * `ReactionMenu.remove_on_timeout()`
 #### Breaking Changes
+* *change/removed* `ReactionMenu` and `TextMenu` are no longer separate classes. `TextMenu` has been merged into `ReactionMenu`
+* *removed* `ReactionMenu` parameters `back_button` and `next_button` have been removed. Use `ReactionMenu.add_button()` instead
+* *removed* `ReactionMenu` parameter `config` has been removed/replaced with parameter `menu_type`
+* *removed* `ReactionMenu.run_time`
+* *removed* `ReactionMenu.default_next_button`
+* *removed* `ReactionMenu.default_back_button`
+* *removed* `ReactionMenu.all_buttons`. use `ReactionMenu.buttons` instead
+* *removed* `ReactionMenu.next_buttons`
+* *removed* `ReactionMenu.back_buttons`
+* *removed* `ReactionMenu.first_page_buttons`
+* *removed* `ReactionMenu.last_page_buttons`
+* *removed* `ReactionMenu.caller_buttons`
+* *removed* `ReactionMenu.end_session_buttons`
+* *removed* `ReactionMenu.go_to_page_buttons`
+* *removed* `ReactionMenu.help_appear_order()`
+* *removed* `ReactionMenu.change_appear_order()`
+* *changed* `ReactionMenu.clear_all_buttons()` to `ReactionMenu.remove_all_buttons()`
+  
 Discords Buttons feature has been implemented using discord.py instead of a 3rd party library. Meaning this library is now only dependent on discord.py. With that said, two classes have been renamed/removed to support discord.py's `View`
 * *removed* `ButtonsMenu` class
   * This has been replaced with `ViewMenu`
 * *removed* `ComponentsButton` class
   * This has been replaced with `ViewButton`
-* *removed* All `ComponentsButton` factory methods. They've been renamed and are now apart of the `ViewButton` class
-```diff
-- ComponentsButton.basic_back()
-+ ViewButton.back()
-
-- ComponentsButton.basic_next()
-+ ViewButton.next()
-
-- ComponentsButton.basic_go_to_first_page()
-+ ViewButton.go_to_first_page()
-
-- ComponentsButton.basic_go_to_last_page()
-+ ViewButton.go_to_last_page()
-
-- ComponentsButton.basic_go_to_page()
-+ ViewButton.go_to_page()
-
-- ComponentsButton.basic_end_session()
-+ ViewButton.end_session()
-```
-* Added the ability to remove the timeout method if you have one set
-  * `ViewMenu.remove_on_timeout()`
+* *changed* All `ComponentsButton` factory methods. They've been renamed and are now apart of the `ViewButton` class
+* *changed* All `ComponentsButton` factory methods. They've been renamed and are now apart of the `ViewButton` class
+  * Before
+    * `ComponentsButton.basic_back()`
+    * `ComponentsButton.basic_next()`
+  * After
+    * `ViewButton.back()`
+    * `ViewButton.next()`
+* *changed* The emojis attached to each button have been moved to their own class
+  * Before
+    * `ReactionMenu.EMOJI_BACK_BUTTON`
+    * `ReactionMenu.EMOJI_NEXT_BUTTON`
+  * After
+    * `ReactionMenu.Emojis.BACK_BUTTON`
+    * `ReactionMenu.Emojis.NEXT_BUTTON`
+* *changed* `Button` names are now case sensitive if you were to use method `ReactionMenu.get_button_by_name()`
 
 <!-- ## v2.0.3 » Future release
 #### New Features
