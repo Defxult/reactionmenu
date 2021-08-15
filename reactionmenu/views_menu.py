@@ -60,11 +60,16 @@ class ViewMenu(BaseMenu):
         self.disable_buttons_on_timeout: bool = kwargs.get('disable_buttons_on_timeout', True)
         self.remove_buttons_on_timeout: bool = kwargs.get('remove_buttons_on_timeout', False)
         self.all_can_click: bool = kwargs.get('all_can_click', False)
-        self.timeout: Union[int, float, None] = kwargs.get('timeout', 60.0) # property get/set
+        self.__timeout: Union[int, float, None] = kwargs.get('timeout', 60.0) # property get/set
 
         # view
-        self._view = discord.ui.View(timeout=self.timeout)
+        self._view = discord.ui.View(timeout=self.__timeout)
         self._view.on_timeout = self._on_dpy_view_timeout
+    
+    def __repr__(self):
+        cls = self.__class__
+        return f'<ViewMenu name={self.name!r} owner={str(self._ctx.author)!r} is_running={self._is_running} timeout={self.timeout} menu_type={cls._get_menu_type(self._menu_type)!r}>'
+
     
     async def _on_dpy_view_timeout(self):
         self._menu_timed_out = True
@@ -90,7 +95,9 @@ class ViewMenu(BaseMenu):
         """
         Returns
         -------
-        A list of either :class:`discord.Embed` if the menu_type is :attr:`ViewMenu.TypeEmbed` / :attr:`ButtonsEmbed.TypeEmbedDynamic`. Or :class:`str` if :attr:`ViewMenu.TypeText`. Can return :class:`None` if there are no pages
+        List[Union[:class:`discord.Embed`, :class:`str`]]:
+            A list of embeds if the menu_type is :attr:`ViewMenu.TypeEmbed` / :attr:`ButtonsEmbed.TypeEmbedDynamic`. Or :class:`str` if :attr:`ViewMenu.TypeText`.
+            Can return :class:`None` if there are no pages
         """
         return self._pages if self._pages else None
     
@@ -110,6 +117,7 @@ class ViewMenu(BaseMenu):
 
         return author_pass
     
+    # TODO : needs testing
     def _refresh_page_director_info(self, type_: int, pages: List[Union[discord.Embed, str]]):
         """Sets the page count at the bottom of embeds/text if set
         
@@ -304,10 +312,6 @@ class ViewMenu(BaseMenu):
         Raises
         ------
         - `ButtonNotFound`: The provided button was not found in the list of buttons on the menu
-        
-            .. changes::
-                v2.0.1
-                    Added reset of button._menu (set to :class:`None`)
         """
         if button in self._buttons:
             button._menu = None
@@ -465,6 +469,7 @@ class ViewMenu(BaseMenu):
         else:
             raise ViewMenuException(f'Parameter "search_by" expected "label" or "id", got {search_by!r}')
 
+    #! TODO : add the button event here to prevent 2 edits of a msg
     def _determine_action(self, action) -> dict:
         kwargs = {
             'embed' if self._menu_type in (ViewMenu.TypeEmbed, ViewMenu.TypeEmbedDynamic) else 'content' : action,
@@ -634,13 +639,15 @@ class ViewMenu(BaseMenu):
                     await self._msg.delete()
                 
                 elif disable_buttons:
-                    if not self._buttons: return # if there are no buttons (they've all been removed) to disable, skip this step
+                    if not self._buttons:
+                        return # if there are no buttons (they've all been removed) to disable, skip this step
                     self.disable_all_buttons()
                     await self._msg.edit(view=self._view)
 
                 elif remove_buttons:
-                    if not self._buttons: return # if there are no buttons to remove (they've already been removed), skip this step
-                    self.disable_all_buttons()
+                    if not self._buttons:
+                        return # if there are no buttons (they've already been removed), skip this step
+                    self.remove_all_buttons()
                     await self._msg.edit(view=self._view)
             
             except discord.DiscordException as dpy_error:
@@ -658,7 +665,8 @@ class ViewMenu(BaseMenu):
                     func = self._on_timeout_details
                     
                     # call the timeout function but ignore any and all exceptions that may occur during the function timeout call.
-                    # the most important thing here is to ensure the menu is properly gracefully while displaying a formatted error mesage
+                    # the most important thing here is to ensure the menu is gracefully stopped while displaying a formatted
+                    # error message to the user
                     try:
                         if asyncio.iscoroutinefunction(func): await func(self)
                         else: func(self)
@@ -673,6 +681,7 @@ class ViewMenu(BaseMenu):
                             """
                         ))
     
+    # TODO : a `is_running` check needs to be added to this (issues with that in that past)
     async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None):
         # ---------------------
         # Note 1: each at least 1 page check is done in it's own if statement to avoid clashing between pages and custom embeds

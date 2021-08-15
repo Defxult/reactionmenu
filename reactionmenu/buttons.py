@@ -75,9 +75,6 @@ class ViewButton(discord.ui.Button, BaseButton):
 		# abc
 		self._menu: ViewMenu = None
 	
-	def __str__(self):
-		return self.label if self.label else self.emoji
-	
 	def __repr__(self):
 		return f'<ViewButton label={self.label!r} custom_id={ViewButton._get_id_name_from_id(self.custom_id)} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled} total_clicks={self._total_clicks}>'
 

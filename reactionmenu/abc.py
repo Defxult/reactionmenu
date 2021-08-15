@@ -26,7 +26,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .buttons import Button
+    from .buttons import Button, ViewButton
 
 import abc
 import asyncio
@@ -39,7 +39,6 @@ from typing import List, Union, Set
 import discord
 from discord.ext.commands import Context
 
-from .buttons import ButtonType
 from .decorators import ensure_not_primed
 from .errors import *
 
@@ -66,7 +65,7 @@ class _PageController:
         """Return the next page in the pagination process"""
         try:
             self.index += 1
-            temp = self.pages[self.index]
+            _ = self.pages[self.index]
         except IndexError:
             if self.index > self.total_pages:
                 self.index = 0
@@ -80,7 +79,7 @@ class _PageController:
         """Return the previous page in the pagination process"""
         try:
             self.index -= 1
-            temp = self.pages[self.index]
+            _ = self.pages[self.index]
         except IndexError:
             if self.index > self.total_pages:
                 self.index = 0
@@ -246,22 +245,15 @@ class BaseMenu(metaclass=abc.ABCMeta):
         self.delete_interactions: bool = kwargs.get('delete_interactions', True)
         self.allowed_mentions: discord.AllowedMentions = kwargs.get('allowed_mentions', discord.AllowedMentions())
     
-    def __repr__(self):
-        """
-            .. added:: v1.0.9
-        
-            .. changes::
-                v2.0.0
-                    Added owner
-        """
-        class_name = self.__class__.__name__
-        return f'<{class_name} name={self._name!r} owner={str(self._menu_owner)!r} is_running={self._is_running} run_time={self._run_time} timeout={self._timeout} auto_paginator={self._auto_paginator}>'
-
+    @property
+    @abc.abstractmethod
+    def _handle_event(self):
+        raise NotImplementedError
+    
     @property
     @abc.abstractmethod
     def timeout(self):
         raise NotImplementedError
-    
     
     @abc.abstractmethod
     def remove_all_buttons(self):
@@ -286,6 +278,16 @@ class BaseMenu(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     async def start(self):
         raise NotImplementedError
+    
+    @classmethod
+    def _get_menu_type(cls, menu_type: int) -> str:
+        """Returns the :class:`str` representation of the classes `menu_type`"""
+        types = {
+            cls.TypeEmbed : 'TypeEmbed',
+            cls.TypeEmbedDynamic : 'TypeEmbedDynamic',
+            cls.TypeText : 'TypeText'
+        }
+        return types[menu_type]
 
     @classmethod
     def get_menu_from_message(cls, message_id: int):
@@ -601,9 +603,9 @@ class BaseMenu(metaclass=abc.ABCMeta):
     
     def _maybe_new_style(self, counter, total_pages) -> str: 
         """Sets custom page director styles"""
-        if self._style:
-            if self._style.count('$') == 1 and self._style.count('&') == 1:
-                temp = self._style # copy it to a new variable so its not being changed in every call
+        if self.style:
+            if self.style.count('$') == 1 and self.style.count('&') == 1:
+                temp = self.style # copy it to a new variable so its not being changed in every call
                 temp = temp.replace('$', str(counter))
                 temp = temp.replace('&', str(total_pages))
                 return temp
@@ -772,24 +774,26 @@ class BaseMenu(metaclass=abc.ABCMeta):
         Parameters
         ----------
         page: Union[:class:`discord.Embed`, :class:`str`]
-            The page to add. Can only be used when the menus `menu_type` is `ViewMenu.TypeEmbed` (adding an embed) or `ViewMenu.TypeText` (adding a str)
+            The page to add. Can only be used when the menus `menu_type` is :attr:`TypeEmbed` (adding a :class:`discord.Embed`)
+            or :class:`TypeText` (adding a :class:`str`)
         
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `MenuSettingsMismatch`: The page being added does not match the menus `menu_type` 
         """
-        if self._menu_type == ViewMenu.TypeEmbed:
+        cls = self.__class__
+        if self._menu_type == cls.TypeEmbed:
             if isinstance(page, discord.Embed):
                 self._pages.append(page)
             else:
-                raise MenuSettingsMismatch(f'ViewMenu menu_type was set as ViewMenu.TypeEmbed but got {page.__class__.__name__} when adding a page')
+                raise MenuSettingsMismatch(f'menu_type was set as TypeEmbed but got {page.__class__.__name__} when adding a page')
         
-        elif self._menu_type == ViewMenu.TypeText:
+        elif self._menu_type == cls.TypeText:
             self._pages.append(str(page))
         
         else:
-            raise MenuSettingsMismatch('add_page method cannot be used with the current ViewMenu menu_type')
+            raise MenuSettingsMismatch('add_page method cannot be used with the current menu_type')
     
     @ensure_not_primed
     def remove_all_pages(self):
@@ -847,37 +851,34 @@ class BaseMenu(metaclass=abc.ABCMeta):
         """
         self._on_timeout_details = None
     
-    def set_relay(self, func):
-        """Set a function to be called with a given set of information when a reaction is pressed on the menu. The information passed is `RelayPayload`, a named tuple object. The
-        named tuple contains the following attributes:
+    def set_relay(self, func: object, *, only: List[Union[Button, ViewButton]]=None):
+        """Set a function to be called with a given set of information when a button is pressed on the menu. The information passed is `RelayPayload`, a named tuple.
+        The named tuple contains the following attributes:
 
-        - `member`: The :class:`discord.Member` object of the member who pressed the reaction. Could be :class:`discord.User` if the menu reaction was pressed in a direct message
-        - `button`: The :class:`Button` object of the reaction that was pressed
-        - `time`: The :class:`datetime` object of when the reaction was pressed. The time is in UTC
-        - `menu`: Depending on the instance, the :class:`ReactionMenu` or :class:`TextMenu` object
+        - `member`: The :class:`discord.Member` object of the person who pressed the button. Could be :class:`discord.User` if the menu was started in a DM
+        - `button`: Depending on the menu instance, the :class:`Button` or :class:`ViewButton` object of the button that was pressed
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         func: Callable[[:class:`NamedTuple`], :class:`None`]
             The function should only contain a single positional argument. Discord.py command functions (`@bot.command()`) not supported
         
+        only: List[Union[:class:`Button`, :class:`ViewButton`]]
+            (optional) A list of buttons associated with the current menu instance (defaults to :class:`None`)
+        
         Raises
         ------
-        - `IncorrectType`: The argument provided was not callable
-        
-            .. added:: v1.0.9
+        - `IncorrectType`: The :param:`func` argument provided was not callable
         """
         if callable(func):
-            self._relay_function = func
+            RelayInfo = collections.namedtuple('RelayInfo', ['func', 'only'])
+            self._relay_info = RelayInfo(func=func, only=only)
         else:
             raise IncorrectType('When setting the relay, argument "func" must be callable')
     
     def remove_relay(self):
-        """Remove the relay that's been set
-
-            .. added:: v2.0.1
-        """
-        self._relay_function = None
+        """Remove the relay that's been set"""
+        self._relay_info = None
     
     def get_button_by_name(self, name: str) -> Button:
         """Retrieve a :class:`Button` object by its name if the kwarg "name" for that :class:`Button` was set

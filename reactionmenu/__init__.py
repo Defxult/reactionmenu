@@ -11,7 +11,6 @@ A library to create a discord.py paginator. Supports pagination with Discords Bu
 
 from .buttons import Button, ButtonType, ViewButton
 from .core import ReactionMenu
-from .text import TextMenu
 from .views_menu import ViewMenu
 
 __version__ = '3.0.0-a'
