@@ -178,13 +178,12 @@ class ViewButton(discord.ui.Button, BaseButton):
 				return f'ViewButton.{key}'
 	
 	@property
-	def menu(self):
+	def menu(self) -> ViewMenu:
 		"""
 		Returns
 		-------
-		:class:`ViewMenu`: The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
-
-			.. added:: v2.0.1
+		:class:`ViewMenu`:
+			The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
 		"""
 		return self._menu
 	

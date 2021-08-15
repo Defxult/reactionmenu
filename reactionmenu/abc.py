@@ -257,7 +257,36 @@ class BaseMenu(metaclass=abc.ABCMeta):
         class_name = self.__class__.__name__
         return f'<{class_name} name={self._name!r} owner={str(self._menu_owner)!r} is_running={self._is_running} run_time={self._run_time} timeout={self._timeout} auto_paginator={self._auto_paginator}>'
 
+    @property
+    @abc.abstractmethod
+    def timeout(self):
+        raise NotImplementedError
     
+    
+    @abc.abstractmethod
+    def remove_all_buttons(self):
+        raise NotImplementedError
+    
+    @abc.abstractmethod
+    def get_button(self):
+        raise NotImplementedError
+    
+    @abc.abstractmethod
+    def remove_button(self):
+        raise NotImplementedError
+    
+    @abc.abstractmethod
+    def add_button(self):
+        raise NotImplementedError
+    
+    @abc.abstractmethod
+    def stop(self):
+        raise NotImplementedError
+    
+    @abc.abstractmethod
+    async def start(self):
+        raise NotImplementedError
+
     @classmethod
     def get_menu_from_message(cls, message_id: int):
         """|class method| Return the menu object associated with the message with the given ID
@@ -494,31 +523,32 @@ class BaseMenu(metaclass=abc.ABCMeta):
             `True` if the menu is currently running, `False` otherwise
         """
         return self._is_running
-
+    
     @property
-    @abc.abstractmethod
-    def timeout(self):
-        raise NotImplementedError
+    def buttons(self):
+        return self._buttons if self._buttons else None
     
-    @abc.abstractmethod
-    def stop(self):
-        raise NotImplementedError
+    @property
+    def buttons_most_clicked(self):
+        if self._buttons:
+            return sorted(self._buttons, key=lambda btn: btn.total_clicks, reverse=True)
+        else:
+            return None
     
-    @abc.abstractmethod
-    def remove_all_buttons(self):
-        raise NotImplementedError
+    @property
+    def in_dms(self) -> bool:
+        """
+        Returns
+        -------
+        :class:`bool`:
+            If the menu was started in a DM
+        """
+        return self._ctx.guild is None
     
-    @abc.abstractmethod
-    def remove_button(self):
-        raise NotImplementedError
-    
-    @abc.abstractmethod
-    def add_button(self):
-        raise NotImplementedError
-    
-    @abc.abstractmethod
-    async def start(self):
-        raise NotImplementedError
+    def _chunks(self, list_, n):
+        """Yield successive n-sized chunks from list. Core component of a dynamic menu"""
+        for i in range(0, len(list_), n):
+            yield list_[i:i + n]
     
     def _update_button_statistics(self, button: Button, member: discord.Member):
         """Update the statistical attributes associated with the button
@@ -582,14 +612,14 @@ class BaseMenu(metaclass=abc.ABCMeta):
         else:
             return f'Page {counter}/{total_pages}'
     
-    async def _contact_relay(self, member: discord.Member, button: ViewButton):
+    async def _contact_relay(self, member: discord.Member, button):
         """Dispatch the information to the relay function if a relay has been set
             
             .. added:: v2.0.1
         """
         if self._relay_info:
             func: object = self._relay_info.func
-            only: List[ViewButton] = self._relay_info.only
+            only = self._relay_info.only
             RelayPayload = collections.namedtuple('RelayPayload', ['member', 'button'])
             payload = RelayPayload(member=member, button=button)
 
@@ -646,6 +676,152 @@ class BaseMenu(metaclass=abc.ABCMeta):
                     else:
                         raise ButtonsMenuException(f'When using parameter "send_to" in ButtonsMenu.start(), the channel {send_to} was not found')
 
+    @ensure_not_primed
+    def clear_all_row_data(self):
+        """Delete all the data thats been added using :meth:`ViewMenu.add_row()`
+        
+        Raises
+        ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `MenuSettingsMismatch`: This method was called but the menus `menu_type` was not `ViewMenu.TypeEmbedDynamic`
+        """
+        if self._menu_type == ViewMenu.TypeEmbedDynamic:
+            self._dynamic_data_builder.clear()
+        else:
+            raise MenuSettingsMismatch('Cannot use method ViewMenu.clear_all_row_data() when the menu_type is not set as ViewMenu.TypeEmbedDynamic')
+    
+    @ensure_not_primed
+    def add_row(self, data: str):
+        """Add text to the embed page by rows of data
+        
+        Parameters
+        ----------
+        data: :class:`str`
+            The data to add
+        
+        Raises
+        ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `MenuSettingsMismatch`: This method was called but the menus `menu_type` was not `ViewMenu.TypeEmbedDynamic`
+        - `MissingSetting`: :class:`ViewMenu` kwarg "rows_requested" (int) has not been set
+        """
+        if self._menu_type == ViewMenu.TypeEmbedDynamic:
+            if self.__rows_requested:
+                self._dynamic_data_builder.append(str(data))
+            else:
+                raise MissingSetting(f'ViewMenu kwarg "rows_requested" (int) has not been set')
+        else:
+            raise MenuSettingsMismatch('add_row can only be used with a menu_type of ViewMenu.TypeEmbedDynamic')
+    
+    @ensure_not_primed
+    def set_main_pages(self, *embeds: discord.Embed):
+        """On a menu with a menu_type of `ViewMenu.TypeEmbedDynamic`, set the pages you would like to show first. These embeds will be shown before the embeds that contain your data
+        
+        Parameter
+        ---------
+        *embeds: :class:`discord.Embed`
+            An argument list of :class:`discord.Embed` objects
+        
+        Raises
+        ------
+        - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `ViewMenu.TypeEmbedDynamic`
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `ViewMenuException`: The "embeds" parameter was empty. At least one value is needed
+        - `IncorrectType`: All values in the argument list were not of type :class:`discord.Embed`
+        """
+        if not embeds: raise ViewMenuException('The argument list when setting main pages was empty')
+        if not all([isinstance(e, discord.Embed) for e in embeds]): raise IncorrectType('All values in the argument list when setting main pages were not of type discord.Embed')
+        if self._menu_type != ViewMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_main_pages is only available for menus with menu_type ViewMenu.TypeEmbedDynamic')
+        
+        # if they've set any values, remove it. Each set should be from the call and should not stack
+        self._main_page_contents.clear()
+        
+        for embed in embeds:
+            self._main_page_contents.append(embed)
+
+    @ensure_not_primed
+    def set_last_pages(self, *embeds: discord.Embed):
+        """On a menu with a menu_type of `ViewMenu.TypeEmbedDynamic`, set the pages you would like to show last. These embeds will be shown after the embeds that contain your data
+        
+        Parameter
+        ---------
+        *embeds: :class:`discord.Embed`
+            An argument list of :class:`discord.Embed` objects
+        
+        Raises
+        ------
+        - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `ViewMenu.TypeEmbedDynamic`
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `ViewMenuException`: The "embeds" parameter was empty. At least one value is needed
+        - `IncorrectType`: All values in the argument list were not of type :class:`discord.Embed`
+        """
+        if not embeds: raise ViewMenuException('The argument list when setting main pages was empty')
+        if not all([isinstance(e, discord.Embed) for e in embeds]): raise IncorrectType('All values in the argument list when setting main pages were not of type discord.Embed')
+        if self._menu_type != ViewMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_last_pages is only available for menus with menu_type ViewMenu.TypeEmbedDynamic')
+        
+        # if they've set any values, remove it. Each set should be from the call and should not stack
+        self._last_page_contents.clear()
+        
+        for embed in embeds:
+            self._last_page_contents.append(embed)
+    
+    @ensure_not_primed
+    def add_page(self, page: Union[discord.Embed, str]):
+        """Add a page to the menu
+        
+        Parameters
+        ----------
+        page: Union[:class:`discord.Embed`, :class:`str`]
+            The page to add. Can only be used when the menus `menu_type` is `ViewMenu.TypeEmbed` (adding an embed) or `ViewMenu.TypeText` (adding a str)
+        
+        Raises
+        ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `MenuSettingsMismatch`: The page being added does not match the menus `menu_type` 
+        """
+        if self._menu_type == ViewMenu.TypeEmbed:
+            if isinstance(page, discord.Embed):
+                self._pages.append(page)
+            else:
+                raise MenuSettingsMismatch(f'ViewMenu menu_type was set as ViewMenu.TypeEmbed but got {page.__class__.__name__} when adding a page')
+        
+        elif self._menu_type == ViewMenu.TypeText:
+            self._pages.append(str(page))
+        
+        else:
+            raise MenuSettingsMismatch('add_page method cannot be used with the current ViewMenu menu_type')
+    
+    @ensure_not_primed
+    def remove_all_pages(self):
+        """Remove all pages from the menu
+        
+        Raises
+        ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        """
+        self._pages.clear()
+    
+    @ensure_not_primed
+    def remove_page(self, page_number: int):
+        """Remove a page from the menu
+        
+        Parameters
+        ----------
+        page_number: :class:`int`
+            The page to remove
+        
+        Raises
+        ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `ViewMenuException`: The page associated with the given page number was not valid
+        """
+        if self._pages:
+            if page_number > 0 and page_number <= len(self._pages):
+                page_to_delete = page_number - 1
+                del self._pages[page_to_delete]
+            else:
+                raise ViewMenuException(f'Page number invalid. Must be from 1 - {len(self._pages)}')
+    
     def set_on_timeout(self, func: object):
         """Set the function to be called when the menu times out
 

@@ -35,7 +35,7 @@ import discord
 from discord.ext.commands import Context
 
 from . import ViewButton
-from .abc import _PageController
+from .abc import _PageController, BaseMenu
 from .decorators import ensure_not_primed
 from .errors import (
     ButtonNotFound,
@@ -51,14 +51,10 @@ from .errors import (
 )
 
 
-class ViewMenu:
-    TypeEmbed = 1
-    TypeEmbedDynamic = 2
-    TypeText = 3
-
-    _active_sessions: List[ViewMenu] = []
-
+class ViewMenu(BaseMenu):
     def __init__(self, ctx: Context, *, menu_type: int, **kwargs):
+        super().__init__(ctx, menu_type)
+
         # kwargs
         self.delete_on_timeout: bool = kwargs.get('delete_on_timeout', False)
         self.disable_buttons_on_timeout: bool = kwargs.get('disable_buttons_on_timeout', True)
@@ -74,101 +70,8 @@ class ViewMenu:
         self._menu_timed_out = True
         await self.stop(delete_menu_message=self.delete_on_timeout, remove_buttons=self.remove_buttons_on_timeout, disable_buttons=self.disable_buttons_on_timeout)
     
-    @classmethod
-    async def stop_session(cls, name: str, include_all: bool=False):
-        """|coro class method| Stop a menu session by it's name
-        
-        Parameters
-        ----------
-        name: :class:`str`
-            Menu name to search for
-        
-        include_all: :class:`bool`
-            (optional) If all menu's that match the given name should be stopped. If `False`, only the most recently started menu that matched the given name will be stopped (defaults to `False`)
-        """
-        sessions_to_stop = [session for session in cls._active_sessions if session.name == name]
-        if sessions_to_stop:
-            if include_all:
-                for session in sessions_to_stop:
-                    await session.stop()
-            else:
-                await sessions_to_stop[-1].stop()
-    
-    @classmethod
-    async def stop_all_sessions(cls):
-        """|coro class method| Stop all active menu sessions"""
-        while cls._active_sessions:
-            menu = cls._active_sessions[0]
-            await menu.stop()
-    
-    @classmethod
-    def get_menu_from_message(cls, message_id: int) -> Union[ViewMenu, None]:
-        """|class method| Return the :class:`ViewMenu` object associated with the message with the given ID
-        
-        Parameters
-        ----------
-        message_id: :class:`int`
-            The message ID from the menu message
-        
-        Returns
-        -------
-        :class:`ViewMenu`:
-           Can be :class:`None` if the menu is not found in the list of active menu sessions
-        """
-        for menu in cls._active_sessions:
-            if menu._msg.id == message_id:
-                return menu
-        return None
-        
-    @classmethod
-    def get_all_sessions(cls) -> Union[List[ViewMenu], None]:
-        """|class method| Get all active menu sessions
-        
-        Returns
-        -------
-        List[:class:`ViewMenu`]:
-            Can be :class:`None` if there are no active menu sessions
-        """
-        return cls._active_sessions if cls._active_sessions else None
-    
-    @classmethod
-    def get_sessions_count(cls) -> int:
-        """|class method| Get the amount of active menu sessions
-        
-        Returns
-        -------
-        :class:`int`
-        """
-        return len(cls._active_sessions)
-    
-    @classmethod
-    def get_session(cls, name: str) -> Union[ViewMenu, List[ViewMenu], None]:
-        """|class method| Get a :class:`ViewMenu` instance by its name
-        
-        Parameters
-        ----------
-        name: :class:`str`
-            :class:`ViewMenu` instance name
-        
-        Returns
-        -------
-        Union[:class:`ViewMenu`, List[:class:`ViewMenu`]]:
-            The :class:`ViewMenu` instance that was found. Can return a list of :class:`ViewMenu` if multiple instances are running that matched the provided name. Can also return :class:`None` if the menu with the provided
-            name was not found
-        """
-        name = str(name)
-        matched_sessions = [session for session in cls._active_sessions if session.name == name]
-        if matched_sessions:
-            if len(matched_sessions) == 1:
-                return matched_sessions[0]
-            else:
-                return matched_sessions
-        else:
-            return None
-    
     @property
     def timeout(self):
-        """.. added:: v3.0.0"""
         return self.__timeout
     
     @timeout.setter
@@ -181,68 +84,6 @@ class ViewMenu:
             self._view.timeout = value
         else:
             raise IncorrectType(f'"timeout" expected int or float, got {value.__class__.__name__}')
-
-    @property
-    def is_running(self) -> bool:
-        """
-        Returns
-        -------
-        :class:`bool`:
-            If the menu is currently active
-        """
-        return self._is_running
-    
-    @property
-    def owner(self) -> Union[discord.Member, discord.User]:
-        """
-        Returns
-        -------
-        Union[:class:`discord.Member`, :class:`discord.User`]:
-            The person who started the menu. Will be :class:`discord.User` if the menu was started in DM's
-        """
-        return self._ctx.author
-    
-    @property
-    def message(self) -> discord.Message:
-        """
-        Returns
-        -------
-        :class:`discord.Message`:
-            The message the :class:`ViewMenu` is operating from
-        """
-        return self._msg
-    
-    @property
-    def buttons(self) -> List[ViewButton]:
-        """
-        Returns
-        -------
-        List[:class:`ViewButton`]: The buttons that have been added to the menu. Can be :class:`None` if there are no buttons registered to the menu
-        """
-        return self._buttons if self._buttons else None
-    
-    @property
-    def buttons_most_clicked(self) -> List[ViewButton]:
-        """
-        Returns
-        -------
-        List[:class:`ViewButton`]:
-            The buttons on the menu ordered from highest (button with the most clicks) to lowest (button with the least clicks). Can be :class:`None` if there are no buttons registered to the menu
-        """
-        if self._buttons:
-            return sorted(self._buttons, key=lambda btn: btn.total_clicks, reverse=True)
-        else:
-            return None
-    
-    @property
-    def in_dms(self) -> bool:
-        """
-        Returns
-        -------
-        :class:`bool`:
-            If the menu was started in a DM
-        """
-        return self._ctx.guild is None
     
     @property
     def pages(self) -> List[Union[discord.Embed, str]]:
@@ -251,45 +92,7 @@ class ViewMenu:
         -------
         A list of either :class:`discord.Embed` if the menu_type is :attr:`ViewMenu.TypeEmbed` / :attr:`ButtonsEmbed.TypeEmbedDynamic`. Or :class:`str` if :attr:`ViewMenu.TypeText`. Can return :class:`None` if there are no pages
         """
-        return self.__pages if self.__pages else None
-    
-    def _handle_send_to(self, send_to):
-        """For the `send_to` kwarg in :meth:`ViewMenu.start()`, determine what channel the menu should start in"""
-        # in DMs
-        if self._ctx.guild is None:
-            return self._ctx
-        
-        # in guild
-        else:
-            if send_to is None:
-                return self._ctx
-            else:
-                if not isinstance(send_to, (str, int, discord.TextChannel)):
-                    raise IncorrectType(f'Parameter "send_to" expected str, int, or discord.TextChannel, got {send_to.__class__.__name__}')
-                else:
-                    # before we continue, check if there are any duplicate named channels/no matching names found if a str was provided
-                    if isinstance(send_to, str):
-                        matched_channels = [ch for ch in self._ctx.guild.text_channels if ch.name == send_to]
-                        if len(matched_channels) == 0:
-                            raise ViewMenuException(f'When using parameter "send_to" in ViewMenu.start(), there were no channels with the name {send_to!r}')
-                        
-                        elif len(matched_channels) >= 2:
-                            raise ViewMenuException(f'When using parameter "send_to" in ViewMenu.start(), there were {len(matched_channels)} channels with the name {send_to!r}. With multiple channels having the same name, the intended channel is unknown')
-                    
-                    for channel in self._ctx.guild.text_channels:
-                        if isinstance(send_to, str):
-                            if channel.name == send_to:
-                                return channel
-                        
-                        elif isinstance(send_to, int):
-                            if channel.id == send_to:
-                                return channel
-
-                        elif isinstance(send_to, discord.TextChannel):
-                            if channel == send_to:
-                                return channel
-                    else:
-                        raise ViewMenuException(f'When using parameter "send_to" in ViewMenu.start(), the channel {send_to} was not found')
+        return self._pages if self._pages else None
     
     def _check(self, inter: discord.Interaction):
         """Base menu button interaction check"""
@@ -306,19 +109,6 @@ class ViewMenu:
             author_pass = True
 
         return author_pass
-    
-    def _maybe_new_style(self, counter, total_pages) -> str: 
-        """Sets custom page director styles"""
-        if self.style:
-            if self.style.count('$') == 1 and self.style.count('&') == 1:
-                temp = self.style # copy it to a new variable so its not being changed in every call
-                temp = temp.replace('$', str(counter))
-                temp = temp.replace('&', str(total_pages))
-                return temp
-            else:
-                raise ImproperStyleFormat
-        else:
-            return f'Page {counter}/{total_pages}'
     
     def _refresh_page_director_info(self, type_: int, pages: List[Union[discord.Embed, str]]):
         """Sets the page count at the bottom of embeds/text if set
@@ -380,76 +170,11 @@ class ViewMenu:
                     self.remove_button(button)
                     await self.refresh_menu_buttons()
     
-    def _chunks(self, list_, n):
-        """Yield successive n-sized chunks from list. Core component of a dynamic menu"""
-        for i in range(0, len(list_), n):
-            yield list_[i:i + n]
-    
-    async def _contact_relay(self, member: discord.Member, button: ViewButton):
-        """Dispatch the information to the relay function if a relay has been set
-            
-            .. added:: v2.0.1
-        """
-        if self._relay_info:
-            func: object = self._relay_info.func
-            only: List[ViewButton] = self._relay_info.only
-            RelayPayload = collections.namedtuple('RelayPayload', ['member', 'button'])
-            payload = RelayPayload(member=member, button=button)
-
-            async def call():
-                try:
-                    if asyncio.iscoroutinefunction(func):
-                        await func(payload)
-                    else:
-                        func(payload)
-                except TypeError:
-                    raise ViewMenuException('When setting a relay, the relay function must have exactly one positional argument')
-
-            if only:
-                if button in only:
-                    await call()
-            else:
-                await call()
-    
-    def set_relay(self, func: object, only: List[ViewButton]=None):
-        """Set a function to be called with a given set of information when a button is clicked on the menu. The information passed is `RelayPayload`, a named tuple object. The named tuple contains the following attributes:
-        - `member`: The :class:`discord.Member` that clicked the button. Could be :class:`discord.User` if the menu button was clicked in a direct message
-        - `button`: The :class:`ViewButton` that was clicked
-        
-        Parameters
-        ---------
-        func: Callable[[:class:`NamedTuple`], :class:`None`]
-            The function should only contain a single positional argument. Discord.py command functions (`@bot.command()`) not supported
-        
-        only: List[:class:`ViewButton`]
-            (optional) If this is set, only the buttons you've set in the list will be relayed (defaults to :class:`None`)
-        
-        Raises
-        ------
-        - `IncorrectType`: The argument provided was not callable
-        
-            .. added:: v2.0.1
-
-            .. changes::
-                v3.0.0
-                    Added :param:`only`
-        """
-        if callable(func):
-            RelayInfo = collections.namedtuple('RelayInfo', ['func', 'only'])
-            self._relay_info = RelayInfo(func=func, only=only)
-        else:
-            raise IncorrectType('When setting the relay, argument "func" must be callable')
-    
-    def remove_relay(self):
-        """Remove the relay that's been set
-            
-            .. added:: v2.0.1
-        """
-        self._relay_info = None
-    
     def _remove_director(self, page: Union[discord.Embed, str]):
         """Removes the page director contents from the page
         
+        Note: This is used for :meth:`ViewMenu.update()`
+
             .. added:: v2.0.1
         """
         style = self.style
@@ -524,22 +249,22 @@ class ViewMenu:
                     for new_embed_page in new_pages:
                         self._remove_director(new_embed_page)
                     
-                    self.__pages = new_pages.copy()
+                    self._pages = new_pages.copy()
                     self._pc = _PageController(new_pages)
-                    self._refresh_page_director_info(ViewMenu.TypeEmbed, self.__pages)
+                    self._refresh_page_director_info(ViewMenu.TypeEmbed, self._pages)
                 else:
                     removed_director_info = []
                     for new_str_page in new_pages.copy():
                         removed_director_info.append(self._remove_director(new_str_page))
                     
-                    self.__pages = removed_director_info.copy()
-                    self._pc = _PageController(self.__pages)
-                    self._refresh_page_director_info(ViewMenu.TypeText, self.__pages)
+                    self._pages = removed_director_info.copy()
+                    self._pc = _PageController(self._pages)
+                    self._refresh_page_director_info(ViewMenu.TypeText, self._pages)
             else:
                 # page controller needs to be reset because even though there are no new pages. the page index is still in the location BEFORE the update
                 # EXAMPLE: 5 page menu > click Next button  (on page 2) > update menu no new pages > click Next button (on page 3)
                 # that makes no sense and resetting the page controller fixes that issue 
-                self._pc = _PageController(self.__pages)
+                self._pc = _PageController(self._pages)
             
             kwargs_to_pass = {'view' : self._view}
 
@@ -557,9 +282,9 @@ class ViewMenu:
                         self.add_button(new_btn)
             
             if self._menu_type == ViewMenu.TypeEmbed:
-                kwargs_to_pass['embed'] = self.__pages[0]
+                kwargs_to_pass['embed'] = self._pages[0]
             else:
-                kwargs_to_pass['content'] = self.__pages[0]
+                kwargs_to_pass['content'] = self._pages[0]
             
             await self._msg.edit(**kwargs_to_pass)
     
@@ -643,29 +368,6 @@ class ViewMenu:
         """Enable all buttons on the menu"""
         for btn in self._buttons:
             btn.disabled = False
-    
-    def set_on_timeout(self, func: object):
-        """Set the function to be called when the menu times out
-        
-        Parameters
-        ----------
-        func: :class:`object`
-            The function object that will be called when the menu times out. The function should contain a single positional argument
-            and should not return anything. The argument passed to that function is an instance of the menu.
-        
-        Raises
-        ------
-        - `ViewMenuException`: Parameter "func" was not a callable object
-        """
-        if not callable(func): raise ViewMenuException('Parameter "func" must be callable')
-        self._on_timeout_details = func
-    
-    def remove_on_timeout(self):
-        """Remove the timeout call to the function you have set when the menu times out
-        
-            .. added:: v3.0.0
-        """
-        self._on_timeout_details = None
     
     def _button_add_check(self, button: ViewButton):
         """A set of checks to ensure the proper button is being added
@@ -762,152 +464,6 @@ class ViewMenu:
                 else: return None
         else:
             raise ViewMenuException(f'Parameter "search_by" expected "label" or "id", got {search_by!r}')
-    
-    @ensure_not_primed
-    def clear_all_pages(self):
-        """Remove all pages from the menu
-        
-        Raises
-        ------
-        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        """
-        self.__pages.clear()
-    
-    @ensure_not_primed
-    def remove_page(self, page_number: int):
-        """Remove a page from the menu
-        
-        Parameters
-        ----------
-        page_number: :class:`int`
-            The page to remove
-        
-        Raises
-        ------
-        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `ViewMenuException`: The page associated with the given page number was not valid
-        """
-        if self.__pages:
-            if page_number > 0 and page_number <= len(self.__pages):
-                page_to_delete = page_number - 1
-                del self.__pages[page_to_delete]
-            else:
-                raise ViewMenuException(f'Page number invalid. Must be from 1 - {len(self.__pages)}')
-    
-    @ensure_not_primed
-    def add_page(self, page: Union[discord.Embed, str]):
-        """Add a page to the menu
-        
-        Parameters
-        ----------
-        page: Union[:class:`discord.Embed`, :class:`str`]
-            The page to add. Can only be used when the menus `menu_type` is `ViewMenu.TypeEmbed` (adding an embed) or `ViewMenu.TypeText` (adding a str)
-        
-        Raises
-        ------
-        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `MenuSettingsMismatch`: The page being added does not match the menus `menu_type` 
-        """
-        if self._menu_type == ViewMenu.TypeEmbed:
-            if isinstance(page, discord.Embed):
-                self.__pages.append(page)
-            else:
-                raise MenuSettingsMismatch(f'ViewMenu menu_type was set as ViewMenu.TypeEmbed but got {page.__class__.__name__} when adding a page')
-        
-        elif self._menu_type == ViewMenu.TypeText:
-            self.__pages.append(str(page))
-        
-        else:
-            raise MenuSettingsMismatch('add_page method cannot be used with the current ViewMenu menu_type')
-    
-    @ensure_not_primed
-    def clear_all_row_data(self):
-        """Delete all the data thats been added using :meth:`ViewMenu.add_row()`
-        
-        Raises
-        ------
-        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `MenuSettingsMismatch`: This method was called but the menus `menu_type` was not `ViewMenu.TypeEmbedDynamic`
-        """
-        if self._menu_type == ViewMenu.TypeEmbedDynamic:
-            self._dynamic_data_builder.clear()
-        else:
-            raise MenuSettingsMismatch('Cannot use method ViewMenu.clear_all_row_data() when the menu_type is not set as ViewMenu.TypeEmbedDynamic')
-    
-    @ensure_not_primed
-    def add_row(self, data: str):
-        """Add text to the embed page by rows of data
-        
-        Parameters
-        ----------
-        data: :class:`str`
-            The data to add
-        
-        Raises
-        ------
-        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `MenuSettingsMismatch`: This method was called but the menus `menu_type` was not `ViewMenu.TypeEmbedDynamic`
-        - `MissingSetting`: :class:`ViewMenu` kwarg "rows_requested" (int) has not been set
-        """
-        if self._menu_type == ViewMenu.TypeEmbedDynamic:
-            if self.__rows_requested:
-                self._dynamic_data_builder.append(str(data))
-            else:
-                raise MissingSetting(f'ViewMenu kwarg "rows_requested" (int) has not been set')
-        else:
-            raise MenuSettingsMismatch('add_row can only be used with a menu_type of ViewMenu.TypeEmbedDynamic')
-    
-    @ensure_not_primed
-    def set_main_pages(self, *embeds: discord.Embed):
-        """On a menu with a menu_type of `ViewMenu.TypeEmbedDynamic`, set the pages you would like to show first. These embeds will be shown before the embeds that contain your data
-        
-        Parameter
-        ---------
-        *embeds: :class:`discord.Embed`
-            An argument list of :class:`discord.Embed` objects
-        
-        Raises
-        ------
-        - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `ViewMenu.TypeEmbedDynamic`
-        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `ViewMenuException`: The "embeds" parameter was empty. At least one value is needed
-        - `IncorrectType`: All values in the argument list were not of type :class:`discord.Embed`
-        """
-        if not embeds: raise ViewMenuException('The argument list when setting main pages was empty')
-        if not all([isinstance(e, discord.Embed) for e in embeds]): raise IncorrectType('All values in the argument list when setting main pages were not of type discord.Embed')
-        if self._menu_type != ViewMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_main_pages is only available for menus with menu_type ViewMenu.TypeEmbedDynamic')
-        
-        # if they've set any values, remove it. Each set should be from the call and should not stack
-        self._main_page_contents.clear()
-        
-        for embed in embeds:
-            self._main_page_contents.append(embed)
-
-    @ensure_not_primed
-    def set_last_pages(self, *embeds: discord.Embed):
-        """On a menu with a menu_type of `ViewMenu.TypeEmbedDynamic`, set the pages you would like to show last. These embeds will be shown after the embeds that contain your data
-        
-        Parameter
-        ---------
-        *embeds: :class:`discord.Embed`
-            An argument list of :class:`discord.Embed` objects
-        
-        Raises
-        ------
-        - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `ViewMenu.TypeEmbedDynamic`
-        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `ViewMenuException`: The "embeds" parameter was empty. At least one value is needed
-        - `IncorrectType`: All values in the argument list were not of type :class:`discord.Embed`
-        """
-        if not embeds: raise ViewMenuException('The argument list when setting main pages was empty')
-        if not all([isinstance(e, discord.Embed) for e in embeds]): raise IncorrectType('All values in the argument list when setting main pages were not of type discord.Embed')
-        if self._menu_type != ViewMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_last_pages is only available for menus with menu_type ViewMenu.TypeEmbedDynamic')
-        
-        # if they've set any values, remove it. Each set should be from the call and should not stack
-        self._last_page_contents.clear()
-        
-        for embed in embeds:
-            self._last_page_contents.append(embed)
 
     def _determine_action(self, action) -> dict:
         kwargs = {
@@ -944,7 +500,7 @@ class ViewMenu:
             except ValueError:
                 return
             else:
-                if 1 <= page <= len(self.__pages):
+                if 1 <= page <= len(self._pages):
                     self._pc.index = page - 1
                     await self._msg.edit(**self._determine_action(self._pc.current_page))
                     if self.delete_interactions:
@@ -1134,22 +690,22 @@ class ViewMenu:
 
         # add page (normal menu)
         if self._menu_type == ViewMenu.TypeEmbed:
-            self._refresh_page_director_info(ViewMenu.TypeEmbed, self.__pages)
+            self._refresh_page_director_info(ViewMenu.TypeEmbed, self._pages)
 
             navigation_btns = [btn for btn in self._buttons if btn.custom_id in ViewButton._base_nav_buttons()]
 
             # an re search is required here because buttons with ID_CUSTOM_EMBED dont have a normal ID, the ID is "8_[unique ID]"
             custom_embed_btns = [btn for btn in self._buttons if btn.style != discord.ButtonStyle.link and re.search(r'8_\d+', btn.custom_id)]
 
-            if all([not self.__pages, not custom_embed_btns]):
+            if all([not self._pages, not custom_embed_btns]):
                 raise NoPages("You cannot start a ViewMenu when you haven't added any pages")
 
             # normal pages, no custom embeds
-            if self.__pages and not custom_embed_btns:
-                self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], view=self._view) # allowed_mentions not needed in embeds
+            if self._pages and not custom_embed_btns:
+                self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0], view=self._view) # allowed_mentions not needed in embeds
             
             # only custom embeds
-            elif not self.__pages and custom_embed_btns:
+            elif not self._pages and custom_embed_btns:
                 # since there are only custom embeds, there is no need for base navigation buttons, so remove them if any
                 for nav_btn in navigation_btns:
                     if nav_btn in self._buttons:
@@ -1160,7 +716,7 @@ class ViewMenu:
                     if custom_btn.followup is None or custom_btn.followup.embed is None:
                         raise ViewMenuException('ViewButton custom_id was set as ViewButton.ID_CUSTOM_EMBED but the "followup" kwargs for that ViewButton was not set or the "embed" kwarg for the followup was not set')
                 
-                # since there are only custom embeds, self.__pages is still set to :class:`None`, so set the embed in `.send()` to the first custom embed in the list
+                # since there are only custom embeds, self._pages is still set to :class:`None`, so set the embed in `.send()` to the first custom embed in the list
                 self._msg = await self._handle_send_to(send_to).send(embed=custom_embed_btns[0].followup.embed, view=self._view)
             
             # normal pages and custom embeds
@@ -1180,7 +736,7 @@ class ViewMenu:
                     )
                     raise ViewMenuException(error_msg)
                 else:
-                    self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], view=self._view) # allowed_mentions not needed in embeds
+                    self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0], view=self._view) # allowed_mentions not needed in embeds
 
         # add row (dynamic menu)
         elif self._menu_type == ViewMenu.TypeEmbedDynamic:
@@ -1190,35 +746,35 @@ class ViewMenu:
                     possible_block = f"```{self.wrap_in_codeblock}\n{joined_data}```"
                     embed = discord.Embed() if self.custom_embed is None else self.custom_embed.copy()
                     embed.description = joined_data if not self.wrap_in_codeblock else possible_block
-                    self.__pages.append(embed)
+                    self._pages.append(embed)
                 else:
                     raise DescriptionOversized('With the amount of data that was received, the embed description is over discords size limit. Lower the amount of "rows_requested" to solve this problem')
             else:
                 # set the main/last pages if any
                 if any((self._main_page_contents, self._last_page_contents)):
-                    self.__pages = collections.deque(self.__pages)
+                    self._pages = collections.deque(self._pages)
                     if self._main_page_contents:
                         self._main_page_contents.reverse()
-                        self.__pages.extendleft(self._main_page_contents)
+                        self._pages.extendleft(self._main_page_contents)
                     
                     if self._last_page_contents:
-                        self.__pages.extend(self._last_page_contents)
+                        self._pages.extend(self._last_page_contents)
                 
-                self._refresh_page_director_info(ViewMenu.TypeEmbedDynamic, self.__pages)
+                self._refresh_page_director_info(ViewMenu.TypeEmbedDynamic, self._pages)
 
                 # make sure data has been added to create at least 1 page
-                if not self.__pages: raise NoPages('You cannot start a ViewMenu when no data has been added')
+                if not self._pages: raise NoPages('You cannot start a ViewMenu when no data has been added')
                 
-                self._msg = await self._handle_send_to(send_to).send(embed=self.__pages[0], view=self._view) # allowed_mentions not needed in embeds
+                self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0], view=self._view) # allowed_mentions not needed in embeds
         
         # add page (text menu)
         else:
-            if not self.__pages:
+            if not self._pages:
                 raise NoPages("You cannot start a ViewMenu when you haven't added any pages")
             
-            self._refresh_page_director_info(ViewMenu.TypeText, self.__pages)
-            self._msg = await self._handle_send_to(send_to).send(content=self.__pages[0], view=self._view, allowed_mentions=self.allowed_mentions)
+            self._refresh_page_director_info(ViewMenu.TypeText, self._pages)
+            self._msg = await self._handle_send_to(send_to).send(content=self._pages[0], view=self._view, allowed_mentions=self.allowed_mentions)
         
-        self._pc = _PageController(self.__pages)
+        self._pc = _PageController(self._pages)
         self._is_running = True
         ViewMenu._active_sessions.append(self)
