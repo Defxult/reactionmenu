@@ -53,7 +53,7 @@ from .errors import (
 
 class ViewMenu(BaseMenu):
     def __init__(self, ctx: Context, *, menu_type: int, **kwargs):
-        super().__init__(ctx, menu_type)
+        super().__init__(ctx, menu_type, **kwargs)
 
         # kwargs
         self.delete_on_timeout: bool = kwargs.get('delete_on_timeout', False)
@@ -65,15 +65,21 @@ class ViewMenu(BaseMenu):
         # view
         self._view = discord.ui.View(timeout=self.__timeout)
         self._view.on_timeout = self._on_dpy_view_timeout
+        self._view.on_error = self._on_dpy_view_error
     
     def __repr__(self):
         cls = self.__class__
         return f'<ViewMenu name={self.name!r} owner={str(self._ctx.author)!r} is_running={self._is_running} timeout={self.timeout} menu_type={cls._get_menu_type(self._menu_type)!r}>'
 
-    
     async def _on_dpy_view_timeout(self):
         self._menu_timed_out = True
         await self.stop(delete_menu_message=self.delete_on_timeout, remove_buttons=self.remove_buttons_on_timeout, disable_buttons=self.disable_buttons_on_timeout)
+    
+    async def _on_dpy_view_error(self, error: Exception, item: discord.ui.Item, inter: discord.Interaction):
+        try:
+            raise error
+        finally:
+            await self.stop()
     
     @property
     def timeout(self):
@@ -81,10 +87,7 @@ class ViewMenu(BaseMenu):
     
     @timeout.setter
     def timeout(self, value):
-        """A property getter/setter for kwarg `timeout`
-        
-            .. added:: v3.0.0
-        """
+        """A property getter/setter for kwarg `timeout`"""
         if isinstance(value, (int, float)):
             self._view.timeout = value
         else:
@@ -96,8 +99,10 @@ class ViewMenu(BaseMenu):
         Returns
         -------
         List[Union[:class:`discord.Embed`, :class:`str`]]:
-            A list of embeds if the menu_type is :attr:`ViewMenu.TypeEmbed` / :attr:`ButtonsEmbed.TypeEmbedDynamic`. Or :class:`str` if :attr:`ViewMenu.TypeText`.
-            Can return :class:`None` if there are no pages
+            The pages currently applied to the menu. Depending on the `menu_type`, it will return a list of :class:`discord.Embed` if the menu type is :attr:`ViewMenu.TypeEmbed`
+            or :attr:`ViewMenu.TypeEmbedDynamic`. If `ViewMenu.TypeText`, it will return a list of :class:`str` Can return :class:`None` if there are no pages
+        
+        Note: If the `menu_type` is :attr:`ViewMenu.TypeEmbedDynamic`, the amount of pages isn't known until after the menu has started
         """
         return self._pages if self._pages else None
     
@@ -117,7 +122,6 @@ class ViewMenu(BaseMenu):
 
         return author_pass
     
-    # TODO : needs testing
     def _refresh_page_director_info(self, type_: int, pages: List[Union[discord.Embed, str]]):
         """Sets the page count at the bottom of embeds/text if set
         
@@ -174,12 +178,7 @@ class ViewMenu(BaseMenu):
                     self.remove_button(button)
     
     def _remove_director(self, page: Union[discord.Embed, str]):
-        """Removes the page director contents from the page
-        
-        Note: This is used for :meth:`ViewMenu.update()`
-
-            .. added:: v2.0.1
-        """
+        """Removes the page director contents from the page. This is used for :meth:`ViewMenu.update()`"""
         style = self.style
         if style is None:
             style = 'Page $/&'
@@ -227,6 +226,8 @@ class ViewMenu(BaseMenu):
         """
         if self._is_running:
             # ----------------------- CHECKS -----------------------
+
+            # Note: button count > 25 check is done in :meth:`ViewMenu.add_button`
             
             if new_pages is None and new_buttons is None:
                 return
@@ -272,7 +273,7 @@ class ViewMenu(BaseMenu):
             kwargs_to_pass = {'view' : self._view}
 
             if isinstance(new_buttons, list):
-                if new_buttons:
+                if len(new_buttons) >= 1:
                     self.remove_all_buttons()
                     for new_btn in new_buttons:
                         # this needs to be set to `True` every loop because once the decorator has been bypassed, the decorator resets that bypass back to `False`
@@ -283,6 +284,8 @@ class ViewMenu(BaseMenu):
                         self._bypass_primed = True
                         
                         self.add_button(new_btn)
+                else:
+                    self.remove_all_buttons()
             
             if self._menu_type == ViewMenu.TypeEmbed:
                 kwargs_to_pass['embed'] = self._pages[0]
@@ -415,7 +418,7 @@ class ViewMenu(BaseMenu):
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `ViewMenuException`: The custom_id for the button was not recognized. A button with that custom_id has already been added
+        - `ViewMenuException`: The custom_id for the button was not recognized or a button with that custom_id has already been added
         - `TooManyButtons`: There are already 25 buttons on the menu
         - `IncorrectType`: Parameter :param:`button` was not of type :class:`ViewButton`
         """
@@ -688,7 +691,7 @@ class ViewMenu(BaseMenu):
                             """
                         ))
     
-    # TODO : a `is_running` check needs to be added to this (issues with that in that past)
+    @ensure_not_primed
     async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None):
         # ---------------------
         # Note 1: each at least 1 page check is done in it's own if statement to avoid clashing between pages and custom embeds
