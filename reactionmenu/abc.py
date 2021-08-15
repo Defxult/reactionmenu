@@ -211,7 +211,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
 
     _active_sessions = []
     _sessions_limited = False
-    _sessions_limit_details = None 
+    _sessions_limit_details = None
 
     def __init__(self, ctx: Context, menu_type: int, **kwargs):
         self._ctx = ctx
@@ -347,26 +347,22 @@ class BaseMenu(metaclass=abc.ABCMeta):
     
     @classmethod
     def get_session(cls, name: str):
-        """|class method| Return a menu instance by it's name. Can return a :class:`list` of menu instances if multiple instances of the menu with the supplied name are running. 
-        Can also return :class:`None` if the menu with the supplied name was not found in the list of active sessions
+        """|class method| Get a menu instance by it's name
         
         Parameter
         ---------
         name: :class:`str`
             The name of the menu to return
-
-            .. added:: v1.0.9
-
-            .. note::
-                Dont add a `Returns` since this is an abc. The main description above provides enough context
+        
+        Returns
+        -------
+        The menu instance. Can return a :class:`list` of menu instances if multiple instances of the menu with the supplied name are running. 
+        Can also return :class:`None` if the menu with the supplied name was not found in the list of active sessions
         """
         name = str(name)
-        sessions = [session for session in cls._active_sessions if session.name == name]
+        sessions = [session for session in cls._active_sessions if session.name and session.name == name]
         if sessions:
-            if len(sessions) == 1:
-                return sessions[0]
-            else:
-                return sessions
+            return sessions[0] if len(sessions) == 1 else sessions
         else:
             return None
     
@@ -657,7 +653,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
                 raise MenuException('When setting a relay, the relay function must have exactly one positional argument')
     
     def _handle_send_to(self, send_to):
-        """For the `send_to` kwarg in :meth:`ButtonsMenu.start()`, determine what channel the menu should start in"""
+        """For the `send_to` kwarg in :meth:`Menu.start()`. Determine what channel the menu should start in"""
         # in DMs
         if self._ctx.guild is None:
             return self._ctx
@@ -670,14 +666,15 @@ class BaseMenu(metaclass=abc.ABCMeta):
                 if not isinstance(send_to, (str, int, discord.TextChannel)):
                     raise IncorrectType(f'Parameter "send_to" expected str, int, or discord.TextChannel, got {send_to.__class__.__name__}')
                 else:
+                    class_name = self.__class__.__name__
                     # before we continue, check if there are any duplicate named channels/no matching names found if a str was provided
                     if isinstance(send_to, str):
                         matched_channels = [ch for ch in self._ctx.guild.text_channels if ch.name == send_to]
                         if len(matched_channels) == 0:
-                            raise ButtonsMenuException(f'When using parameter "send_to" in ButtonsMenu.start(), there were no channels with the name {send_to!r}')
+                            raise MenuException(f'When using parameter "send_to" in {class_name}.start(), there were no channels with the name {send_to!r}')
                         
                         elif len(matched_channels) >= 2:
-                            raise ButtonsMenuException(f'When using parameter "send_to" in ButtonsMenu.start(), there were {len(matched_channels)} channels with the name {send_to!r}. With multiple channels having the same name, the intended channel is unknown')
+                            raise MenuException(f'When using parameter "send_to" in {class_name}.start(), there were {len(matched_channels)} channels with the name {send_to!r}. With multiple channels having the same name, the intended channel is unknown')
                     
                     for channel in self._ctx.guild.text_channels:
                         if isinstance(send_to, str):
@@ -692,7 +689,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
                             if channel == send_to:
                                 return channel
                     else:
-                        raise ButtonsMenuException(f'When using parameter "send_to" in ButtonsMenu.start(), the channel {send_to} was not found')
+                        raise MenuException(f'When using parameter "send_to" in {class_name}.start(), the channel {send_to} was not found')
 
     @ensure_not_primed
     def clear_all_row_data(self):
