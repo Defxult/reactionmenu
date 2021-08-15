@@ -9,7 +9,7 @@
 #### New Features
 * `ALL`Added the ability for relay functions to relay only the buttons of your choice instead of relaying all buttons
   * Before: `ReactionMenu.set_relay(func)`
-  * After: `ReactionMenu.set_relay(func, only: List[ViewButton]=None)`
+  * After: `ReactionMenu.set_relay(func, only: List[Button]=None)`
 * `ALL` Added the ability to remove the timeout method if you have one set
   * `ReactionMenu.remove_on_timeout()`
 #### Breaking Changes
@@ -37,14 +37,13 @@ Discords Buttons feature has been implemented using discord.py instead of a 3rd 
 * *removed* `ComponentsButton` class
   * This has been replaced with `ViewButton`
 * *changed* All `ComponentsButton` factory methods. They've been renamed and are now apart of the `ViewButton` class
-* *changed* All `ComponentsButton` factory methods. They've been renamed and are now apart of the `ViewButton` class
   * Before
     * `ComponentsButton.basic_back()`
     * `ComponentsButton.basic_next()`
   * After
     * `ViewButton.back()`
     * `ViewButton.next()`
-* *changed* The emojis attached to each button have been moved to their own class
+* *changed* The emojis attached to each menu have been moved to their own class
   * Before
     * `ReactionMenu.EMOJI_BACK_BUTTON`
     * `ReactionMenu.EMOJI_NEXT_BUTTON`
