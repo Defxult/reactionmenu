@@ -85,14 +85,7 @@ def static_only(func):
     return wrapper
 
 def ensure_not_primed(func):
-    """Check to make sure certain methods cannot be ran once the menu has been fully started
-    
-        .. changes::
-            v2.0.0
-                Added inst name check so this decorator is compatible with :class:`ButtonsMenu`
-            v2.0.1
-                Added handling for :attr:`inst._bypass_primed`
-    """
+    """Check to make sure certain methods cannot be ran once the menu has been fully started"""
     if asyncio.iscoroutinefunction(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -102,7 +95,7 @@ def ensure_not_primed(func):
                     inst._bypass_primed = False
                 return await func(*args, **kwargs)
             else:
-                raise MenuAlreadyRunning(f'You cannot use method "{func.__name__}" after the menu has started. Menu name: {inst._name}')
+                raise MenuAlreadyRunning(f'You cannot use method "{func.__name__}" after the menu has started. Menu name: {inst.name}')
         return wrapper
     else:
         @wraps(func)
@@ -113,9 +106,5 @@ def ensure_not_primed(func):
                     inst._bypass_primed = False
                 return func(*args, **kwargs)
             else:
-                if inst.__class__.__name__ == 'ButtonsMenu':
-                    menu_name = inst.name
-                else:
-                    menu_name = inst._name
-                raise MenuAlreadyRunning(f'You cannot use method "{func.__name__}" after the menu has started. Menu name: {menu_name!r}')
+                raise MenuAlreadyRunning(f'You cannot use method "{func.__name__}" after the menu has started. Menu name: {inst.name!r}')
         return wrapper
