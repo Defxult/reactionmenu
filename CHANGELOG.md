@@ -15,13 +15,20 @@ If you have used or are currently using this library and would like to upgrade, 
   * `ViewMenu.get_button(..., search_by='name')`
 
 #### Breaking Changes
-* *change/removed* `ReactionMenu` and `TextMenu` are no longer separate classes. `TextMenu` has been merged into `ReactionMenu`
+* *changed/removed* `ReactionMenu` and `TextMenu` are no longer separate classes. `TextMenu` has been merged into `ReactionMenu`
+* *changed* The `Button` class has been renamed to `ReactionButton` to avoid compatibility issues with discord.py 2.0
+* *changed* `ButtonType` has been moved and setting the `linked_to` of a button is now set through the button itself
+  * Old: `Button(..., linked_to=ButtonType.NEXT_PAGE)`
+  * New: `ReactionButton(..., linked_to=ReactionButton.Type.NEXT_PAGE)`
+* *changed* Method `ButtonType.caller_details()` has been moved to `ReactionButton` 
+  * Old: `Button(..., details=ButtonType.caller_details())`
+  * New: `ReactionButton(..., details=ReactionButton.caller_details())`
 * *removed* `ReactionMenu` parameters `back_button` and `next_button` have been removed. Use `ReactionMenu.add_button()` instead
 * *removed* `ReactionMenu` parameter `config` has been removed/replaced with parameter `menu_type`
 * *removed* `ReactionMenu.run_time`
 * *removed* `ReactionMenu.default_next_button`
 * *removed* `ReactionMenu.default_back_button`
-* *removed* `ReactionMenu.all_buttons`. use `ReactionMenu.buttons` instead
+* *removed* `ReactionMenu.all_buttons`. Use `ReactionMenu.buttons` instead
 * *removed* `ReactionMenu.next_buttons`
 * *removed* `ReactionMenu.back_buttons`
 * *removed* `ReactionMenu.first_page_buttons`
@@ -39,17 +46,17 @@ Discords Buttons feature has been implemented using discord.py instead of a 3rd 
 * *removed* `ComponentsButton` class
   * This has been replaced with `ViewButton`
 * *changed* All `ComponentsButton` factory methods. They've been renamed and are now apart of the `ViewButton` class
-  * Before
+  * Old
     * `ComponentsButton.basic_back()`
     * `ComponentsButton.basic_next()`
-  * After
+  * New
     * `ViewButton.back()`
     * `ViewButton.next()`
 * *changed* The emojis attached to each menu have been moved to their own class
-  * Before
+  * Old
     * `ReactionMenu.EMOJI_BACK_BUTTON`
     * `ReactionMenu.EMOJI_NEXT_BUTTON`
-  * After
+  * New
     * `ReactionMenu.Emojis.BACK_BUTTON`
     * `ReactionMenu.Emojis.NEXT_BUTTON`
 * *changed* `Button` names are now case sensitive if you were to use method `ReactionMenu.get_button_by_name()`

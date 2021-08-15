@@ -32,7 +32,6 @@ if TYPE_CHECKING:
 import re
 from collections import namedtuple
 from datetime import datetime
-from enum import Enum, auto
 
 import discord
 from discord.ext.commands import Command
@@ -76,7 +75,7 @@ class ViewButton(discord.ui.Button, BaseButton):
 		self._menu: ViewMenu = None
 	
 	def __repr__(self):
-		return f'<ViewButton label={self.label!r} custom_id={ViewButton._get_id_name_from_id(self.custom_id)} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled} total_clicks={self._total_clicks}>'
+		return f'<ViewButton label={self.label!r} custom_id={ViewButton._get_id_name_from_id(str(self.custom_id))} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled} total_clicks={self._total_clicks}>'
 
 	class Followup:
 		"""A class that represents the message sent using a :class:`ViewButton`. Contains parameters similar to discord.py's `Messageable.send`. Only to be used with :class:`ViewButton` kwarg "followup".
@@ -247,25 +246,63 @@ class ViewButton(discord.ui.Button, BaseButton):
 	async def callback(self, interaction: discord.Interaction):
 		await self._menu._paginate(self, interaction)
 
-class ButtonType(Enum):
-	"""A helper class for :class:`ReactionMenu` and :class:`TextMenu`. Determines the generic action a button can perform. This should *NOT* be used with :class:`ButtonsMenu`
-	
-		.. changes::
-			v1.0.1
-				Added :attr:`ButtonType.GO_TO_PAGE`
-			v1.0.3
-				Added :attr:`ButtonType.CALLER`
-				Added :meth:`caller_details`
-	"""
-	NEXT_PAGE = auto()
-	PREVIOUS_PAGE = auto()
-	GO_TO_FIRST_PAGE = auto()
-	GO_TO_LAST_PAGE = auto()
-	GO_TO_PAGE = auto()
-	END_SESSION = auto()
-	CUSTOM_EMBED = auto()
-	CALLER = auto()
+class ButtonType:
+	"""A helper class for :class:`ReactionMenu`. Determines the generic action a button can perform. This should *NOT* be used with :class:`ViewMenu`"""
+	NEXT_PAGE = 0
+	PREVIOUS_PAGE = 1
+	GO_TO_FIRST_PAGE = 2
+	GO_TO_LAST_PAGE = 3
+	GO_TO_PAGE = 4
+	END_SESSION = 5
+	CUSTOM_EMBED = 6
+	CALLER = 7
 
+class ReactionButton(BaseButton):
+	"""A helper class for :class:`ReactionMenu`. Represents a reaction. This should *NOT* be used with :class:`ViewMenu`
+	
+	Parameters
+	----------
+	emoji: :class:`str`
+		The discord reaction that will be used
+
+	linked_to: :class:`Button.Type`
+		A generic action a button can perform
+	
+	event: :class:`Button.Event`
+		Determine when a button should be removed or disabled depending on the amount of clicks
+	
+	Kwargs
+	------
+	embed: :class:`discord.Embed`
+		Only used when :param:`linked_to` is set as `Button.Type.CUSTOM_EMBED`. This is the embed that can be selected seperately from the reaction menu (static menu's only)
+
+	name: :class:`str`
+		An optional name for the button. Can be set to retrieve it later via :meth:`ReactionMenu.get_button_by_name()`
+
+	details: :meth:`Button.caller_details()`
+		The class method used to set the function and it's arguments to be called when the button is pressed
+	"""
+
+	Type = ButtonType
+
+	def __init__(self, *, emoji: str, linked_to: ReactionButton.Type, event: ReactionButton.Event=None, **kwargs):
+		super().__init__()
+		self.emoji = emoji
+		self.linked_to = linked_to
+		self.custom_embed: discord.Embed = kwargs.get('embed')
+		self.details: tuple = kwargs.get('details')
+		self.name: str = kwargs.get('name')
+		
+		# abc
+		self._menu: ReactionMenu = None
+	
+	def __str__(self):
+		return self.emoji
+	
+	def __repr__(self):
+		# TODO : make a _get_button_name_from_id method
+		return f'<ReactionButton emoji={self.emoji!r} linked_to={self.linked_to} total_clicks={self._total_clicks} name={self.name!r}>'
+	
 	@classmethod
 	def caller_details(cls, func, *args, **kwargs) -> tuple:
 		"""|class method| Registers the function to call as well as it's arguments. Please note that the function you set should not return anything.
@@ -289,85 +326,17 @@ class ButtonType(Enum):
 		menu = ReactionMenu(...)
 		menu.add_button(Button(emoji='🥶', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(holiday, 'North Pole', 'Winter', 12, moto='hohoho')))
 		```
-
-			.. added:: v1.0.3
-
-			.. changes::
-				v1.0.4
-					Support for commands to be used as functions to call
 		"""
 		func = func.callback if isinstance(func, Command) else func
 		return (func, args, kwargs)
-
-class Button(BaseButton):
-	"""A helper class for :class:`ReactionMenu`. Represents a reaction. This should *NOT* be used with :class:`ViewMenu`
-	
-	Parameters
-	----------
-	emoji: :class:`str`
-		The discord reaction that will be used
-
-	linked_to: :class:`ButtonType`
-		A generic action a button can perform
-	
-	event: :class:`Button.Event`
-		Determine when a button should be removed or disabled depending on the amount of clicks
-	
-	Options [kwargs]
-	----------------
-	embed: :class:`discord.Embed`
-		Only used when :param:`linked_to` is set as `ButtonType.CUSTOM_EMBED`. This is the embed that can be selected seperately from the reaction menu (static menu's only)
-
-	name: :class:`str`
-		An optional name for the button. Can be set to retrieve it later via :meth:`ReactionMenu.get_button_by_name()`
-
-	details: :meth:`ButtonType.caller_details()`
-		The class method used to set the function and it's arguments to be called when the button is pressed
-
-		.. changes::
-			v1.0.3
-				Added :attr:`details`
-			v2.0.3
-				Added :attr:`_clicked_by`
-				Added :attr:`_total_clicks`
-				Added :attr:`_last_clicked`
-				Removed `__slots__`
-			v3.0.0
-				Added :param:`event`
-	"""
-
-	def __init__(self, *, emoji: str, linked_to: ButtonType, event: Button.Event=None, **options):
-		super().__init__()
-		self.emoji = emoji
-		self.linked_to = linked_to
-		self.custom_embed: discord.Embed = options.get('embed')
-		self.details: tuple = options.get('details')
-		self.name: str = options.get('name')
-		
-		# abc
-		self._menu: ReactionMenu = None
-	
-	def __str__(self):
-		return self.emoji
-	
-	def __repr__(self):
-		"""
-			.. changes::
-				v1.0.9
-					Replaced old string formatting (%s) with fstring
-		"""
-		return f'<Button emoji={self.emoji!r} linked_to={self.linked_to} total_clicks={self._total_clicks} name={self.name!r}>'
 	
 	@property
 	def menu(self) -> ReactionMenu:
 		"""
 		Returns
 		-------
-		:class:`ReactionMenu`
+		:class:`ReactionMenu`:
 			The menu the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
-		
-			.. added:: v2.0.3
 		"""
 		return self._menu
-	
 	

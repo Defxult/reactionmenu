@@ -9,7 +9,7 @@ A library to create a discord.py paginator. Supports pagination with Discords Bu
 
 """
 
-from .buttons import Button, ButtonType, ViewButton
+from .buttons import ReactionButton, ViewButton
 from .core import ReactionMenu
 from .views_menu import ViewMenu
 
