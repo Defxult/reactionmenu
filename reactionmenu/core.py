@@ -456,6 +456,25 @@ class ReactionMenu(abc.BaseMenu):
 				raise ReactionMenuException('Parameter "turn_every" must be greater than or equal to one')
 		else:
 			raise ReactionMenuException('Menu is not set as auto-paginator')
+	
+	def get_button_by_name(self, name: str) -> Button:
+		"""Retrieve a :class:`Button` object by its name if the kwarg "name" for that :class:`Button` was set
+
+		Parameter
+		---------
+		name: :class:`str`
+			The :class:`Button` name
+		
+		Returns
+		-------
+		:class:`Button`:
+			The :class:`Button` that matched the name. Could be :class:`None` if the :class:`Button` was not found
+		"""
+		name = str(name).lower()
+		for btn in self._all_buttons:
+			if btn.name == name:
+				return btn
+		return None
 
 
 

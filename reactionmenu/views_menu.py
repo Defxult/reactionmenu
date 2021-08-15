@@ -161,22 +161,17 @@ class ViewMenu(BaseMenu):
                         pages[idx] = f'{content}\n\n{page_info}'
                     page_count += 1
 
-    async def _handle_event(self, button: ViewButton):
-        """If an event is set, disable/remove the buttons from the menu when the click requirement has been met
-            
-            .. added:: v2.0.2
-        """
+    def _handle_event(self, button: ViewButton):
+        """If an event is set, disable/remove the buttons from the menu when the click requirement has been met"""
         if button.event:
             event_type = button.event.event_type
             event_value = button.event.value
             if button.total_clicks == event_value:
                 if event_type == ViewButton.Event._disable:
                     self.disable_button(button)
-                    await self.refresh_menu_buttons()
                 
                 elif event_type == ViewButton.Event._remove:
                     self.remove_button(button)
-                    await self.refresh_menu_buttons()
     
     def _remove_director(self, page: Union[discord.Embed, str]):
         """Removes the page director contents from the page
@@ -431,20 +426,21 @@ class ViewMenu(BaseMenu):
         self._view.add_item(button)
         self._buttons.append(button)
     
-    def get_button(self, identity: str, *, search_by: str='label') -> Union[ViewButton, List[ViewButton], None]:
-        """Get a button that has been registered to the menu by it's label or custom_id
+    def get_button(self, identity: str, *, search_by: str='label') -> Union[ViewButton, List[ViewButton]]:
+        """Get a button that has been registered to the menu by it's label, custom_id, or name
         
         Parameters
         ----------
         identity: :class:`str`
-            The button label (case sensitive) or it's custom_id
+            The button label, custom_id, or name
         
         search_by: :class:`str`
-            (optional) How to search for the button. If "label", it's searched by button labels, if "id", it's searched by it's custom_id (defaults to "label")
+            (optional) How to search for the button. If "label", it's searched by button labels. If "id", it's searched by it's custom_id. 
+            If "name", it's searched by button names (defaults to "label")
         
         Raises
         ------
-        - `ViewMenuException`: Parameter :param:`search_by` was not "label" or "id"
+        - `ViewMenuException`: Parameter :param:`search_by` was not "label", "id", or "name"
         
         Returns
         -------
@@ -454,45 +450,58 @@ class ViewMenu(BaseMenu):
         identity = str(identity)
         search_by = str(search_by).lower()
 
-        if search_by in ('label', 'id'):
-            if search_by == 'label':
-                matched_labels = [btn for btn in self._buttons if btn.label == identity]
-                if matched_labels:
-                    if len(matched_labels) == 1: return matched_labels[0]
-                    else: return matched_labels
-                else:
-                    return None
+        if search_by == 'label':
+            matched_labels: List[ViewButton] = [btn for btn in self._buttons if btn.label and btn.label == identity]
+            if matched_labels:
+                return matched_labels[0] if len(matched_labels) == 1 else matched_labels
             else:
-                matched_id = [btn for btn in self._buttons if btn.custom_id == identity]
-                if matched_id: return matched_id[0]
-                else: return None
+                return None
+        
+        elif search_by == 'id':
+            matched_ids: List[ViewButton] = [btn for btn in self._buttons if btn.custom_id and btn.custom_id.startswith(identity)]
+            if matched_ids:
+                return matched_ids[0] if len(matched_ids) == 1 else matched_ids
+            else:
+                return None
+        
+        elif search_by == 'name':
+            matched_names: List[ViewButton] = [btn for btn in self._buttons if btn.name and btn.name == identity]
+            if matched_names:
+                return matched_names[0] if len(matched_names) == 1 else matched_names
+            else:
+                return None
+        
         else:
-            raise ViewMenuException(f'Parameter "search_by" expected "label" or "id", got {search_by!r}')
+            raise ViewMenuException(f'Parameter "search_by" expected "label", "id", or "name", got {search_by!r}')
 
-    #! TODO : add the button event here to prevent 2 edits of a msg
-    def _determine_action(self, action) -> dict:
+    def _determine_edit_kwargs(self, content: Union[discord.Embed, str]) -> dict:
+        """Determine the :meth:`inter.response.edit_message` kwargs for the pagination process. Only used in :meth:`ViewsMenu._paginate`"""
         kwargs = {
-            'embed' if self._menu_type in (ViewMenu.TypeEmbed, ViewMenu.TypeEmbedDynamic) else 'content' : action,
+            'embed' if self._menu_type in (ViewMenu.TypeEmbed, ViewMenu.TypeEmbedDynamic) else 'content' : content,
             'view' : self._view
         }
         return kwargs
 
     async def _paginate(self, button: ViewButton, inter: discord.Interaction):
+        """When the button is pressed, handle the pagination process"""
         if not self._check(inter):
             await inter.response.defer()
             return
-
+        
+        button._update_statistics(inter.user)
+        self._handle_event(button)
+        
         if button.custom_id == ViewButton.ID_PREVIOUS_PAGE:
-            await inter.response.edit_message(**self._determine_action(self._pc.prev()))
+            await inter.response.edit_message(**self._determine_edit_kwargs(self._pc.prev()))
         
         elif button.custom_id == ViewButton.ID_NEXT_PAGE:
-            await inter.response.edit_message(**self._determine_action(self._pc.next()))
+            await inter.response.edit_message(**self._determine_edit_kwargs(self._pc.next()))
         
         elif button.custom_id == ViewButton.ID_GO_TO_FIRST_PAGE:
-            await inter.response.edit_message(**self._determine_action(self._pc.first_page()))
+            await inter.response.edit_message(**self._determine_edit_kwargs(self._pc.first_page()))
         
         elif button.custom_id == ViewButton.ID_GO_TO_LAST_PAGE:
-            await inter.response.edit_message(**self._determine_action(self._pc.last_page()))
+            await inter.response.edit_message(**self._determine_edit_kwargs(self._pc.last_page()))
         
         elif button.custom_id == ViewButton.ID_GO_TO_PAGE:
             await inter.response.defer()
@@ -507,7 +516,7 @@ class ViewMenu(BaseMenu):
             else:
                 if 1 <= page <= len(self._pages):
                     self._pc.index = page - 1
-                    await self._msg.edit(**self._determine_action(self._pc.current_page))
+                    await self._msg.edit(**self._determine_edit_kwargs(self._pc.current_page))
                     if self.delete_interactions:
                         await prompt.delete()
                         await selection_message.delete()
@@ -609,9 +618,7 @@ class ViewMenu(BaseMenu):
                 # this shouldn't execute because of :meth:`_button_add_check`, but just in case i missed something, raise the appropriate error
                 raise ViewMenuException(f'ViewButton custom_id {button.custom_id!r} was not recognized')
 
-        button._update_statistics(inter.user)
         await self._contact_relay(inter.user, button)
-        await self._handle_event(button)
 
     async def stop(self, *, delete_menu_message: bool=False, remove_buttons: bool=False, disable_buttons: bool=False):
         """|coro| Stops the process of the menu with the option of deleting the menu's message, removing the buttons, or disabling the buttons upon stop

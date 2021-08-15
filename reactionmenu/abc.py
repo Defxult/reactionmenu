@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 import abc
 import asyncio
 import collections
+import inspect
 import warnings
 from enum import Enum, IntEnum
 from datetime import datetime
@@ -218,7 +219,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
 
         self._msg: discord.Message = None
         self._pc: _PageController = None
-        self._buttons = []
+        self._buttons: List[Union[Button, ViewButton]] = []
         self._is_running = False
 
         # dynamic session
@@ -614,31 +615,46 @@ class BaseMenu(metaclass=abc.ABCMeta):
         else:
             return f'Page {counter}/{total_pages}'
     
-    async def _contact_relay(self, member: discord.Member, button):
-        """Dispatch the information to the relay function if a relay has been set
-            
-            .. added:: v2.0.1
-        """
+    async def _contact_relay(self, member: discord.Member, button: Union[Button, ViewButton]):
+        """Dispatch the information to the relay function if a relay has been set"""
         if self._relay_info:
             func: object = self._relay_info.func
             only = self._relay_info.only
             RelayPayload = collections.namedtuple('RelayPayload', ['member', 'button'])
             payload = RelayPayload(member=member, button=button)
 
-            async def call():
-                try:
-                    if asyncio.iscoroutinefunction(func):
-                        await func(payload)
-                    else:
-                        func(payload)
-                except TypeError:
-                    raise ViewMenuException('When setting a relay, the relay function must have exactly one positional argument')
+            # before the information is relayed, ensure the relay function contains a single positional argument
+            spec = inspect.getfullargspec(func)
+            if all([
+                len(spec.args) == 1,
+                not spec.varargs,
+                not spec.varkw,
+                not spec.defaults,
+                not spec.kwonlyargs,
+                not spec.kwonlydefaults
+            ]):
+                async def call():
+                    """Dispatch the information to the relay function. If any errors occur during the call, report it to the user"""
+                    try:
+                        if asyncio.iscoroutinefunction(func):
+                            await func(payload)
+                        else:
+                            func(payload)
+                    except Exception as error:
+                        error_msg = inspect.cleandoc(
+                            f"""When dispatching the information to your relay function ("{func.__name__}"), that function raised an error during it's execution
+                            -> {error.__class__.__name__}: {error}
+                            """
+                        )
+                        raise MenuException(error_msg)
 
-            if only:
-                if button in only:
+                if only:
+                    if button in only:
+                        await call()
+                else:
                     await call()
             else:
-                await call()
+                raise MenuException('When setting a relay, the relay function must have exactly one positional argument')
     
     def _handle_send_to(self, send_to):
         """For the `send_to` kwarg in :meth:`ButtonsMenu.start()`, determine what channel the menu should start in"""
@@ -879,23 +895,4 @@ class BaseMenu(metaclass=abc.ABCMeta):
     def remove_relay(self):
         """Remove the relay that's been set"""
         self._relay_info = None
-    
-    def get_button_by_name(self, name: str) -> Button:
-        """Retrieve a :class:`Button` object by its name if the kwarg "name" for that :class:`Button` was set
-
-        Parameter
-        ---------
-        name: :class:`str`
-            The :class:`Button` name
-        
-        Returns
-        -------
-        :class:`Button`:
-           The :class:`Button` that matched the name. Could be :class:`None` if the :class:`Button` was not found
-        """
-        name = str(name).lower()
-        for btn in self._all_buttons:
-            if btn.name == name:
-                return btn
-        return None
     
