@@ -29,9 +29,9 @@ If you have used or are currently using this library and would like to upgrade, 
 * *changed* `ButtonType` has been moved and setting the `linked_to` of a button is now set through the button itself
   * Old: `Button(..., linked_to=ButtonType.NEXT_PAGE)`
   * New: `ReactionButton(..., linked_to=ReactionButton.Type.NEXT_PAGE)`
-* *changed* Method `ButtonType.caller_details()` has been moved to `ReactionButton` 
+* *changed* Method `ButtonType.caller_details()` has been renamed and moved to `ReactionButton`
   * Old: `Button(..., details=ButtonType.caller_details())`
-  * New: `ReactionButton(..., details=ReactionButton.caller_details())`
+  * New: `ReactionButton(..., details=ReactionButton.set_caller_details())`
 * *removed* `ReactionMenu` parameters `back_button` and `next_button` have been removed. Use `ReactionMenu.add_button()` instead
 * *removed* `ReactionMenu` parameter `config` has been removed/replaced with parameter `menu_type`
 * *removed* `ReactionMenu.run_time`
@@ -72,6 +72,7 @@ Discords Buttons feature has been implemented using discord.py instead of a 3rd 
     * `ReactionMenu.Emojis.BACK_BUTTON`
     * `ReactionMenu.Emojis.NEXT_BUTTON`
 * *changed* `Button` names are now case sensitive if you were to use method `ReactionMenu.get_button_by_name()`
+* *changed* Setting the `ID_CALLER` information is different now. See the documentation for proper implementation
 
 ## v2.0.3 » Future release
 <details>
