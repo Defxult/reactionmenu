@@ -246,7 +246,6 @@ class BaseMenu(metaclass=abc.ABCMeta):
         self.delete_interactions: bool = kwargs.get('delete_interactions', True)
         self.allowed_mentions: discord.AllowedMentions = kwargs.get('allowed_mentions', discord.AllowedMentions())
     
-    @property
     @abc.abstractmethod
     def _handle_event(self):
         raise NotImplementedError
