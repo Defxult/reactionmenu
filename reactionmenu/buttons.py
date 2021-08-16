@@ -24,10 +24,10 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Set, Tuple, Union
+from typing import TYPE_CHECKING, NamedTuple, Set, Tuple, Union
 
 if TYPE_CHECKING:
-	from . import ViewMenu, ReactionMenu
+	from . import ViewMenu, ReactionButton, ReactionMenu
 
 import re
 from collections import namedtuple
@@ -36,8 +36,8 @@ from datetime import datetime
 import discord
 from discord.ext.commands import Command
 
-from .abc import BaseButton
-from .errors import ViewMenuException
+from .abc import BaseButton, PaginationEmojis
+from .errors import IncorrectType, ViewMenuException
 
 
 class ViewButton(discord.ui.Button, BaseButton):
@@ -49,7 +49,7 @@ class ViewButton(discord.ui.Button, BaseButton):
 	ID_END_SESSION =        '5'
 	ID_CALLER =             '6'
 	ID_SEND_MESSAGE =       '7'
-	ID_CUSTOM_EMBED = 	'8'
+	ID_CUSTOM_EMBED = 		'8'
 
 	_RE_IDs = r'[0-8]|[0-8]_\d+'
 	_RE_UNIQUE_ID_SET = r'_\d+'
@@ -105,7 +105,7 @@ class ViewButton(discord.ui.Button, BaseButton):
 			If the message will be hidden from everyone except the person that clicked the button (defaults to `False`) *NOTE* This is only valid for a :class:`ViewButton` with custom_id `ViewButton.ID_SEND_MESSAGE`
 		"""
 		
-		__slots__ = ('content', 'embed', 'file', 'tts', 'allowed_mentions', 'delete_after', 'ephemeral', '_caller_info')
+		__slots__ = ('content', 'embed', 'file', 'tts', 'allowed_mentions', 'delete_after', 'ephemeral', 'details')
 
 		def __init__(
 			self,
@@ -116,7 +116,8 @@ class ViewButton(discord.ui.Button, BaseButton):
 			tts: bool=False,
 			allowed_mentions: discord.AllowedMentions=None,
 			delete_after: Union[int, float]=None,
-			ephemeral: bool=False
+			ephemeral: bool=False,
+			**kwargs
 			):
 			self.content = content
 			self.embed = embed
@@ -125,7 +126,8 @@ class ViewButton(discord.ui.Button, BaseButton):
 			self.allowed_mentions = allowed_mentions
 			self.delete_after = delete_after
 			self.ephemeral = ephemeral
-			self._caller_info: 'NamedTuple' = None
+			
+			self.details: NamedTuple = kwargs.get('details')
 		
 		def _to_dict(self) -> dict:
 			"""This is a :class:`ViewButton.Followup` method"""
@@ -134,13 +136,14 @@ class ViewButton(discord.ui.Button, BaseButton):
 				new[i] = getattr(self, i)
 			return new
 		
-		def set_caller_details(self, func: object, *args, **kwargs):
-			"""Set the parameters for the function you set for a :class:`ViewButton` with the custom_id `ViewButton.ID_CALLER`
+		@classmethod
+		def set_caller_details(cls, func: object, *args, **kwargs) -> NamedTuple:
+			"""|class method| Set the parameters for the function you set for a :class:`ViewButton` with the custom_id `ViewButton.ID_CALLER`
 			
 			Parameters
 			----------
 			func: :class:`object`
-				The function object that will be called when the associated button is clicked
+				The function object that will be called when the associated button is pressed
 			
 			*args: :class:`Any`
 				An argument list that represents the parameters of that function
@@ -150,12 +153,14 @@ class ViewButton(discord.ui.Button, BaseButton):
 			
 			Raises
 			------
-			- `ViewMenuException`: Parameter "func" was not a callable object
+			- `IncorrectType`: Parameter "func" was not a callable object
 			"""
-			if not callable(func): raise ViewMenuException('Parameter "func" must be callable')
-			Details = namedtuple('Details', ['func', 'args', 'kwargs'])
-			func = func.callback if isinstance(func, Command) else func
-			self._caller_info = Details(func=func, args=args, kwargs=kwargs)
+			if callable(func):
+				Details = namedtuple('Details', ['func', 'args', 'kwargs'])
+				func = func.callback if isinstance(func, Command) else func
+				return Details(func=func, args=args, kwargs=kwargs)
+			else:
+				raise IncorrectType('Parameter "func" must be callable')
 
 	@classmethod
 	def _base_nav_buttons(cls) -> Tuple[str]:
@@ -257,6 +262,20 @@ class ButtonType:
 	CUSTOM_EMBED = 6
 	CALLER = 7
 
+	@classmethod
+	def _get_buttontype_name_from_type(cls, type_: int):
+		dict_ = {
+			cls.NEXT_PAGE : 'ButtonType.NEXT_PAGE',
+			cls.PREVIOUS_PAGE : 'ButtonType.PREVIOUS_PAGE',
+			cls.GO_TO_FIRST_PAGE : 'ButtonType.GO_TO_FIRST_PAGE',
+			cls.GO_TO_LAST_PAGE : 'ButtonType.GO_TO_LAST_PAGE',
+			cls.GO_TO_PAGE : 'ButtonType.GO_TO_PAGE',
+			cls.END_SESSION : 'ButtonType.END_SESSION',
+			cls.CUSTOM_EMBED : 'ButtonType.CUSTOM_EMBED',
+			cls.CALLER : 'ButtonType.CALLER'
+		}
+		return dict_[type_]
+
 class ReactionButton(BaseButton):
 	"""A helper class for :class:`ReactionMenu`. Represents a reaction. This should *NOT* be used with :class:`ViewMenu`
 	
@@ -289,6 +308,8 @@ class ReactionButton(BaseButton):
 		super().__init__()
 		self.emoji = emoji
 		self.linked_to = linked_to
+		# Note: self.event is set in super()
+		
 		self.custom_embed: discord.Embed = kwargs.get('embed')
 		self.details: tuple = kwargs.get('details')
 		self.name: str = kwargs.get('name')
@@ -300,35 +321,33 @@ class ReactionButton(BaseButton):
 		return self.emoji
 	
 	def __repr__(self):
-		# TODO : make a _get_button_name_from_id method
-		return f'<ReactionButton emoji={self.emoji!r} linked_to={self.linked_to} total_clicks={self._total_clicks} name={self.name!r}>'
+		return f'<ReactionButton emoji={self.emoji!r} linked_to={ButtonType._get_buttontype_name_from_type(self.linked_to)} total_clicks={self._total_clicks} name={self.name!r}>'
 	
 	@classmethod
-	def set_caller_details(cls, func: object, *args, **kwargs) -> tuple:
-		"""|class method| Registers the function to call as well as it's arguments. Please note that the function you set should not return anything.
-		Calling functions with :attr:`ReactionButton.Type.CALLER` does not store or handle anything returned by :param:`func`
+	def set_caller_details(cls, func: object, *args, **kwargs) -> NamedTuple:
+		"""|class method| Set the parameters for the function you set for a :class:`ReactionButton` with a `linked_to` of `ReactionButton.Type.CALLER`
 
-		Parameter
-		---------
-		func: `object`
-			The function object you want to call when the button is pressed
+		Parameters
+		----------
+		func: :class:`object`
+			The function object that will be called when the associated button is clicked
 		
-		Info
-		----
-		:param:`*args` and :param:`**kwargs` represents the arguments to be passed to the function
+		*args: :class:`Any`
+			An argument list that represents the parameters of that function
 		
-		Example
-		-------
-		```
-		def holiday(location, season, month, *, moto):
-			# ...
+		**kwargs: :class:`Any`
+			An argument list that represents the kwarg parameters of that function
 		
-		menu = ReactionMenu(...)
-		menu.add_button(ReactionButton(emoji='🥶', linked_to=ReactionButton.Type.CALLER, details=ReactionButton.set_caller_details(holiday, 'North Pole', 'Winter', 12, moto='hohoho')))
-		```
+		Raises
+		------
+		- `IncorrectType`: Parameter "func" was not a callable object
 		"""
-		func = func.callback if isinstance(func, Command) else func
-		return (func, args, kwargs)
+		if callable(func):
+			Details = namedtuple('Details', ['func', 'args', 'kwargs'])
+			func = func.callback if isinstance(func, Command) else func
+			return Details(func=func, args=args, kwargs=kwargs)
+		else:
+			raise IncorrectType('Parameter "func" must be callable')
 	
 	@property
 	def menu(self) -> ReactionMenu:
@@ -340,3 +359,56 @@ class ReactionButton(BaseButton):
 		"""
 		return self._menu
 	
+	@classmethod
+	def back(cls) -> ReactionButton:
+		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		
+		- emoji: ◀️
+		- linked_to: `ReactionButton.Type.PREVIOUS_PAGE`
+		"""
+		return cls(emoji=PaginationEmojis.BACK_BUTTON, linked_to=cls.Type.PREVIOUS_PAGE)
+	
+	@classmethod
+	def next(cls) -> ReactionButton:
+		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		
+		- emoji: ▶️
+		- linked_to: `ReactionButton.Type.NEXT_PAGE`
+		"""
+		return cls(emoji=PaginationEmojis.NEXT_BUTTON, linked_to=cls.Type.NEXT_PAGE)
+	
+	@classmethod
+	def go_to_first_page(cls) -> ReactionButton:
+		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		
+		- emoji: ⏪
+		- linked_to: `ReactionButton.Type.GO_TO_FIRST_PAGE`
+		"""
+		return cls(emoji=PaginationEmojis.FIRST_PAGE, linked_to=cls.Type.GO_TO_FIRST_PAGE)
+	
+	@classmethod
+	def go_to_last_page(cls) -> ReactionButton:
+		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		
+		- emoji: ⏩
+		- linked_to: `ReactionButton.Type.GO_TO_LAST_PAGE`
+		"""
+		return cls(emoji=PaginationEmojis.LAST_PAGE, linked_to=cls.Type.GO_TO_LAST_PAGE)
+	
+	@classmethod
+	def go_to_page(cls) -> ReactionButton:
+		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		
+		- emoji: 🔢
+		- linked_to: `ReactionButton.Type.GO_TO_PAGE`
+		"""
+		return cls(emoji=PaginationEmojis.GO_TO_PAGE, linked_to=cls.Type.GO_TO_PAGE)
+	
+	@classmethod
+	def end_session(cls) -> ReactionButton:
+		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		
+		- emoji: ⏹️
+		- linked_to: `ReactionButton.Type.END_SESSION`
+		"""
+		return cls(emoji=PaginationEmojis.END_SESSION, linked_to=cls.Type.END_SESSION)
