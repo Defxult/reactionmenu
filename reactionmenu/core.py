@@ -27,14 +27,14 @@ from __future__ import annotations
 import asyncio
 import collections
 import itertools
-from typing import Deque, List, Union, NamedTuple
+from typing import Deque, List, NamedTuple, Union
 
 import discord
 from discord import Embed, Role, TextChannel
 from discord.ext.commands import Context
 
 from . import abc
-from .buttons import Button, ButtonType
+from .buttons import ReactionButton
 from .decorators import *
 from .errors import *
 
