@@ -107,8 +107,8 @@ class _PageController:
         return self.pages[self.index]
 
 
-class DirectionalEmojis:
-    """A set of basic emojis for your convenience to use as your buttons emoji
+class PaginationEmojis:
+    """A set of basic emojis for your convenience to use for your buttons emoji
     - ◀️ as `BACK_BUTTON`
     - ▶️ as `NEXT_BUTTON`
     - ⏪ as `FIRST_PAGE`
@@ -128,7 +128,7 @@ class DirectionalEmojis:
 
 class BaseButton(metaclass=abc.ABCMeta):
 
-    Emojis = DirectionalEmojis
+    Emojis = PaginationEmojis
 
     def __init__(self):
         self.name: str = None
