@@ -15,7 +15,16 @@ If you have used or are currently using this library and would like to upgrade, 
   * `ViewMenu.get_button(..., search_by='name')`
 
 #### Breaking Changes
-* *changed/removed* `ReactionMenu` and `TextMenu` are no longer separate classes. `TextMenu` has been merged into `ReactionMenu`
+* *changed* `ReactionMenu.STATIC` and `ReactionMenu.DYNAMIC` have been renamed
+  * Old: `ReactionMenu.STATIC`
+  * New: `ReactionMenu.TypeEmbed`
+  * Old: `ReactionMenu.DYNAMIC`
+  * New: `ReactionMenu.TypeEmbedDynamic`
+* *changed/removed* The parameters of `ReactionMenu` have been changed
+  * Old: `ReactionMenu(ctx, back_button='⬅️', next_button='➡️', config=ReactionMenu.STATIC)`
+  * New: `ReactionMenu(ctx, menu_type=ReactionMenu.TypeEmbed)`
+* *changed/removed* `ReactionMenu` and `TextMenu` are no longer separate classes. `TextMenu` has been merged into `ReactionMenu`. You can use a text menu by doing the following
+  * `ReactionMenu(..., menu_type=ReactionMenu.TypeText)`
 * *changed* The `Button` class has been renamed to `ReactionButton` to avoid compatibility issues with discord.py 2.0
 * *changed* `ButtonType` has been moved and setting the `linked_to` of a button is now set through the button itself
   * Old: `Button(..., linked_to=ButtonType.NEXT_PAGE)`
@@ -39,7 +48,10 @@ If you have used or are currently using this library and would like to upgrade, 
 * *removed* `ReactionMenu.help_appear_order()`
 * *removed* `ReactionMenu.change_appear_order()`
 * *changed* `ReactionMenu.clear_all_buttons()` to `ReactionMenu.remove_all_buttons()`
-  
+* *changed* Setting the caller details is under a slightly new method
+  * Old: `Button(..., details=ButtonType.caller_details())`
+  * New: `ReactionButton(..., details=ReactionButton.set_caller_details())`
+
 Discords Buttons feature has been implemented using discord.py instead of a 3rd party library. Meaning this library is now only dependent on discord.py. With that said, two classes have been renamed/removed to support discord.py's `View`
 * *removed* `ButtonsMenu` class
   * This has been replaced with `ViewMenu`
