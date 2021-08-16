@@ -529,14 +529,14 @@ class ViewMenu(BaseMenu):
         
         else:
             if button.custom_id.startswith(ViewButton.ID_CALLER):
-                if button.followup is None or button.followup._caller_info is None:
+                if button.followup is None or button.followup.details is None:
                     error_msg = 'ViewButton custom_id was set as ViewButton.ID_CALLER but the "followup" kwarg for that ViewButton was not set ' \
                                 'or method ViewButton.Followup.set_caller_details(..) was not called to set the caller information'
                     raise ViewMenuException(error_msg)
                 
-                func = button.followup._caller_info.func
-                args = button.followup._caller_info.args
-                kwargs = button.followup._caller_info.kwargs
+                func = button.followup.details.func
+                args = button.followup.details.args
+                kwargs = button.followup.details.kwargs
 
                 # reply now because we don't know how long the users function will take to execute
                 await inter.response.defer()
@@ -560,9 +560,9 @@ class ViewMenu(BaseMenu):
                         else:
                             followup_kwargs = button.followup._to_dict()
 
-                            # inter.followup() has no attribute delete_after/_caller_info, so manually delete the key/val pairs to avoid :exc:`TypeError`, got an unexpected kwarg
+                            # inter.followup() has no attribute delete_after/details, so manually delete the key/val pairs to avoid :exc:`TypeError`, got an unexpected kwarg
                             del followup_kwargs['delete_after']
-                            del followup_kwargs['_caller_info']
+                            del followup_kwargs['details']
                             
                             # if there's no file, remove it to avoid an NoneType error
                             if followup_kwargs['file'] is None:
@@ -583,8 +583,8 @@ class ViewMenu(BaseMenu):
                 
                 followup_kwargs = button.followup._to_dict()
 
-                # inter.followup.send() has no kwarg "_caller_info"
-                del followup_kwargs['_caller_info']
+                # inter.followup.send() has no kwarg "details"
+                del followup_kwargs['details']
                 
                 # files are ignored
                 del followup_kwargs['file']
