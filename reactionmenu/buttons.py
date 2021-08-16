@@ -49,7 +49,7 @@ class ViewButton(discord.ui.Button, BaseButton):
 	ID_END_SESSION =        '5'
 	ID_CALLER =             '6'
 	ID_SEND_MESSAGE =       '7'
-	ID_CUSTOM_EMBED = 		'8'
+	ID_CUSTOM_EMBED = 	'8'
 
 	_RE_IDs = r'[0-8]|[0-8]_\d+'
 	_RE_UNIQUE_ID_SET = r'_\d+'
@@ -265,21 +265,21 @@ class ReactionButton(BaseButton):
 	emoji: :class:`str`
 		The discord reaction that will be used
 
-	linked_to: :class:`Button.Type`
+	linked_to: :class:`ReactionButton.Type`
 		A generic action a button can perform
 	
-	event: :class:`Button.Event`
-		Determine when a button should be removed or disabled depending on the amount of clicks
+	event: :class:`ReactionButton.Event`
+		Determine when a button should be removed depending on how many times it has been pressed
 	
 	Kwargs
 	------
 	embed: :class:`discord.Embed`
-		Only used when :param:`linked_to` is set as `Button.Type.CUSTOM_EMBED`. This is the embed that can be selected seperately from the reaction menu (static menu's only)
+		Only used when :param:`linked_to` is set as `ReactionButton.Type.CUSTOM_EMBED`. This is the embed that can be selected seperately from the menu (`TypeEmbed` menu's only)
 
 	name: :class:`str`
 		An optional name for the button. Can be set to retrieve it later via :meth:`ReactionMenu.get_button_by_name()`
 
-	details: :meth:`Button.caller_details()`
+	details: :meth:`ReactionButton.set_caller_details()`
 		The class method used to set the function and it's arguments to be called when the button is pressed
 	"""
 
@@ -304,18 +304,18 @@ class ReactionButton(BaseButton):
 		return f'<ReactionButton emoji={self.emoji!r} linked_to={self.linked_to} total_clicks={self._total_clicks} name={self.name!r}>'
 	
 	@classmethod
-	def caller_details(cls, func, *args, **kwargs) -> tuple:
+	def set_caller_details(cls, func: object, *args, **kwargs) -> tuple:
 		"""|class method| Registers the function to call as well as it's arguments. Please note that the function you set should not return anything.
-		Calling functions with :attr:`ButtonType.CALLER` does not store or handle anything returned by :param:`func`
+		Calling functions with :attr:`ReactionButton.Type.CALLER` does not store or handle anything returned by :param:`func`
 
 		Parameter
 		---------
 		func: `object`
-			The function object you want to call when the button is pressed. 
+			The function object you want to call when the button is pressed
 		
 		Info
 		----
-		:param:`*args` and :param:`**kwargs` represents the arguments to be passed to the function.
+		:param:`*args` and :param:`**kwargs` represents the arguments to be passed to the function
 		
 		Example
 		-------
@@ -324,7 +324,7 @@ class ReactionButton(BaseButton):
 			# ...
 		
 		menu = ReactionMenu(...)
-		menu.add_button(Button(emoji='🥶', linked_to=ButtonType.CALLER, details=ButtonType.caller_details(holiday, 'North Pole', 'Winter', 12, moto='hohoho')))
+		menu.add_button(ReactionButton(emoji='🥶', linked_to=ReactionButton.Type.CALLER, details=ReactionButton.set_caller_details(holiday, 'North Pole', 'Winter', 12, moto='hohoho')))
 		```
 		"""
 		func = func.callback if isinstance(func, Command) else func
