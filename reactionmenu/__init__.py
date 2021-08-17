@@ -9,10 +9,9 @@ A library to create a discord.py paginator. Supports pagination with Discords Bu
 
 """
 
-from .buttons import Button, ButtonType, ComponentsButton
-from .buttons_menu import ButtonsMenu
+from .buttons import ReactionButton, ViewButton
 from .core import ReactionMenu
-from .text import TextMenu
+from .views_menu import ViewMenu
 
-__version__ = '2.0.3-pr-a'
+__version__ = '3.0.0-pr-a'
 __source__ = 'https://github.com/Defxult/reactionmenu'
