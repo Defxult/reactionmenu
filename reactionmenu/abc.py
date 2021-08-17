@@ -167,7 +167,7 @@ class BaseButton(metaclass=abc.ABCMeta):
         self._last_clicked = datetime.utcnow()
 
     class Event:
-        """Set a button to be disabled or removed when it has been pressed a certain amount of times
+        """Set a button to be disabled or removed when it has been pressed a certain amount of times. If the button is a :class:`ReactionButton`, only the "remove" event is available
         
         Parameters
         ----------
@@ -176,6 +176,7 @@ class BaseButton(metaclass=abc.ABCMeta):
         
         value: :class:`int`
             The amount set for the specified event. Must be >= 1. If value is <= 0, it is implicitly set to 1"""
+        
         _disable = 'disable'
         _remove = 'remove'
 
@@ -187,7 +188,7 @@ class BaseButton(metaclass=abc.ABCMeta):
                 self.event_type = event_type
                 self.value = value
             else:
-                raise ViewMenuException(f'Parameter "event_type" expected "disable" or "remove", got {event_type!r}')
+                raise MenuException(f'The value for parameter "event_type" was not recognized')
 
 
 class BaseMenu(metaclass=abc.ABCMeta):
@@ -286,7 +287,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Returns
         -------
-        The menu object. Can be :class:`None` if the menu was not found in this list of active menu sessions
+        The menu object. Can be :class:`None` if the menu was not found in the list of active menu sessions
         """
         for menu in cls._active_sessions:
             if menu._msg.id == message_id:
@@ -312,7 +313,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         return dm_sessions if dm_sessions else None
     
     @classmethod
-    def get_all_sessions(cls):
+    def get_all_sessions(cls) -> list:
         """|class method| Returns all active menu sessions
         
         Returns
@@ -356,8 +357,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
     
     @classmethod
     def set_sessions_limit(cls, limit: int, per: str='guild', message: str='Too many active reaction menus. Wait for other menus to be finished.'):
-        """|class method| Sets the amount of menu sessions that can be active at the same time per guild, channel, or member. Should be set before any menus are started. Ideally this should only
-        be set once. But can be set at anytime if there are no active menu sessions
+        """|class method| Sets the amount of menu sessions that can be active at the same time per guild, channel, or member
 
         Parameters
         ----------
@@ -369,16 +369,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         message: :class:`str`
             (optional) Message that will be sent informing users about the menu limit when the limit is reached. Can be :class:`None` for no message
-
-        Example
-        -------
-        ```
-        class Example(commands.Cog):
-            def __init__(self, bot):
-                self.bot = bot
-                Menu.set_sessions_limit(3, per='member', 'Sessions are limited to 3 per member')
-        ```
-            
+                    
         Raises
         ------
         - `IncorrectType`: The :param:`limit` parameter was not of type `int`
@@ -841,4 +832,3 @@ class BaseMenu(metaclass=abc.ABCMeta):
     def remove_relay(self):
         """Remove the relay that's been set"""
         self._relay_info = None
-    
