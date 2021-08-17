@@ -102,7 +102,7 @@ class ViewButton(discord.ui.Button, BaseButton):
 		self._menu: ViewMenu = None
 	
 	def __repr__(self):
-		total_clicks = '' if self.style == discord.ButtonStyle.link else f' total_clicks={self._total_clicks}'
+		total_clicks = '' if self.style == discord.ButtonStyle.link else f' total_clicks={self.total_clicks}'
 		return f'<ViewButton label={self.label!r} custom_id={ViewButton._get_id_name_from_id(str(self.custom_id))} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled}{total_clicks}>'
 
 	async def callback(self, interaction: discord.Interaction):
@@ -366,7 +366,7 @@ class ReactionButton(BaseButton):
 		return self.emoji
 	
 	def __repr__(self):
-		return f'<ReactionButton emoji={self.emoji!r} linked_to={ButtonType._get_buttontype_name_from_type(self.linked_to)} total_clicks={self._total_clicks} name={self.name!r}>'
+		return f'<ReactionButton emoji={self.emoji!r} linked_to={ButtonType._get_buttontype_name_from_type(self.linked_to)} total_clicks={self.total_clicks} name={self.name!r}>'
 	
 	@classmethod
 	def set_caller_details(cls, func: object, *args, **kwargs) -> NamedTuple:

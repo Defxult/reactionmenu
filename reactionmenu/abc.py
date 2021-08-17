@@ -122,9 +122,9 @@ class BaseButton(metaclass=abc.ABCMeta):
     def __init__(self):
         self.name: str = None
         self.event: BaseButton.Event = None
-        self._clicked_by = set()
-        self._total_clicks = 0
-        self._last_clicked: datetime = None
+        self.__clicked_by = set()
+        self.__total_clicks = 0
+        self.__last_clicked: datetime = None
     
     @property
     @abc.abstractmethod
@@ -139,7 +139,7 @@ class BaseButton(metaclass=abc.ABCMeta):
         Set[:class:`discord.Member`]:
             The members who clicked the button
         """
-        return self._clicked_by
+        return self.__clicked_by
     
     @property
     def total_clicks(self) -> int:
@@ -149,7 +149,7 @@ class BaseButton(metaclass=abc.ABCMeta):
         :class:`int`:
             The amount of clicks on the button
         """
-        return self._total_clicks
+        return self.__total_clicks
 
     @property
     def last_clicked(self) -> datetime:
@@ -159,12 +159,12 @@ class BaseButton(metaclass=abc.ABCMeta):
         :class:`datetime.datetime`:
             The time in UTC for when the button was last clicked. Can be :class:`None` if the button has not been clicked
         """
-        return self._last_clicked
+        return self.__last_clicked
 
     def _update_statistics(self, user: Union[discord.Member, discord.User]):
-        self._clicked_by.add(user)
-        self._total_clicks += 1
-        self._last_clicked = datetime.utcnow()
+        self.__clicked_by.add(user)
+        self.__total_clicks += 1
+        self.__last_clicked = datetime.utcnow()
 
     class Event:
         """Set a button to be disabled or removed when it has been pressed a certain amount of times. If the button is a :class:`ReactionButton`, only the "remove" event is available
