@@ -45,10 +45,7 @@ from .errors import *
 
 
 class _PageController:
-    """An helper class to control the pagination process
-    
-        .. added:: v2.0.0
-    """
+    """An helper class to control the pagination process"""
 
     __slots__ = ('pages', 'total_pages', 'index')
 
@@ -91,18 +88,12 @@ class _PageController:
             return self.pages[self.index]
     
     def first_page(self) -> Union[discord.Embed, str]:
-        """Return the first page in the pagination process
-        
-            .. added:: v3.0.0
-        """
+        """Return the first page in the pagination process"""
         self.index = 0
         return self.pages[self.index]
 
     def last_page(self) -> Union[discord.Embed, str]:
-        """Return the last page in the pagination process
-        
-            .. added:: v3.0.0
-        """
+        """Return the last page in the pagination process"""
         self.index = self.total_pages
         return self.pages[self.index]
 
@@ -115,8 +106,6 @@ class PaginationEmojis:
     - ⏩ as `LAST_PAGE`
     - 🔢 as `GO_TO_PAGE`
     - ⏹️ as `END_SESSION`
-
-        .. added:: v3.0.0
     """
     BACK_BUTTON = 	'◀️'
     NEXT_BUTTON = 	'▶️'
@@ -186,10 +175,7 @@ class BaseButton(metaclass=abc.ABCMeta):
             The action to take. Can either be "disable" or "remove"
         
         value: :class:`int`
-            The amount set for the specified event. Must be >= 1. If value is <= 0, it is implicitly set to 1
-            
-            .. added:: v2.0.2
-        """
+            The amount set for the specified event. Must be >= 1. If value is <= 0, it is implicitly set to 1"""
         _disable = 'disable'
         _remove = 'remove'
 
@@ -530,12 +516,6 @@ class BaseMenu(metaclass=abc.ABCMeta):
         """Yield successive n-sized chunks from list. Core component of a dynamic menu"""
         for i in range(0, len(list_), n):
             yield list_[i:i + n]
-    
-    def _update_button_statistics(self, button: Button, member: discord.Member):
-        """Update the statistical attributes associated with the button"""
-        button._Button_clicked_by.add(member)
-        button._Button_total_clicks += 1
-        button._Button_last_clicked = datetime.utcnow()
     
     async def _handle_session_limits(self) -> bool:
         """|coro| Determine if the menu session is currently limited, if so, send the error message and return `False` indicating that further code execution (starting the menu) should be cancelled"""
