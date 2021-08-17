@@ -10,6 +10,14 @@ If you have used or are currently using this library and would like to upgrade, 
   * `ReactionMenu.set_relay(..., only: List[Button]=None)`
 * `RM|VM` Added the ability to remove the timeout method if you have one set
   * `ReactionMenu.remove_on_timeout()`
+* `RM` Added factory methods for `ReactionButton`
+  * `ReactionButton.back()` 
+  * `ReactionButton.next()` 
+  * `ReactionButton.go_to_first_page()` 
+  * `ReactionButton.go_to_last_page()` 
+  * `ReactionButton.go_to_page()` 
+  * `ReactionButton.end_session()` 
+  * `ReactionButton.all()` 
 * `VM` `ViewButton` now has a `name` attribute
 * `VM` Added the ability for method `ViewMenu.get_button()` to get buttons by name
   * `ViewMenu.get_button(..., search_by='name')`

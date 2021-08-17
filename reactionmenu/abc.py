@@ -178,7 +178,7 @@ class BaseButton(metaclass=abc.ABCMeta):
         self._last_clicked = datetime.utcnow()
 
     class Event:
-        """Set a to be disabled or removed when it has been clicked a certain amount of times
+        """Set a button to be disabled or removed when it has been pressed a certain amount of times
         
         Parameters
         ----------
@@ -300,9 +300,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Returns
         -------
-        The menu object. Can be :class:`None` if the menu is not found in this list of active menu sessions
-            
-            .. added:: v2.0.0
+        The menu object. Can be :class:`None` if the menu was not found in this list of active menu sessions
         """
         for menu in cls._active_sessions:
             if menu._msg.id == message_id:
@@ -311,7 +309,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
     
     @classmethod
     def remove_limit(cls):
-        """|class method| Remove the limits currently set for reaction menu's"""
+        """|class method| Remove the limits currently set for menu's"""
         cls._sessions_limited = False
         cls._sessions_limit_details = None
     
@@ -334,13 +332,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         Returns
         -------
         :class:`list`:
-            A list of :class:`ReactionMenu` or :class:`TextMenu` depending on the instance. Can be an empty list if there are no active sessions
-
-            .. added:: v1.0.9
-
-            .. changes::
-                v2.0.0
-                    Changed return type from :class:`list` to :class:`None` if list is empty
+            A list of all menu sessions that are currently running. Can be :class:`None` if there are no active sessions
         """
         return cls._active_sessions if cls._active_sessions else None
     
@@ -359,7 +351,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         Can also return :class:`None` if the menu with the supplied name was not found in the list of active sessions
         """
         name = str(name)
-        sessions = [session for session in cls._active_sessions if session.name and session.name == name]
+        sessions = [session for session in cls._active_sessions if session.name == name]
         if sessions:
             return sessions[0] if len(sessions) == 1 else sessions
         else:
@@ -373,8 +365,6 @@ class BaseMenu(metaclass=abc.ABCMeta):
         -------
         :class:`int`:
             The amount of active sessions
-
-            .. added:: v1.0.2
         """
         return len(cls._active_sessions)
     
@@ -382,8 +372,6 @@ class BaseMenu(metaclass=abc.ABCMeta):
     def set_sessions_limit(cls, limit: int, per: str='guild', message: str='Too many active reaction menus. Wait for other menus to be finished.'):
         """|class method| Sets the amount of menu sessions that can be active at the same time per guild, channel, or member. Should be set before any menus are started. Ideally this should only
         be set once. But can be set at anytime if there are no active menu sessions
-            
-            .. added:: v1.0.1
 
         Parameters
         ----------
@@ -407,30 +395,18 @@ class BaseMenu(metaclass=abc.ABCMeta):
             
         Raises
         ------
-        - `ReactionMenuException`: Attempted to call method when there are menu sessions that are already active or attempted to set a limit of zero
         - `IncorrectType`: The :param:`limit` parameter was not of type `int`
-
-            .. changes::
-                v1.0.9
-                    Replaced now removed class :meth:`_cancel_all_sessions` with class :meth:`_force_stop`
-                    Added :exc:`IncorrectType`
-                v2.0.0
-                    Added :param:`per` and initialization of new limits
+        - `MenuException`: The value of :param:`per` was not valid or the limit was not greater than or equal to one
         """
-        if len(cls._active_sessions) != 0:
-            # because of the created task(s) when making a session, the menu is still running in the background so manually stopping them is required to stop using resources
-            cls._force_stop(None)
-            raise ReactionMenuException('Method "set_sessions_limit" cannot be called when any other menus have started')
-
         if not isinstance(limit, int):
             raise IncorrectType(f'Parameter "limit" expected int, got {limit.__class__.__name__}')
         else:
             if limit <= 0:
-                raise ReactionMenuException('The session limit must be greater than or equal to one')
+                raise MenuException('The session limit must be greater than or equal to one')
             
             per = str(per).lower()
             if per not in ('guild', 'channel', 'member'):
-                raise ReactionMenuException('Parameter value of "per" was not recognized. Expected: "channel", "guild", or "member"')
+                raise MenuException('Parameter value of "per" was not recognized. Expected: "channel", "guild", or "member"')
 
             LimitDetails = collections.namedtuple('LimitDetails', ['limit', 'per', 'message'])
             cls._sessions_limit_details = LimitDetails(limit=limit, per=per, message=message)
@@ -450,9 +426,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Raises
         ------
-        - `ReactionMenuException`: The session with the supplied name was not found
-
-            .. added:: v1.0.9
+        - `MenuException`: The session with the supplied name was not found
         """
         name = str(name)
         matched_sessions = [session for session in cls._active_sessions if name == session.name]
@@ -463,14 +437,11 @@ class BaseMenu(metaclass=abc.ABCMeta):
             else:
                 await matched_sessions[-1].stop()
         else:
-            raise ReactionMenuException(f'Menu with name {name!r} was not found in the list of active menu sessions')
+            raise MenuException(f'Menu with name {name!r} was not found in the list of active menu sessions')
 
     @classmethod
     async def stop_all_sessions(cls):
-        """|coro class method| Stops all sessions that are currently running
-
-            .. added:: v1.0.9
-        """
+        """|coro class method| Stops all sessions that are currently running"""
         while cls._active_sessions:
             session = cls._active_sessions[0]
             await session.stop()
@@ -523,11 +494,23 @@ class BaseMenu(metaclass=abc.ABCMeta):
         return self._is_running
     
     @property
-    def buttons(self):
+    def buttons(self) -> list:
+        """
+        Returns
+        -------
+        :class:`list`
+            A list of all the buttons that have been added to the menu
+        """
         return self._buttons if self._buttons else None
     
     @property
-    def buttons_most_clicked(self):
+    def buttons_most_clicked(self) -> list:
+        """
+        Returns
+        -------
+        :class:`list`:
+            The list of buttons on the menu ordered from highest (button with the most clicks) to lowest (button with the least clicks). Can be :class:`None` if there are no buttons registered to the menu
+        """
         if self._buttons:
             return sorted(self._buttons, key=lambda btn: btn.total_clicks, reverse=True)
         else:
@@ -549,21 +532,13 @@ class BaseMenu(metaclass=abc.ABCMeta):
             yield list_[i:i + n]
     
     def _update_button_statistics(self, button: Button, member: discord.Member):
-        """Update the statistical attributes associated with the button
-
-            .. added:: v2.0.3
-        """
+        """Update the statistical attributes associated with the button"""
         button._Button_clicked_by.add(member)
         button._Button_total_clicks += 1
         button._Button_last_clicked = datetime.utcnow()
     
     async def _handle_session_limits(self) -> bool:
-        """|coro| Determine if the menu session is currently limited, if so, send the error message and return `False` indicating that further code execution (starting the menu) should be cancelled
-        
-            .. added:: v2.0.0
-
-            .. note:: use to be :meth:`_is_currently_limited`
-        """
+        """|coro| Determine if the menu session is currently limited, if so, send the error message and return `False` indicating that further code execution (starting the menu) should be cancelled"""
         cls = self.__class__
         details: 'NamedTuple' = cls._sessions_limit_details
         can_proceed = True
@@ -692,17 +667,17 @@ class BaseMenu(metaclass=abc.ABCMeta):
 
     @ensure_not_primed
     def clear_all_row_data(self):
-        """Delete all the data thats been added using :meth:`ViewMenu.add_row()`
+        """Delete all the data thats been added using :meth:`add_row()`
         
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `MenuSettingsMismatch`: This method was called but the menus `menu_type` was not `ViewMenu.TypeEmbedDynamic`
+        - `MenuSettingsMismatch`: This method was called but the menus `menu_type` was not `TypeEmbedDynamic`
         """
-        if self._menu_type == ViewMenu.TypeEmbedDynamic:
+        if self._menu_type == BaseMenu.TypeEmbedDynamic:
             self._dynamic_data_builder.clear()
         else:
-            raise MenuSettingsMismatch('Cannot use method ViewMenu.clear_all_row_data() when the menu_type is not set as ViewMenu.TypeEmbedDynamic')
+            raise MenuSettingsMismatch('Cannot clear all row data when the menu_type is not set as TypeEmbedDynamic')
     
     @ensure_not_primed
     def add_row(self, data: str):
@@ -716,20 +691,20 @@ class BaseMenu(metaclass=abc.ABCMeta):
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `MenuSettingsMismatch`: This method was called but the menus `menu_type` was not `ViewMenu.TypeEmbedDynamic`
-        - `MissingSetting`: :class:`ViewMenu` kwarg "rows_requested" (int) has not been set
+        - `MenuSettingsMismatch`: This method was called but the menus `menu_type` was not `TypeEmbedDynamic`
+        - `MissingSetting`: The kwarg "rows_requested" (int) has not been set for the menu
         """
-        if self._menu_type == ViewMenu.TypeEmbedDynamic:
-            if self.__rows_requested:
+        if self._menu_type == BaseMenu.TypeEmbedDynamic:
+            if self.rows_requested:
                 self._dynamic_data_builder.append(str(data))
             else:
-                raise MissingSetting(f'ViewMenu kwarg "rows_requested" (int) has not been set')
+                raise MissingSetting(f'The kwarg "rows_requested" (int) has not been set for the menu')
         else:
-            raise MenuSettingsMismatch('add_row can only be used with a menu_type of ViewMenu.TypeEmbedDynamic')
+            raise MenuSettingsMismatch('add_row() can only be used with a menu_type of TypeEmbedDynamic')
     
     @ensure_not_primed
     def set_main_pages(self, *embeds: discord.Embed):
-        """On a menu with a menu_type of `ViewMenu.TypeEmbedDynamic`, set the pages you would like to show first. These embeds will be shown before the embeds that contain your data
+        """On a menu with a menu_type of `TypeEmbedDynamic`, set the pages you would like to show first. These embeds will be shown before the embeds that contain your data
         
         Parameter
         ---------
@@ -738,14 +713,14 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Raises
         ------
-        - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `ViewMenu.TypeEmbedDynamic`
+        - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `TypeEmbedDynamic`
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `ViewMenuException`: The "embeds" parameter was empty. At least one value is needed
         - `IncorrectType`: All values in the argument list were not of type :class:`discord.Embed`
         """
         if not embeds: raise ViewMenuException('The argument list when setting main pages was empty')
         if not all([isinstance(e, discord.Embed) for e in embeds]): raise IncorrectType('All values in the argument list when setting main pages were not of type discord.Embed')
-        if self._menu_type != ViewMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_main_pages is only available for menus with menu_type ViewMenu.TypeEmbedDynamic')
+        if self._menu_type != BaseMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_main_pages is only available for menus with menu_type TypeEmbedDynamic')
         
         # if they've set any values, remove it. Each set should be from the call and should not stack
         self._main_page_contents.clear()
@@ -755,7 +730,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
 
     @ensure_not_primed
     def set_last_pages(self, *embeds: discord.Embed):
-        """On a menu with a menu_type of `ViewMenu.TypeEmbedDynamic`, set the pages you would like to show last. These embeds will be shown after the embeds that contain your data
+        """On a menu with a menu_type of `TypeEmbedDynamic`, set the pages you would like to show last. These embeds will be shown after the embeds that contain your data
         
         Parameter
         ---------
@@ -764,14 +739,14 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Raises
         ------
-        - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `ViewMenu.TypeEmbedDynamic`
+        - `MenuSettingsMismatch`: Tried to use method on a menu that was not of menu_type `TypeEmbedDynamic`
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `ViewMenuException`: The "embeds" parameter was empty. At least one value is needed
         - `IncorrectType`: All values in the argument list were not of type :class:`discord.Embed`
         """
         if not embeds: raise ViewMenuException('The argument list when setting main pages was empty')
         if not all([isinstance(e, discord.Embed) for e in embeds]): raise IncorrectType('All values in the argument list when setting main pages were not of type discord.Embed')
-        if self._menu_type != ViewMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_last_pages is only available for menus with menu_type ViewMenu.TypeEmbedDynamic')
+        if self._menu_type != BaseMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_last_pages is only available for menus with menu_type TypeEmbedDynamic')
         
         # if they've set any values, remove it. Each set should be from the call and should not stack
         self._last_page_contents.clear()
@@ -829,14 +804,14 @@ class BaseMenu(metaclass=abc.ABCMeta):
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `ViewMenuException`: The page associated with the given page number was not valid
+        - `MenuException`: The page associated with the given page number was not valid
         """
         if self._pages:
             if page_number > 0 and page_number <= len(self._pages):
                 page_to_delete = page_number - 1
                 del self._pages[page_to_delete]
             else:
-                raise ViewMenuException(f'Page number invalid. Must be from 1 - {len(self._pages)}')
+                raise MenuException(f'Page number invalid. Must be from 1 - {len(self._pages)}')
     
     def set_on_timeout(self, func: object):
         """Set the function to be called when the menu times out
@@ -849,18 +824,13 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Raises
         ------
-        - `ReactionMenuException`: Parameter "func" was not a callable object
-
-            .. added:: v2.0.0
+        - `MenuException`: Parameter "func" was not a callable object
         """
-        if not callable(func): raise ReactionMenuException('Parameter "func" must be callable')
+        if not callable(func): raise MenuException('Parameter "func" must be callable')
         self._on_timeout_details = func
     
     def remove_on_timeout(self):
-        """Remove the timeout call to the function you have set when the menu times out
-        
-            .. added:: v3.0.0
-        """
+        """Remove the timeout call to the function you have set when the menu times out"""
         self._on_timeout_details = None
     
     def set_relay(self, func: object, *, only: List[Union[Button, ViewButton]]=None):

@@ -106,6 +106,10 @@ class ViewMenu(BaseMenu):
         """
         return self._pages if self._pages else None
     
+    def _get_new_view(self) -> discord.ui.View:
+        """Returns a new :class:`discord.ui.View` object with the `timeout` parameter already set"""
+        return discord.ui.View(timeout=self.__timeout)
+    
     def _check(self, inter: discord.Interaction):
         """Base menu button interaction check"""
         author_pass = False
@@ -270,11 +274,13 @@ class ViewMenu(BaseMenu):
                 # that makes no sense and resetting the page controller fixes that issue 
                 self._pc = _PageController(self._pages)
             
-            kwargs_to_pass = {'view' : self._view}
+            kwargs_to_pass = {}
 
             if isinstance(new_buttons, list):
+                self.remove_all_buttons()
+                self._view = self._get_new_view()
+                kwargs_to_pass['view'] = self._view
                 if len(new_buttons) >= 1:
-                    self.remove_all_buttons()
                     for new_btn in new_buttons:
                         # this needs to be set to `True` every loop because once the decorator has been bypassed, the decorator resets that bypass back to `False`
                         # i could set the bypass values before and after the loop, but the time it takes for new buttons to be replaced *could* be enough time for other
@@ -284,8 +290,6 @@ class ViewMenu(BaseMenu):
                         self._bypass_primed = True
                         
                         self.add_button(new_btn)
-                else:
-                    self.remove_all_buttons()
             
             if self._menu_type == ViewMenu.TypeEmbed:
                 kwargs_to_pass['embed'] = self._pages[0]
@@ -294,6 +298,7 @@ class ViewMenu(BaseMenu):
             
             await self._msg.edit(**kwargs_to_pass)
     
+    # FIXME:
     async def refresh_menu_buttons(self):
         """|coro| When the menu is running, update the message to reflect the buttons that were removed, enabled, or disabled"""
         if self._is_running:
@@ -395,6 +400,12 @@ class ViewMenu(BaseMenu):
                 name = ViewButton._get_id_name_from_id(button.custom_id)
                 raise ViewMenuException(f'A ViewButton with custom_id {name!r} has already been added')
             
+            # if the menu_type is TypeText, disallow custom embed buttons
+            if button.style != discord.ButtonStyle.link and self._menu_type == ViewMenu.TypeText:
+                if button.custom_id == ViewButton.ID_CUSTOM_EMBED:
+                    if button.followup and button.followup.embed is not None:
+                        raise MenuSettingsMismatch('ViewButton with custom_id ViewButton.ID_CUSTOM_EMBED cannot be used when the menu_type is ViewMenu.TypeText')
+            
             # ensure there are no more than 25 buttons
             if len(self._buttons) >= 25:
                 raise TooManyButtons('ViewMenu cannot have more than 25 buttons (discord limitation)')
@@ -418,6 +429,7 @@ class ViewMenu(BaseMenu):
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `MenuSettingsMismatch`: The buttons custom_id was set as `ViewButton.ID_CUSTOM_EMBED` but the `menu_type` is `ViewMenu.TypeText`
         - `ViewMenuException`: The custom_id for the button was not recognized or a button with that custom_id has already been added
         - `TooManyButtons`: There are already 25 buttons on the menu
         - `IncorrectType`: Parameter :param:`button` was not of type :class:`ViewButton`
@@ -478,12 +490,22 @@ class ViewMenu(BaseMenu):
             raise ViewMenuException(f'Parameter "search_by" expected "label", "id", or "name", got {search_by!r}')
 
     def _determine_edit_kwargs(self, content: Union[discord.Embed, str]) -> dict:
-        """Determine the :meth:`inter.response.edit_message` kwargs for the pagination process. Only used in :meth:`ViewsMenu._paginate`"""
+        """Determine the :meth:`inter.response.edit_message` kwargs for the pagination process. Only used in :meth:`ViewMenu._paginate`"""
         kwargs = {
-            'embed' if self._menu_type in (ViewMenu.TypeEmbed, ViewMenu.TypeEmbedDynamic) else 'content' : content,
-            'view' : self._view
+            'embed' if self._menu_type in (ViewMenu.TypeEmbed, ViewMenu.TypeEmbedDynamic) else 'content' : content
+            # Note to self: Take a look at the note below as to why the following item in this dict is commented out
+            #'view' : self._view
         }
         return kwargs
+        """
+        Note ::
+            I thought everytime a message was edited, the `view` had to be present but that's not the case. Each button stays on the message
+            even if the message is edited. The view shouldn't be passed in again because it already exists on the message. This seems to have fixed
+            the error:
+                    discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+                    In components.0.components.5: The specified component exceeds the maximum width
+            that I was having
+        """
 
     async def _paginate(self, button: ViewButton, inter: discord.Interaction):
         """When the button is pressed, handle the pagination process"""
@@ -605,18 +627,8 @@ class ViewMenu(BaseMenu):
                 else:
                     if button.followup is None or button.followup.embed is None:
                         raise ViewMenuException('ViewButton custom_id was set as ViewButton.ID_CUSTOM_EMBED but the "followup" kwargs for that ViewButton was not set or the "embed" kwarg for the followup was not set')
-                    
-                    """
-                    I would have used `inter.response.edit_message`, but for whatever reason i'm getting the error:
-                        
-                        discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
-                        In components.0.components.5: The specified component exceeds the maximum width
-                    
-                    Not sure what could be causing it when that works for all base navigation buttons
-                    """
-                    await inter.response.defer()
-                    await self._msg.edit(embed=button.followup.embed, view=self._view)
-            
+                   
+                    await inter.response.edit_message(embed=button.followup.embed)            
             else:
                 # this shouldn't execute because of :meth:`_button_add_check`, but just in case i missed something, raise the appropriate error
                 raise ViewMenuException(f'ViewButton custom_id {button.custom_id!r} was not recognized')
@@ -693,6 +705,10 @@ class ViewMenu(BaseMenu):
     
     @ensure_not_primed
     async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None):
+        if ViewMenu._sessions_limited:
+            can_proceed = await self._handle_session_limits()
+            if not can_proceed:
+                return
         # ---------------------
         # Note 1: each at least 1 page check is done in it's own if statement to avoid clashing between pages and custom embeds
         # Note 2: at least 1 page check for add_row is done in "(dynamic menu)"
@@ -744,7 +760,7 @@ class ViewMenu(BaseMenu):
                 if not navigation_btns:
                     error_msg = inspect.cleandoc(
                         """
-                        Since you've added pages and custom embeds, there needs to be at least one base navigation button. Without one, there's no way to go back to the normal pages in the menu if a custom embed button is clicked.
+                        Since you've added pages and custom embeds, there needs to be at least one base navigation button. Without one, there's no way to go back to the normal pages in the menu if a custom embed button is pressed.
                         The available base navigation buttons are buttons with the custom_id:
                         - ViewButton.ID_PREVIOUS_PAGE
                         - ViewButton.ID_NEXT_PAGE
