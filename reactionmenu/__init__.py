@@ -13,5 +13,5 @@ from .buttons import ReactionButton, ViewButton
 from .core import ReactionMenu
 from .views_menu import ViewMenu
 
-__version__ = '3.0.0-a'
+__version__ = '3.0.0-pr-a'
 __source__ = 'https://github.com/Defxult/reactionmenu'
