@@ -3,7 +3,7 @@
 * `RM` = `ReactionMenu`
 * `TM` = `TextMenu`
 
-## v2.0.3 » Future release
+## v2.0.3 » Aug. 18, 2021
 #### New Features
 * `RM|TM` The `Button` class now has similar attributes to `ComponentsButton`
   * `Button.menu`
