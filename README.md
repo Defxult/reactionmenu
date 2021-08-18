@@ -753,7 +753,7 @@ The following are the rules set by Discord for Buttons:
   * `ComponentsButton.ID_END_SESSION`
   * `ComponentsButton.ID_CALLER`
   * `ComponentsButton.ID_SEND_MESSAGE`
-  * `ComponentsButton.ID_CUSTOM_EMBED` (only valid with menu type `ButtonsMenu.TypeEmbed`)
+  * `ComponentsButton.ID_CUSTOM_EMBED` (only valid with menu type `ButtonsMenu.TypeEmbedDynamic`)
 * `emoji` (`discord.PartialEmoji`) Emoji used for the button
   * `ComponentsButton(..., emoji='😄')` 
   * `ComponentsButton(..., emoji='<:miscTwitter:705423192818450453>')`
@@ -925,10 +925,10 @@ menu.add_button(button_2)
 ## ButtonsMenu Relays
 Menu relays are functions that are called anytime a button that is apart of a menu is clicked. It is considered as an extension of a `ComponentsButton` with an ID of `ComponentsButton.ID_CALLER`. Unlike caller buttons which provides no details about the interactions on the menu, relays do.
 * Associated methods
-  * `ButtonsMenu.set_relay()`
+  * `ButtonsMenu.set_relay(func: object)`
   * `ButtonsMenu.remove_relay()`
 
-When creating a function for your relay, that function must contain a single positional argument. When a button is clicked, a `RelayPayload` object (a named tuple) is passed to that function. The attributes of RelayPayload are:
+When creating a function for your relay, that function must contain a single positional argument. When a button is clicked, a `RelayPayload` object (a named tuple) is passed to that function. The attributes of `RelayPayload` are:
 * `member` (`discord.Member`) The person who clicked the button
 * `button` (`ComponentsButton`) The [button](#componentsbutton) that was clicked
 
