@@ -7,7 +7,7 @@
 </div>
 
 ## discord.py 2.0 support
-The next major version of this library (reactionmenu 3.0) is in development to support discord.py's next big update. I plan on releasing that version soon after the official release of d.py 2.0. In the mean time, check out the [dpy-2.0-compatible](https://github.com/Defxult/reactionmenu/tree/dpy-2.0-compatible) branch where implementation of the new `discord.ui.View` is being developed. If you decide to try it out and find any bugs, don't forget to submit an [issue](https://github.com/Defxult/reactionmenu/issues/new/choose).
+The next major version of this library (reactionmenu 3.0) is in development to support discord.py's next big update. I plan on releasing that version soon after the official release of d.py 2.0. In the mean time, check out the [dpy-2.0-compatible](https://github.com/Defxult/reactionmenu/tree/dpy-2.0-compatible) branch. The library has been re-worked and quite a few things have changed for the better.
 
 ---
 ## Github Updates vs PyPI Updates
