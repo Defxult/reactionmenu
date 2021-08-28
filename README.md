@@ -6,10 +6,6 @@
 ![python_version](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue)
 </div>
 
-## discord.py 2.0 support
-The next major version of this library (reactionmenu 3.0) is ready for alpha testing to support discord.py's next big update. I plan on releasing that version soon after the official release of d.py 2.0. In the mean time, check out the [dpy-2.0-compatible](https://github.com/Defxult/reactionmenu/tree/dpy-2.0-compatible) branch. The library has been re-worked and quite a few things have changed for the better.
-
----
 ## Github Updates vs PyPI Updates
 The Github version of this library will always have the latest changes, fixes, and additions before the [PyPI](https://pypi.org/project/reactionmenu/) version. You can install the Github version by doing:
 ```
