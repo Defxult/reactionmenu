@@ -429,7 +429,7 @@ bot.run(...)
 class reactionmenu.ViewMenu(ctx: Context, *, menu_type: int, **kwargs)
 ```
 
-A `ViewMenu` is a menu that uses discords Buttons feature. With buttons, you can enable and disable them, set a certain color for them with emojis, have buttons that send hidden messages, and add hyperlinks. This library offers a broader range of functionalities such as who pressed the button, how many times it was pressed and more. It uses discord.py's views (`discord.ui.View`) to implement the Buttons functionality, but uses some of it's own methods in order to make a Button pagination menu simple.
+A `ViewMenu` is a menu that uses discords Buttons feature. With buttons, you can enable and disable them, set a certain color for them with emojis, have buttons that send hidden messages, and add hyperlinks. This library offers a broader range of functionalities such as who pressed the button, how many times it was pressed and more. It uses views (`discord.ui.View`) to implement the Buttons functionality, but uses some of it's own methods in order to make a Button pagination menu simple.
 
 ![image](https://cdn.discordapp.com/attachments/655186216060321816/855818139450081280/buttons_showcase_reduced.gif)
 
@@ -551,7 +551,7 @@ Buttons are what you use to interact with the menu. Unlike reactions, they look 
 class reactionmenu.ViewButton(*, style=discord.ButtonStyle.secondary, label=None, disabled=False, custom_id=None, url=None, emoji=None, followup=None, event=None, **kwargs)
 ```
 
-A `ViewButton` is a class that represents the discord button. It is a subclass of discord.py's `discord.ui.Button`.
+A `ViewButton` is a class that represents the discord button. It is a subclass of `discord.ui.Button`.
 
 The following are the rules set by Discord for Buttons:
 * Link buttons don't send interactions to the Discord App, so link button statistics (it's properties) are not tracked
@@ -579,7 +579,7 @@ The following are the rules set by Discord for Buttons:
   * `ViewButton(..., emoji='\N{winking face}')`
 * `url` (`str`) URL for a button with style `discord.ButtonStyle.link`
 * `disabled` (`bool`) If the button should be disabled
-* `followup` (`ViewButton.Followup`) The message sent after the button is pressed. Only available for buttons that have a `custom_id` of `ViewButton.ID_CALLER` or `ViewButton.ID_SEND_MESSAGE`. `ViewButton.Followup` is a class that has parameters similar to discord.py's `Messageable.send()`, and is used to control if a message is ephemeral (hidden), contains a file, embed, tts, etc...
+* `followup` (`ViewButton.Followup`) The message sent after the button is pressed. Only available for buttons that have a `custom_id` of `ViewButton.ID_CALLER` or `ViewButton.ID_SEND_MESSAGE`. `ViewButton.Followup` is a class that has parameters similar to `discord.abc.Messageable.send()`, and is used to control if a message is ephemeral (hidden), contains a file, embed, tts, etc...
 * `event` (`ViewButton.Event`) Set a button to be disabled or removed when it has been pressed a certain amount of times
 
 #### Attributes for ViewButton
@@ -677,7 +677,7 @@ await menu.update(new_pages=[hello_embed, goodbye_embed], new_buttons=[link_butt
 The `ViewButton` class comes with a set factory methods (class methods) that returns a `ViewButton` with parameters set according to their `custom_id` (excluding link buttons).
 
 * `ViewButton.link(label: str, url: str)`
-  * style: `discord.ButtonStyle.gray`
+  * style: `discord.ButtonStyle.link`
   * label: `<label>`
   * url: `<url>`
 * `ViewButton.back()`
