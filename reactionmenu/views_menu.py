@@ -687,7 +687,7 @@ class ViewMenu(BaseMenu):
                 await self._handle_on_timeout()
     
     @ensure_not_primed
-    async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None):
+    async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None, reply: bool=False):
         """|coro| Start the menu
         
         Parameters
@@ -696,6 +696,9 @@ class ViewMenu(BaseMenu):
             (optional) The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
             method :meth:`discord.Client.get_channel()` (or any other related methods), that text channel should be in the same list as if you were to use `ctx.guild.text_channels`. This only works on a context guild text channel basis. That means a menu instance cannot be
             created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to` (defaults to :class:`None`)
+        
+        reply: :class:`bool`
+			(optional) Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True` (defaults to `False`)
         
         Example for :param:`send_to`
         ---------------------------
@@ -737,6 +740,8 @@ class ViewMenu(BaseMenu):
         if not self._buttons: raise NoButtons
         if self._menu_type not in ViewMenu._all_menu_types(): raise ViewMenuException('ViewMenu menu_type not recognized')
 
+        reply_kwargs = self._handle_reply_kwargs(send_to, reply)
+
         # add page (normal menu)
         if self._menu_type == ViewMenu.TypeEmbed:
             self._refresh_page_director_info(ViewMenu.TypeEmbed, self._pages)
@@ -751,7 +756,7 @@ class ViewMenu(BaseMenu):
 
             # normal pages, no custom embeds
             if self._pages and not custom_embed_btns:
-                self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0], view=self._view) # allowed_mentions not needed in embeds
+                self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0], view=self._view, **reply_kwargs) # allowed_mentions not needed in embeds
             
             # only custom embeds
             elif not self._pages and custom_embed_btns:
@@ -766,7 +771,7 @@ class ViewMenu(BaseMenu):
                         raise ViewMenuException('ViewButton custom_id was set as ViewButton.ID_CUSTOM_EMBED but the "followup" kwargs for that ViewButton was not set or the "embed" kwarg for the followup was not set')
                 
                 # since there are only custom embeds, self._pages is still set to :class:`None`, so set the embed in `.send()` to the first custom embed in the list
-                self._msg = await self._handle_send_to(send_to).send(embed=custom_embed_btns[0].followup.embed, view=self._view)
+                self._msg = await self._handle_send_to(send_to).send(embed=custom_embed_btns[0].followup.embed, view=self._view, **reply_kwargs)
             
             # normal pages and custom embeds
             else:
@@ -785,7 +790,7 @@ class ViewMenu(BaseMenu):
                     )
                     raise ViewMenuException(error_msg)
                 else:
-                    self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0], view=self._view) # allowed_mentions not needed in embeds
+                    self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0], view=self._view, **reply_kwargs) # allowed_mentions not needed in embeds
 
         # add row (dynamic menu)
         elif self._menu_type == ViewMenu.TypeEmbedDynamic:
@@ -797,7 +802,7 @@ class ViewMenu(BaseMenu):
                 raise NoPages
             
             self._refresh_page_director_info(ViewMenu.TypeText, self._pages)
-            self._msg = await self._handle_send_to(send_to).send(content=self._pages[0], view=self._view, allowed_mentions=self.allowed_mentions)
+            self._msg = await self._handle_send_to(send_to).send(content=self._pages[0], view=self._view, allowed_mentions=self.allowed_mentions, **reply_kwargs)
         
         self._pc = _PageController(self._pages)
         self._is_running = True

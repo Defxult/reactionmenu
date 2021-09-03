@@ -719,7 +719,17 @@ class BaseMenu(metaclass=abc.ABCMeta):
             else:
                 raise MenuException('When setting a relay, the relay function must have exactly one positional argument')
     
-    def _handle_send_to(self, send_to):
+    def _handle_reply_kwargs(self, send_to, reply: bool) -> dict:
+        """Used to determine the mentions for the `reply` parameter in :meth:`.start()`"""
+        # sometimes users do `.start(send_to=ctx.channel)`. its not needed but handle it just in case
+        if isinstance(send_to, discord.TextChannel) and send_to == self._ctx.channel:
+            send_to = None
+        return {
+            'reference' : self._ctx.message if all([send_to is None, reply is True]) else None,
+            'mention_author' : self.allowed_mentions.replied_user
+        }
+    
+    def _handle_send_to(self, send_to) -> discord.TextChannel:
         """For the :param:`send_to` kwarg in :meth:`Menu.start()`. Determine what channel the menu should start in"""
         # in DMs
         if self._ctx.guild is None:

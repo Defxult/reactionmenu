@@ -683,7 +683,7 @@ class ReactionMenu(BaseMenu):
 				self._auto_paginator = False
 		
 	@ensure_not_primed
-	async def start(self, send_to: Union[str, int, discord.TextChannel]=None):
+	async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None, reply: bool=False):
 		"""|coro| Start the menu
         
         Parameters
@@ -692,6 +692,9 @@ class ReactionMenu(BaseMenu):
             (optional) The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
             method :meth:`discord.Client.get_channel()` (or any other related methods), that text channel should be in the same list as if you were to use `ctx.guild.text_channels`. This only works on a context guild text channel basis. That means a menu instance cannot be
             created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to` (defaults to :class:`None`)
+		
+		reply: :class:`bool`
+			(optional) Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True` (defaults to `False`)
         
         Example for :param:`send_to`
         ---------------------------
@@ -737,6 +740,8 @@ class ReactionMenu(BaseMenu):
 			if not self._buttons:
 				raise NoButtons
 
+			reply_kwargs = self._handle_reply_kwargs(send_to, reply)
+			
 			if self._menu_type == ReactionMenu.TypeEmbed:
 				if self._pages:
 					self._refresh_page_director_info(self._menu_type, self._pages)
@@ -744,20 +749,20 @@ class ReactionMenu(BaseMenu):
 				custom_embed_buttons = self._get_custom_embed_buttons()
 				# no pages and no custom embeds (no pages at all)
 				if not self._pages and not custom_embed_buttons:
-					raise NoPages
+					raise NoPages	
 
 				# only custom embeds
 				if not self._pages and custom_embed_buttons:
-					self._msg = await self._handle_send_to(send_to).send(embed=self._get_custom_embed_buttons()[0].custom_embed)
+					self._msg = await self._handle_send_to(send_to).send(embed=self._get_custom_embed_buttons()[0].custom_embed, **reply_kwargs)
 				else:
-					self._msg = await self._handle_send_to(send_to).send(**self._determine_kwargs(self._pages[0]))
+					self._msg = await self._handle_send_to(send_to).send(**self._determine_kwargs(self._pages[0]), **reply_kwargs)
 			
 			elif self._menu_type == ReactionMenu.TypeText:
 				if not self._pages:
 					raise NoPages
 				
 				self._refresh_page_director_info(self._menu_type, self._pages)
-				self._msg = await self._handle_send_to(send_to).send(content=self._pages[0], allowed_mentions=self.allowed_mentions)
+				self._msg = await self._handle_send_to(send_to).send(content=self._pages[0], allowed_mentions=self.allowed_mentions, **reply_kwargs)
 			
 			elif self._menu_type == ReactionMenu.TypeEmbedDynamic:
 				# page director info is refreshed in method
