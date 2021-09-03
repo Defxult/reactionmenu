@@ -6,10 +6,15 @@
 ![python_version](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue)
 </div>
 
+## reactionmenu 3.0
+The [reactionmenu 3.0 branch](https://github.com/Defxult/reactionmenu/tree/3.0) is now available for testing
+
+---
+
 ## Github Updates vs PyPI Updates
 The Github version of this library will always have the latest changes, fixes, and additions before the [PyPI](https://pypi.org/project/reactionmenu/) version. You can install the Github version by doing:
 ```
-pip install git+https://github.com/Defxult/reactionmenu.git
+$ pip install git+https://github.com/Defxult/reactionmenu.git
 ```
 You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the Github version of this library. If you are using the PyPI version of this library, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
 
@@ -20,7 +25,7 @@ You must have [Git](https://git-scm.com/) installed in order to do this. With th
 
 ## How to install
 ```
-pip install reactionmenu
+$ pip install reactionmenu
 ```
 ---
 ## Showcase
