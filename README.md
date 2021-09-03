@@ -20,7 +20,6 @@ If you've previously used this library, I suggest reading the readme once more. 
 * reactionmenu 3.0 development version
 ```
 $ pip install -U git+https://github.com/Defxult/reactionmenu@3.0
-
 ```
 * pycord 2.0 development version
 ```

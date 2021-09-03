@@ -305,8 +305,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Returns
         -------
-        :class:`list`:
-            Can return :class:`None` if the there are no active DM sessions
+        :class:`list`: Can return :class:`None` if the there are no active DM sessions
         """
         dm_sessions = [session for session in cls._active_sessions if session.message.guild is None]
         return dm_sessions if dm_sessions else None
@@ -317,8 +316,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Returns
         -------
-        :class:`list`:
-            A list of all menu sessions that are currently running. Can be :class:`None` if there are no active sessions
+        :class:`list`: A list of all menu sessions that are currently running. Can be :class:`None` if there are no active sessions
         """
         return cls._active_sessions if cls._active_sessions else None
     
@@ -349,8 +347,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Returns
         -------
-        :class:`int`:
-            The amount of active sessions
+        :class:`int`: The amount of active sessions
         """
         return len(cls._active_sessions)
     
