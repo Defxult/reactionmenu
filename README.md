@@ -374,7 +374,7 @@ menu.set_relay(example, only=[back_button])
 ---
 ### Starting/Stopping the ReactionMenu
 * Associated methods
-  * `await ReactionMenu.start(*, send_to=None)`
+  * `await ReactionMenu.start(*, send_to=None, reply=False)`
   * `await ReactionMenu.stop(*, delete_menu_message=False, clear_reactions=False)`
 
 When starting the menu, you have the option to send the menu to a certain channel. Parameter `send_to` is the channel you'd like to send the menu to. You can set `send_to` as the channel name (`str`), channel ID (`int`), or channel object (`discord.TextChannel`). Example:
@@ -780,7 +780,7 @@ menu.set_relay(example, only=[back_button])
 ---
 ### Starting/Stopping the ViewMenu
 * Associated methods
-  * `await ViewMenu.start(*, send_to=None)`
+  * `await ViewMenu.start(*, send_to=None, reply=False)`
   * `await ViewMenu.stop(*, delete_menu_message=False, remove_buttons=False, disable_buttons=False)`
 
 When starting the menu, you have the option to send the menu to a certain channel. Parameter `send_to` is the channel you'd like to send the menu to. You can set `send_to` as the channel name (`str`), channel ID (`int`), or channel object (`discord.TextChannel`). Example:
