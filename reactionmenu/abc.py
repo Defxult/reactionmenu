@@ -637,7 +637,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         can_proceed = True
         
         # if the menu is in a DM, handle it separately
-        if self._ctx.guild is None:
+        if self.in_dms:
             dm_sessions = cls.get_all_dm_sessions()
             if dm_sessions:
                 user_dm_sessions = [session for session in dm_sessions if session.owner.id == self._ctx.author.id]
@@ -729,13 +729,11 @@ class BaseMenu(metaclass=abc.ABCMeta):
             'mention_author' : self.allowed_mentions.replied_user
         }
     
-    def _handle_send_to(self, send_to) -> discord.TextChannel:
+    def _handle_send_to(self, send_to) -> discord.abc.Messageable:
         """For the :param:`send_to` kwarg in :meth:`Menu.start()`. Determine what channel the menu should start in"""
-        # in DMs
-        if self._ctx.guild is None:
-            return self._ctx
         
-        # in guild
+        if self.in_dms:
+            return self._ctx
         else:
             if send_to is None:
                 return self._ctx

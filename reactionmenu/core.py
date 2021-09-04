@@ -662,7 +662,7 @@ class ReactionMenu(BaseMenu):
 	
 	def _override_dm_settings(self):
 		"""If a menu session is in a direct message and the menu is set as an auto-paginator, the following settings are disabled/changed because of discord limitations and resource/safety reasons"""
-		if self._ctx.guild is None:
+		if self.in_dms:
 			if self.clear_reactions_after:
 				self.clear_reactions_after = False
 			
