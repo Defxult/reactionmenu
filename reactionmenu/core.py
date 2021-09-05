@@ -595,11 +595,9 @@ class ReactionMenu(BaseMenu):
 						try:
 							selection_message: discord.Message = await self._ctx.bot.wait_for('message', check=lambda m: all([m.channel.id == self._msg.channel.id, m.author.id == self._ctx.author.id]), timeout=self.timeout)
 							page = int(selection_message.content)
-						except asyncio.TimeoutError:
+						except (asyncio.TimeoutError, ValueError):
 							# dont call :meth:`.stop()` here because I want the timeout factor to only be applicable after the
 							# original reactions were added
-							continue
-						except ValueError:
 							continue
 						else:
 							if 1 <= page <= len(self._pages):
@@ -685,45 +683,45 @@ class ReactionMenu(BaseMenu):
 	@ensure_not_primed
 	async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None, reply: bool=False):
 		"""|coro| Start the menu
-        
-        Parameters
-        ----------
-        send_to: Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`]
-            (optional) The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
-            method :meth:`discord.Client.get_channel()` (or any other related methods), that text channel should be in the same list as if you were to use `ctx.guild.text_channels`. This only works on a context guild text channel basis. That means a menu instance cannot be
-            created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to` (defaults to :class:`None`)
-		
+
+		Parameters
+		----------
+		send_to: Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`]
+			(optional) The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
+			method :meth:`discord.Client.get_channel()` (or any other related methods), that text channel should be in the same list as if you were to use `ctx.guild.text_channels`. This only works on a context guild text channel basis. That means a menu instance cannot be
+			created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to` (defaults to :class:`None`)
+
 		reply: :class:`bool`
 			(optional) Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True` (defaults to `False`)
-        
-        Example for :param:`send_to`
-        ---------------------------
-        Using the `send_to` parameter is optional. Simply calling `menu.start()` will suffice if you want the menu sent to the channel where the command was used/message was sent
 
-        ```
-        menu = ReactionMenu(...)
-        
-        # channel name
-        await menu.start(send_to='bot-commands')
-        
-        # channel ID
-        await menu.start(send_to=1234567890123456)
-        
-        # channel object
-        channel = guild.get_channel(1234567890123456)
-        await menu.start(send_to=channel)
-        ```
-        
-        Raises
-        ------
-        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `NoPages`: The menu was started when no pages have been added
-        - `NoButtons`: Attempted to start the menu when no Buttons have been registered
-        - `ReactionMenuException`: The :class:`ReactionMenu`'s `menu_type` was not recognized
-        - `DescriptionOversized`: When using a `menu_type` of :attr:`ReactionMenu.TypeEmbedDynamic`, the embed description was over discords size limit
-        - `IncorrectType`: Parameter :param:`send_to` was not :class:`str`, :class:`int`, or :class:`discord.TextChannel`
-        - `MenuException`: The channel set in :param:`send_to` was not found
-        """
+		Example for :param:`send_to`
+		---------------------------
+		Using the `send_to` parameter is optional. Simply calling `menu.start()` will suffice if you want the menu sent to the channel where the command was used/message was sent
+
+		```
+		menu = ReactionMenu(...)
+
+		# channel name
+		await menu.start(send_to='bot-commands')
+
+		# channel ID
+		await menu.start(send_to=1234567890123456)
+
+		# channel object
+		channel = guild.get_channel(1234567890123456)
+		await menu.start(send_to=channel)
+		```
+
+		Raises
+		------
+		- `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+		- `NoPages`: The menu was started when no pages have been added
+		- `NoButtons`: Attempted to start the menu when no Buttons have been registered
+		- `ReactionMenuException`: The :class:`ReactionMenu`'s `menu_type` was not recognized
+		- `DescriptionOversized`: When using a `menu_type` of :attr:`ReactionMenu.TypeEmbedDynamic`, the embed description was over discords size limit
+		- `IncorrectType`: Parameter :param:`send_to` was not :class:`str`, :class:`int`, or :class:`discord.TextChannel`
+		- `MenuException`: The channel set in :param:`send_to` was not found
+		"""
 		if ReactionMenu._sessions_limited:
 			can_proceed = await self._handle_session_limits()
 			if not can_proceed:
