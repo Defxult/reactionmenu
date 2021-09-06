@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, Set, Union
 
 if TYPE_CHECKING:
     from .buttons import ReactionButton, ViewButton
@@ -36,7 +36,6 @@ import inspect
 import re
 import warnings
 from datetime import datetime
-from typing import List, Set, Union
 
 import discord
 from discord.ext.commands import Context
@@ -424,7 +423,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         """
         Returns
         -------
-        Union[:class:`discord.Member`, :class:`str`]: The last page that was viewed in the pagination process
+        Union[:class:`discord.Member`, :class:`str`]: The last page that was viewed in the pagination process. Can be :class:`None` if the menu has not been started
         """
         return self._pc.current_page if self._pc is not None else None
     
