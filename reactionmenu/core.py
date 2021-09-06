@@ -240,15 +240,17 @@ class ReactionMenu(BaseMenu):
 		search_by: :class:`str`
 			(optional) How to search for the button. If "name", it's searched by button names. If "emoji", it's searched by it's emojis. 
 			If "type", it's searched by :attr:`ReactionMenu.Type`, aka the `linked_to` of the button (defaults to "name")
-
-		Raises
-		------
-		- `ReactionMenuException`: Parameter :param:`search_by` was not "name", "emoji", or "type"
+			How to search for the button. If "name", it's searched by button names. If "emoji", it's searched by it's emojis. 
+			If "type", it's searched by :attr:`ReactionMenu.Type`, aka the `linked_to` of the button
 
 		Returns
 		-------
 		Union[:class:`ReactionButton`, List[:class:`ReactionButton`]]:
 			The button(s) matching the given identity. Can be :class:`None` if the button was not found
+		
+		Raises
+		------
+		- `ReactionMenuException`: Parameter :param:`search_by` was not "name", "emoji", or "type"
 		"""
 		search_by = str(search_by).lower()
 		if search_by in ('name', 'emoji'):
@@ -537,8 +539,8 @@ class ReactionMenu(BaseMenu):
 			"""|coro| Handle reaction removal for :attr:`navigation_speed`. Update the buttons statistics. Contact the relay if one was set and handle any events if set"""
 			btn._update_statistics(user)
 			await determine_removal(emoji, user)
-			await self._handle_event(btn)
-			await self._contact_relay(user, btn)
+			await self._handle_event(button)
+			await self._contact_relay(user, button)
 
 		# apply the reactions (buttons) to the menu message
 		for btn in self._buttons:

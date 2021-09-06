@@ -38,7 +38,7 @@ from .errors import *
 
 
 class ViewMenu(BaseMenu):
-    """A class to create a discord.py pagination menu using :class:`discord.ui.View`
+    """A class to create a discord pagination menu using :class:`discord.ui.View`
     
     Parameters
     ----------
@@ -472,14 +472,15 @@ class ViewMenu(BaseMenu):
             (optional) How to search for the button. If "label", it's searched by button labels. If "id", it's searched by it's custom_id. 
             If "name", it's searched by button names (defaults to "label")
         
-        Raises
-        ------
-        - `ViewMenuException`: Parameter :param:`search_by` was not "label", "id", or "name"
-        
         Returns
         -------
         Union[:class:`ViewButton`, List[:class:`ViewButton`]]:
             The button(s) matching the given identity. Can be :class:`None` if the button was not found
+        
+        Raises
+        ------
+        - `ViewMenuException`: Parameter :param:`search_by` was not "label", "id", or "name"
+        
         """
         identity = str(identity)
         search_by = str(search_by).lower()

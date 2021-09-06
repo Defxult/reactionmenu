@@ -188,6 +188,11 @@ class ViewButton(discord.ui.Button, BaseButton):
 			**kwargs: :class:`Any`
 				An argument list that represents the kwarg parameters of that function
 			
+			Returns
+			-------
+			:class:`NamedTuple`:
+				The values needed to internally call the function you have set
+			
 			Raises
 			------
 			- `IncorrectType`: Parameter "func" was not a callable object
@@ -220,8 +225,7 @@ class ViewButton(discord.ui.Button, BaseButton):
 		"""
 		Returns
 		-------
-		:class:`ViewMenu`:
-			The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
+		:class:`ViewMenu`: The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
 		"""
 		return self._menu
 	
@@ -396,6 +400,11 @@ class ReactionButton(BaseButton):
 		**kwargs: :class:`Any`
 			An argument list that represents the kwarg parameters of that function
 		
+		Returns
+		-------
+		:class:`NamedTuple`:
+			The values needed to internally call the function you have set
+		
 		Raises
 		------
 		- `IncorrectType`: Parameter "func" was not a callable object
@@ -412,8 +421,7 @@ class ReactionButton(BaseButton):
 		"""
 		Returns
 		-------
-		:class:`ReactionMenu`:
-			The menu the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
+		:class:`ReactionMenu`: The menu the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
 		"""
 		return self._menu
 	
