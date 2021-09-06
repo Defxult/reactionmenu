@@ -922,12 +922,12 @@ class BaseMenu(metaclass=abc.ABCMeta):
             else:
                 raise InvalidPage(f'Page number invalid. Must be from 1 - {len(self._pages)}')
     
-    def set_on_timeout(self, func: object):
+    def set_on_timeout(self, func: Callable[[Any], None]):
         """Set the function to be called when the menu times out
 
         Parameters
         ----------
-        func: :class:`object`
+        func: Callable[[Any], :class:`None`]
             The function object that will be called when the menu times out. The function should contain a single positional argument
             and should not return anything. The argument passed to that function is an instance of the menu.
         
@@ -942,7 +942,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         """Remove the timeout call to the function you have set when the menu times out"""
         self._on_timeout_details = None
     
-    def set_relay(self, func: object, *, only: List[Union[ReactionButton, ViewButton]]=None):
+    def set_relay(self, func: Callable[[NamedTuple], None], *, only: List[Union[ReactionButton, ViewButton]]=None):
         """Set a function to be called with a given set of information when a button is pressed on the menu. The information passed is `RelayPayload`, a named tuple.
         The named tuple contains the following attributes:
 
