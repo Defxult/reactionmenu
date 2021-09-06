@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, NamedTuple, Tuple, Union
+from typing import TYPE_CHECKING, Callable, ClassVar, List, NamedTuple, Optional, Tuple, Union
 
 if TYPE_CHECKING:
 	from . import ViewMenu, ReactionButton, ReactionMenu
@@ -45,38 +45,38 @@ class ViewButton(discord.ui.Button, BaseButton):
 	Parameters
 	----------
 	style: :class:`discord.ButtonStyle`
-		(optional) The style of the button (defaults to `discord.ButtonStyle.secondary`)
+		The style of the button (defaults to `discord.ButtonStyle.secondary`)
 	
-	label: :class:`str`
-		(optional) The label of the button, if any (defaults to :class:`None`)
+	label: Optional[:class:`str`]
+		The label of the button, if any
 	
 	disabled: :class:`bool`
-		(optional) Whether the button is disabled or not (defaults to `False`)
+		Whether the button is disabled or not
 	
-	custom_id: :class:`str`
-		(optional) The ID of the button that gets received during an interaction. If this button is for a URL, it does not have a custom ID (defaults to :class:`None`)
+	custom_id: Optional[:class:`str`]
+		The ID of the button that gets received during an interaction. If this button is for a URL, it does not have a custom ID
 	
-	url: :class:`str`
-		(optional) The URL this button sends you to (defaults to :class:`None`)
+	url: Optional[:class:`str`]
+		The URL this button sends you to
 	
-	emoji: Union[:class:`str`, :class:`discord.PartialEmoji`]
-		(optional) The emoji of the button, if available (defaults to :class:`None`)
+	emoji: Optional[Union[:class:`str`, :class:`discord.PartialEmoji`]]
+		The emoji of the button, if available
 	
-	followup: :class:`ViewButton.Follow`
-		(optional) Used with buttons with custom_id :attr:`ViewButton.ID_CALLER`, :attr:`ViewButton.ID_SEND_MESSAGE`, :attr:`ViewButton.ID_CUSTOM_EMBED` (defaults to :class:`None`)
+	followup: Optional[:class:`ViewButton.Follow`]
+		Used with buttons with custom_id :attr:`ViewButton.ID_CALLER`, :attr:`ViewButton.ID_SEND_MESSAGE`, :attr:`ViewButton.ID_CUSTOM_EMBED`
 	
-	event: :class:`ViewButton.Event`
-		(optional) Set the button to be disabled or removed when it has been pressed a certain amount of times (defaults to :class:`None`)
+	event: Optional[:class:`ViewButton.Event`]
+		Set the button to be disabled or removed when it has been pressed a certain amount of times
 	"""
-	ID_NEXT_PAGE =          '0'
-	ID_PREVIOUS_PAGE =      '1'
-	ID_GO_TO_FIRST_PAGE =   '2'
-	ID_GO_TO_LAST_PAGE =    '3'
-	ID_GO_TO_PAGE =         '4'
-	ID_END_SESSION =        '5'
-	ID_CALLER =             '6'
-	ID_SEND_MESSAGE =       '7'
-	ID_CUSTOM_EMBED = 		'8'
+	ID_NEXT_PAGE: ClassVar[str] =			'0'
+	ID_PREVIOUS_PAGE: ClassVar[str] =		'1'
+	ID_GO_TO_FIRST_PAGE: ClassVar[str] =	'2'
+	ID_GO_TO_LAST_PAGE: ClassVar[str] =		'3'
+	ID_GO_TO_PAGE: ClassVar[str] =			'4'
+	ID_END_SESSION: ClassVar[str] =			'5'
+	ID_CALLER: ClassVar[str] =				'6'
+	ID_SEND_MESSAGE: ClassVar[str] =		'7'
+	ID_CUSTOM_EMBED: ClassVar[str] =		'8'
 
 	_RE_IDs = r'[0-8]|[0-8]_\d+'
 	_RE_UNIQUE_ID_SET = r'_\d+'
@@ -85,13 +85,13 @@ class ViewButton(discord.ui.Button, BaseButton):
 		self,
 		*,
 		style: discord.ButtonStyle=discord.ButtonStyle.secondary,
-		label: str=None,
+		label: Optional[str]=None,
 		disabled: bool=False,
-		custom_id: str=None,
-		url: str=None,
-		emoji: Union[str, discord.PartialEmoji]=None,
-		followup: ViewButton.Followup=None,
-		event: ViewButton.Event=None,
+		custom_id: Optional[str]=None,
+		url: Optional[str]=None,
+		emoji: Optional[Union[str, discord.PartialEmoji]]=None,
+		followup: Optional[ViewButton.Followup]=None,
+		event: Optional[ViewButton.Event]=None,
 		**kwargs
 		):
 		super().__init__(style=style, label=label, disabled=disabled, custom_id=custom_id, url=url, emoji=emoji, row=None)
@@ -115,44 +115,44 @@ class ViewButton(discord.ui.Button, BaseButton):
 		
 		Parameters
 		----------
-		content: :class:`str`
-			Message to send (defaults to :class:`None`)
+		content: Optional[:class:`str`]
+			Message to send
 		
-		embed: :class:`discord.Embed`
-			Embed to send. Can also bet set for buttons with a custom_id of :attr:`ViewButton.ID_CUSTOM_EMBED` (defaults to :class:`None`)
+		embed: Optional[:class:`discord.Embed`]
+			Embed to send. Can also bet set for buttons with a custom_id of :attr:`ViewButton.ID_CUSTOM_EMBED`
 		
-		file: :class:`discord.File`
-			File to send (defaults to :class:`None`) If the :class:`ViewButton` custom_id is :attr:`ViewButton.ID_SEND_MESSAGE`, the file will be ignored because of discord API limitations
+		file: Optional[:class:`discord.File`]
+			File to send. If the :class:`ViewButton` custom_id is :attr:`ViewButton.ID_SEND_MESSAGE`, the file will be ignored because of discord API limitations
 		
 		tts: :class:`bool`
-			If discord should read the message aloud (defaults to `False`) Not valid for `ephemeral` messages
+			If discord should read the message aloud. Not valid for `ephemeral` messages
 		
-		allowed_mentions: :class:`discord.AllowedMentions`
-			Controls the mentions being processed in the menu message (defaults to :class:`None`) Not valid for `ephemeral` messages
+		allowed_mentions: Optional[:class:`discord.AllowedMentions`]
+			Controls the mentions being processed in the menu message. Not valid for `ephemeral` messages
 		
-		delete_after: Union[:class:`int`, :class:`float`]
-			Amount of time to wait before the message is deleted (defaults to :class:`None`) Not valid for `ephemeral` messages
+		delete_after: Optional[Union[:class:`int`, :class:`float`]]
+			Amount of time to wait before the message is deleted. Not valid for `ephemeral` messages
 		
 		ephemeral: :class:`bool`
-			If the message will be hidden from everyone except the person that pressed the button (defaults to `False`) This is only valid for a :class:`ViewButton` with custom_id :attr:`ViewButton.ID_SEND_MESSAGE`
+			If the message will be hidden from everyone except the person that pressed the button. This is only valid for a :class:`ViewButton` with custom_id :attr:`ViewButton.ID_SEND_MESSAGE`
 		
 		Kwargs
 		------
 		details: :meth:`ViewButton.Followup.set_caller_details()`
-			The information that will be used when a `ViewButton.ID_CALLER` button is pressed
+			The information that will be used when a `ViewButton.ID_CALLER` button is pressed (defaults to :class:`None`)
 		"""
 		
 		__slots__ = ('content', 'embed', 'file', 'tts', 'allowed_mentions', 'delete_after', 'ephemeral', 'details')
 
 		def __init__(
 			self,
-			content: str=None, 
+			content: Optional[str]=None, 
 			*,
-			embed: discord.Embed=None,
-			file: discord.File=None,
+			embed: Optional[discord.Embed]=None,
+			file: Optional[discord.File]=None,
 			tts: bool=False,
-			allowed_mentions: discord.AllowedMentions=None,
-			delete_after: Union[int, float]=None,
+			allowed_mentions: Optional[discord.AllowedMentions]=None,
+			delete_after: Optional[Union[int, float]]=None,
 			ephemeral: bool=False,
 			**kwargs
 			):
@@ -174,12 +174,12 @@ class ViewButton(discord.ui.Button, BaseButton):
 			return new
 		
 		@classmethod
-		def set_caller_details(cls, func: object, *args, **kwargs) -> NamedTuple:
+		def set_caller_details(cls, func: Callable[..., None], *args, **kwargs) -> NamedTuple:
 			"""|class method| Set the parameters for the function you set for a :class:`ViewButton` with the custom_id :attr:`ViewButton.ID_CALLER`
 			
 			Parameters
 			----------
-			func: :class:`object`
+			func: Callable[..., :class:`None`]
 				The function object that will be called when the associated button is pressed
 			
 			*args: :class:`Any`
@@ -316,14 +316,14 @@ class ViewButton(discord.ui.Button, BaseButton):
 
 class ButtonType:
 	"""A helper class for :class:`ReactionMenu`. Determines the generic action a button can perform."""
-	NEXT_PAGE = 		0
-	PREVIOUS_PAGE = 	1
-	GO_TO_FIRST_PAGE = 	2
-	GO_TO_LAST_PAGE = 	3
-	GO_TO_PAGE = 		4
-	END_SESSION = 		5
-	CUSTOM_EMBED = 		6
-	CALLER = 			7
+	NEXT_PAGE: ClassVar[int] = 			0
+	PREVIOUS_PAGE: ClassVar[int] = 		1
+	GO_TO_FIRST_PAGE: ClassVar[int] = 	2
+	GO_TO_LAST_PAGE: ClassVar[int] = 	3
+	GO_TO_PAGE: ClassVar[int] = 		4
+	END_SESSION: ClassVar[int] = 		5
+	CUSTOM_EMBED: ClassVar[int] = 		6
+	CALLER: ClassVar[int] = 			7
 
 	@classmethod
 	def _get_buttontype_name_from_type(cls, type_: int):
@@ -386,12 +386,12 @@ class ReactionButton(BaseButton):
 		return f'<ReactionButton emoji={self.emoji!r} linked_to={ButtonType._get_buttontype_name_from_type(self.linked_to)} total_clicks={self.total_clicks} name={self.name!r}>'
 	
 	@classmethod
-	def set_caller_details(cls, func: object, *args, **kwargs) -> NamedTuple:
+	def set_caller_details(cls, func: Callable[..., None], *args, **kwargs) -> NamedTuple:
 		"""|class method| Set the parameters for the function you set for a :class:`ReactionButton` with a `linked_to` of :attr:`ReactionButton.Type.CALLER`
 
 		Parameters
 		----------
-		func: :class:`object`
+		func: Callable[..., :class:`None`]
 			The function object that will be called when the associated button is pressed
 		
 		*args: :class:`Any`

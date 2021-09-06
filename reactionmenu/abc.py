@@ -24,7 +24,17 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, Set, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Union
+)
 
 if TYPE_CHECKING:
     from .buttons import ReactionButton, ViewButton
@@ -109,16 +119,16 @@ class PaginationEmojis:
     - 🔢 as `GO_TO_PAGE`
     - ⏹️ as `END_SESSION`
     """
-    BACK_BUTTON = 	'◀️'
-    NEXT_BUTTON = 	'▶️'
-    FIRST_PAGE =  	'⏪'
-    LAST_PAGE =   	'⏩'
-    GO_TO_PAGE =  	'🔢'
-    END_SESSION = 	'⏹️'
+    BACK_BUTTON: ClassVar[str] = 	'◀️'
+    NEXT_BUTTON: ClassVar[str] = 	'▶️'
+    FIRST_PAGE: ClassVar[str] =  	'⏪'
+    LAST_PAGE: ClassVar[str] =   	'⏩'
+    GO_TO_PAGE: ClassVar[str] =  	'🔢'
+    END_SESSION: ClassVar[str] = 	'⏹️'
 
 class BaseButton(metaclass=abc.ABCMeta):
 
-    Emojis = PaginationEmojis
+    Emojis: ClassVar[PaginationEmojis] = PaginationEmojis
 
     def __init__(self, name: str, event: BaseButton.Event):
         self.name: str = name
@@ -189,9 +199,9 @@ class BaseButton(metaclass=abc.ABCMeta):
                 raise MenuException('The value for parameter "event_type" was not recognized')
 
 class BaseMenu(metaclass=abc.ABCMeta):
-    TypeEmbed = 1
-    TypeEmbedDynamic = 2
-    TypeText = 3
+    TypeEmbed: ClassVar[int] = 1
+    TypeEmbedDynamic: ClassVar[int] = 2
+    TypeText: ClassVar[int] = 3
 
     _active_sessions = []
     _sessions_limited = False
@@ -360,10 +370,10 @@ class BaseMenu(metaclass=abc.ABCMeta):
             The amount of menu sessions allowed
         
         per: :class:`str`
-            (optional) How menu sessions should be limited. Options: "channel", "guild", "member" (defaults to "guild")
+            How menu sessions should be limited. Options: "channel", "guild", or "member"
         
         message: :class:`str`
-            (optional) Message that will be sent informing users about the menu limit when the limit is reached. Can be :class:`None` for no message
+            Message that will be sent informing users about the menu limit when the limit is reached. Can be :class:`None` for no message
                     
         Raises
         ------
@@ -394,7 +404,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
             The menus name
         
         include_all: :class:`bool`
-            (optional) If set to `True`, it stops all menu sessions with the supplied name. If `False`, stops only the most recently started menu with the supplied name (defaults to `False`)
+            If set to `True`, it stops all menu sessions with the supplied name. If `False`, stops only the most recently started menu with the supplied name
         
         Raises
         ------
@@ -942,7 +952,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         """Remove the timeout call to the function you have set when the menu times out"""
         self._on_timeout_details = None
     
-    def set_relay(self, func: Callable[[NamedTuple], None], *, only: List[Union[ReactionButton, ViewButton]]=None):
+    def set_relay(self, func: Callable[[NamedTuple], None], *, only: Optional[List[Union[ReactionButton, ViewButton]]]=None):
         """Set a function to be called with a given set of information when a button is pressed on the menu. The information passed is `RelayPayload`, a named tuple.
         The named tuple contains the following attributes:
 
@@ -954,9 +964,9 @@ class BaseMenu(metaclass=abc.ABCMeta):
         func: Callable[[:class:`NamedTuple`], :class:`None`]
             The function should only contain a single positional argument. Discord.py command functions (`@bot.command()`) not supported
         
-        only: List[Union[:class:`ReactionButton`, :class:`ViewButton`]]
-            (optional) A list of buttons associated with the current menu instance. If this is :class:`None`, all buttons on the menu will be relayed. If
-            set, only button presses from those specified buttons will be relayed (defaults to :class:`None`)
+        only: Optional[List[Union[:class:`ReactionButton`, :class:`ViewButton`]]]
+            A list of buttons associated with the current menu instance. If this is :class:`None`, all buttons on the menu will be relayed. If
+            set, only button presses from those specified buttons will be relayed
         
         Raises
         ------

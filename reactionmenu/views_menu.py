@@ -26,7 +26,7 @@ import asyncio
 import inspect
 import random
 import re
-from typing import List, Union
+from typing import List, Optional, Union
 
 import discord
 from discord.ext.commands import Context
@@ -469,8 +469,8 @@ class ViewMenu(BaseMenu):
             The button label, custom_id, or name
         
         search_by: :class:`str`
-            (optional) How to search for the button. If "label", it's searched by button labels. If "id", it's searched by it's custom_id. 
-            If "name", it's searched by button names (defaults to "label")
+            How to search for the button. If "label", it's searched by button labels. If "id", it's searched by it's custom_id. 
+            If "name", it's searched by button names
         
         Returns
         -------
@@ -644,13 +644,13 @@ class ViewMenu(BaseMenu):
         Parameters
         ----------
         delete_menu_message: :class:`bool`
-            (optional) Delete the message the menu is operating from (defaults to `False`)
+            Delete the message the menu is operating from
 
         remove_buttons: :class:`bool`
-            (optional) Remove the buttons from the menu (defaults to `False`)
+            Remove the buttons from the menu
 
         disable_buttons: :class:`bool`
-            (optional) Disable the buttons on the menu (defaults to `False`)
+            Disable the buttons on the menu
 
         Parameter Hierarchy
         -------------------
@@ -688,18 +688,18 @@ class ViewMenu(BaseMenu):
                 await self._handle_on_timeout()
     
     @ensure_not_primed
-    async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None, reply: bool=False):
+    async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel]]=None, reply: bool=False):
         """|coro| Start the menu
         
         Parameters
         ----------
-        send_to: Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`]
-            (optional) The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
+        send_to: Optional[Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`]]
+            The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
             method :meth:`discord.Client.get_channel()` (or any other related methods), that text channel should be in the same list as if you were to use `ctx.guild.text_channels`. This only works on a context guild text channel basis. That means a menu instance cannot be
-            created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to` (defaults to :class:`None`)
+            created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to`
         
         reply: :class:`bool`
-			(optional) Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True` (defaults to `False`)
+			Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True`
         
         Raises
         ------
