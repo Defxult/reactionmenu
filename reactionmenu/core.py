@@ -641,7 +641,20 @@ class ReactionMenu(BaseMenu):
 						await self._msg.edit(embed=btn.custom_embed)
 
 	async def stop(self, *, delete_menu_message=False, clear_reactions=False):
-		"""|coro| Stops the process of the menu with the option of deleting the menu's message or clearing reactions upon stop"""
+		"""|coro| Stops the process of the menu with the option of deleting the menu's message or clearing reactions upon stop
+		
+		Parameters
+		----------
+		delete_menu_message: :class:`bool`
+			Delete the menu message
+		
+		clear_reactions: :class:`bool`
+			Remove all reactions
+		
+		Raises
+		------
+		- `discord.DiscordException`: Any exception that can be raised when deleting a message or removing a reaction from a message
+		"""
 		if self._is_running:
 			try:
 				if delete_menu_message:
