@@ -700,24 +700,6 @@ class ViewMenu(BaseMenu):
         reply: :class:`bool`
 			(optional) Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True` (defaults to `False`)
         
-        Example for :param:`send_to`
-        ---------------------------
-        Using the `send_to` parameter is optional. Simply calling `menu.start()` will suffice if you want the menu sent to the channel where the command was used/message was sent
-
-        ```
-        menu = ViewMenu(...)
-        
-        # channel name
-        await menu.start(send_to='bot-commands')
-        
-        # channel ID
-        await menu.start(send_to=1234567890123456)
-        
-        # channel object
-        channel = guild.get_channel(1234567890123456)
-        await menu.start(send_to=channel)
-        ```
-        
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
