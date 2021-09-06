@@ -426,7 +426,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         -------
         Union[:class:`discord.Member`, :class:`str`]: The last page that was viewed in the pagination process
         """
-        return self._pc.current_page
+        return self._pc.current_page if self._pc is not None else None
     
     @property
     def owner(self) -> Union[discord.Member, discord.User]:
