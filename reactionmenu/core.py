@@ -185,7 +185,7 @@ class ReactionMenu(BaseMenu):
 		"""Return a list of all the emojis registered to each button. Can return an empty list if there are no buttons"""
 		return [button.emoji for button in self._buttons]
 	
-	async def _handle_event(self, user: Union[discord.Member, discord.User], button: ReactionButton):
+	async def _handle_event(self, button: ReactionButton):
 		"""|coro| If an event is set, remove the buttons from the menu when the click requirement has been met"""
 		if button.event:
 			event_type = button.event.event_type
@@ -537,7 +537,7 @@ class ReactionMenu(BaseMenu):
 			"""|coro| Handle reaction removal for :attr:`navigation_speed`. Update the buttons statistics. Contact the relay if one was set and handle any events if set"""
 			btn._update_statistics(user)
 			await determine_removal(emoji, user)
-			await self._handle_event(user, btn)
+			await self._handle_event(btn)
 			await self._contact_relay(user, btn)
 
 		# apply the reactions (buttons) to the menu message
