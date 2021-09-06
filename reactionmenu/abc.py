@@ -420,6 +420,15 @@ class BaseMenu(metaclass=abc.ABCMeta):
             await session.stop()
     
     @property
+    def last_viewed(self) -> Union[discord.Embed, str]:
+        """
+        Returns
+        -------
+        Union[:class:`discord.Member`, :class:`str`]: The last page that was viewed in the pagination process
+        """
+        return self._pc.current_page
+    
+    @property
     def owner(self) -> Union[discord.Member, discord.User]:
         """
         Returns
