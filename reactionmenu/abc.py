@@ -60,17 +60,21 @@ _DEFAULT_STYLE = 'Page $/&'
 class _PageController:
     """An helper class to control the pagination process"""
 
-    __slots__ = ('pages', 'total_pages', 'index')
+    __slots__ = ('pages', 'index')
 
     def __init__(self, pages: List[Union[discord.Embed, str]]):
         self.pages = pages
-        self.total_pages = len(pages) - 1
         self.index = 0
 
     @property
     def current_page(self) -> Union[discord.Embed, str]:
         """Return the current page in the pagination process"""
         return self.pages[self.index]
+    
+    @property
+    def total_pages(self) -> int:
+        """Return the total amount of pages registered to the menu"""
+        return len(self.pages) - 1
     
     def next(self) -> Union[discord.Embed, str]:
         """Return the next page in the pagination process"""
