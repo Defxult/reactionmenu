@@ -207,7 +207,7 @@ class ViewMenu(BaseMenu):
             Pages to *replace* the current pages with. If the menus current `menu_type` is :attr:`ViewMenu.TypeEmbed`, only :class:`discord.Embed` can be used. If :attr:`ViewMenu.TypeText`, only :class:`str` can be used. If you
             don't want to replace any pages, set this to :class:`None`
         
-        new_buttons: List[:class:`ViewButtons`]
+        new_buttons: List[:class:`ViewButton`]
             Buttons to *replace* the current buttons with. Can be an empty list if you want the updated menu to have no buttons. Can also be set to :class:`None` if you don't want to replace any buttons
         
         Raises
@@ -443,7 +443,7 @@ class ViewMenu(BaseMenu):
         Parameters
         ----------
         button: :class:`ViewButton`
-            The button to register
+            The button to add
         
         Raises
         ------

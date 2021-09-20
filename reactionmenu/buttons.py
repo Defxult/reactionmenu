@@ -45,10 +45,10 @@ class ViewButton(discord.ui.Button, BaseButton):
 	Parameters
 	----------
 	style: :class:`discord.ButtonStyle`
-		The style of the button (defaults to `discord.ButtonStyle.secondary`)
+		The style of the button
 	
 	label: Optional[:class:`str`]
-		The label of the button, if any
+		The button label, if any
 	
 	disabled: :class:`bool`
 		Whether the button is disabled or not
@@ -106,11 +106,11 @@ class ViewButton(discord.ui.Button, BaseButton):
 		return f'<ViewButton label={self.label!r} custom_id={ViewButton._get_id_name_from_id(str(self.custom_id))} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled}{total_clicks}>'
 
 	async def callback(self, interaction: discord.Interaction):
-		"""The callback function from the button interaction. This should not be manually called"""
+		"""*INTERNAL USE ONLY* - The callback function from the button interaction. This should not be manually called"""
 		await self._menu._paginate(self, interaction)
 	
 	class Followup:
-		"""A class that represents the message sent using a :class:`ViewButton`. Contains parameters similar to discord.py's `Messageable.send`. Only to be used with :class:`ViewButton` kwarg "followup".
+		"""A class that represents the message sent using a :class:`ViewButton`. Contains parameters similar to method `discord.abc.Messageable.send`. Only to be used with :class:`ViewButton` kwarg "followup".
 		It is to be noted that this should not be used with :class:`ViewButton` with a "style" of `discord.ButtonStyle.link` because link buttons do not send interaction events.
 		
 		Parameters
@@ -190,8 +190,7 @@ class ViewButton(discord.ui.Button, BaseButton):
 			
 			Returns
 			-------
-			:class:`NamedTuple`:
-				The values needed to internally call the function you have set
+			:class:`NamedTuple`: The values needed to internally call the function you have set
 			
 			Raises
 			------
@@ -402,8 +401,7 @@ class ReactionButton(BaseButton):
 		
 		Returns
 		-------
-		:class:`NamedTuple`:
-			The values needed to internally call the function you have set
+		:class:`NamedTuple`: The values needed to internally call the function you have set
 		
 		Raises
 		------

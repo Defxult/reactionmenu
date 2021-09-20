@@ -243,7 +243,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         self.all_can_click: bool = kwargs.get('all_can_click', False)
         self.delete_interactions: bool = kwargs.get('delete_interactions', True)
 
-        # NOTE - I might have to remove this because d.py 2.0 for whatever reason doesn't have a `allowed_mentions` kwarg for :meth:`inter.response.edit_message()`
+        #+ NOTE - I might have to remove this because d.py 2.0 for whatever reason doesn't have a `allowed_mentions` kwarg for :meth:`inter.response.edit_message()`
         self.allowed_mentions: discord.AllowedMentions = kwargs.get('allowed_mentions', discord.AllowedMentions(everyone=False, users=True, roles=False, replied_user=True))
     
     @abc.abstractmethod
@@ -753,7 +753,6 @@ class BaseMenu(metaclass=abc.ABCMeta):
     
     def _handle_send_to(self, send_to) -> discord.abc.Messageable:
         """For the :param:`send_to` kwarg in :meth:`Menu.start()`. Determine what channel the menu should start in"""
-        
         if self.in_dms:
             return self._ctx
         else:
@@ -966,7 +965,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         Parameters
         ----------
         func: Callable[[:class:`NamedTuple`], :class:`None`]
-            The function should only contain a single positional argument. Discord.py command functions (`@bot.command()`) not supported
+            The function should only contain a single positional argument. Command functions (`@bot.command()`) not supported
         
         only: Optional[List[Union[:class:`ReactionButton`, :class:`ViewButton`]]]
             A list of buttons associated with the current menu instance. If this is :class:`None`, all buttons on the menu will be relayed. If

@@ -38,7 +38,7 @@ from .errors import *
 
 
 class ReactionMenu(BaseMenu):
-	"""A class to create a discord.py pagination menu using reactions
+	"""A class to create a discord pagination menu using reactions
 
 	Parameters
 	----------
@@ -284,7 +284,7 @@ class ReactionMenu(BaseMenu):
 		Parameters
 		----------
 		button: :class:`ReactionButton`
-			The button to instantiate
+			The button to add
 
 		Raises
 		------
