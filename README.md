@@ -26,7 +26,12 @@ P.S: Thank you all for using reactionmenu! Over 75,000 downloads! 😃 Never tho
 * reactionmenu 3.0 development version
 ```
 $ pip install -U git+https://github.com/Defxult/reactionmenu@3.0
+
+OR
+
+$ pip install reactionmenu==3.0.0b0
 ```
+
 * pycord 2.0 development version
 ```
 $ pip install -U git+https://github.com/Pycord-Development/pycord
