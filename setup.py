@@ -9,6 +9,7 @@ classifiers = [
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
     'Topic :: Software Development :: Libraries',
     'Topic :: Software Development :: Libraries :: Python Modules'
 ]
@@ -54,7 +55,7 @@ details = {
 setup(
     author='Defxult#8269',
     name='reactionmenu',
-    version='3.0.0-dev', 
+    version='3.0.0b', 
     description='A library to create a discord paginator. Supports pagination with Discords Buttons feature and reactions.',
     url='https://github.com/Defxult/reactionmenu',
     project_urls=details,
