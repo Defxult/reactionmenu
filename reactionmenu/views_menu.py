@@ -474,13 +474,11 @@ class ViewMenu(BaseMenu):
         
         Returns
         -------
-        Union[:class:`ViewButton`, List[:class:`ViewButton`]]:
-            The button(s) matching the given identity. Can be :class:`None` if the button was not found
+        Union[:class:`ViewButton`, List[:class:`ViewButton`]]: The button(s) matching the given identity. Can be :class:`None` if the button was not found
         
         Raises
         ------
         - `ViewMenuException`: Parameter :param:`search_by` was not "label", "id", or "name"
-        
         """
         identity = str(identity)
         search_by = str(search_by).lower()

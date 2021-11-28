@@ -58,7 +58,7 @@ _DEFAULT_STYLE = 'Page $/&'
 
 
 class _PageController:
-    """An helper class to control the pagination process"""
+    """A helper class to control the pagination process"""
 
     __slots__ = ('pages', 'index')
 

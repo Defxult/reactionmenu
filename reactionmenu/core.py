@@ -243,8 +243,7 @@ class ReactionMenu(BaseMenu):
 
 		Returns
 		-------
-		Union[:class:`ReactionButton`, List[:class:`ReactionButton`]]:
-			The button(s) matching the given identity. Can be :class:`None` if the button was not found
+		Union[:class:`ReactionButton`, List[:class:`ReactionButton`]]: The button(s) matching the given identity. Can be :class:`None` if the button was not found
 		
 		Raises
 		------
