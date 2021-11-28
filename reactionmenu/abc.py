@@ -28,7 +28,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    ClassVar,
+    Final,
     List,
     NamedTuple,
     Optional,
@@ -118,16 +118,16 @@ class PaginationEmojis:
     - 🔢 as `GO_TO_PAGE`
     - ⏹️ as `END_SESSION`
     """
-    BACK_BUTTON: ClassVar[str] = 	'◀️'
-    NEXT_BUTTON: ClassVar[str] = 	'▶️'
-    FIRST_PAGE: ClassVar[str] =  	'⏪'
-    LAST_PAGE: ClassVar[str] =   	'⏩'
-    GO_TO_PAGE: ClassVar[str] =  	'🔢'
-    END_SESSION: ClassVar[str] = 	'⏹️'
+    BACK_BUTTON: Final[str] = 	'◀️'
+    NEXT_BUTTON: Final[str] = 	'▶️'
+    FIRST_PAGE: Final[str] =  	'⏪'
+    LAST_PAGE: Final[str] =   	'⏩'
+    GO_TO_PAGE: Final[str] =  	'🔢'
+    END_SESSION: Final[str] = 	'⏹️'
 
 class BaseButton(metaclass=abc.ABCMeta):
 
-    Emojis: ClassVar[PaginationEmojis] = PaginationEmojis
+    Emojis: Final[PaginationEmojis] = PaginationEmojis
 
     def __init__(self, name: str, event: BaseButton.Event):
         self.name: str = name
@@ -198,9 +198,9 @@ class BaseButton(metaclass=abc.ABCMeta):
                 raise MenuException('The value for parameter "event_type" was not recognized')
 
 class BaseMenu(metaclass=abc.ABCMeta):
-    TypeEmbed: ClassVar[int] = 1
-    TypeEmbedDynamic: ClassVar[int] = 2
-    TypeText: ClassVar[int] = 3
+    TypeEmbed: Final[int] = 1
+    TypeEmbedDynamic: Final[int] = 2
+    TypeText: Final[int] = 3
 
     _active_sessions = []
     _sessions_limited = False

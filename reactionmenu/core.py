@@ -26,7 +26,7 @@ import asyncio
 import inspect
 import itertools
 from threading import Timer
-from typing import ClassVar, List, Optional, Union
+from typing import Final, List, Optional, Union
 
 import discord
 from discord.ext.commands import Context
@@ -97,8 +97,8 @@ class ReactionMenu(BaseMenu):
 		The discord codeblock language identifier (:attr:`ReactionMenu.TypeEmbedDynamic` only/defaults to :class:`None`). Example: `ReactionMenu(ctx, ..., wrap_in_codeblock='py')`
 	"""
 
-	NORMAL: ClassVar[str] = 'NORMAL'
-	FAST: ClassVar[str] = 'FAST'
+	NORMAL: Final[str] = 'NORMAL'
+	FAST: Final[str] = 'FAST'
 
 	def __init__(self, ctx: Context, *, menu_type: int, **kwargs):
 		super().__init__(ctx, menu_type, **kwargs)
