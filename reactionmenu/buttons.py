@@ -102,7 +102,8 @@ class ComponentsButton(dislash.Button):
 		super().__init__(style=style, label=label, emoji=emoji, custom_id=custom_id, url=url, disabled=disabled)
 
 	def __repr__(self):
-	    return f'<ComponentsButton label={self.label!r} custom_id={self._get_id_name_from_id(self.custom_id)} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled} total_clicks={self.__total_clicks}>'
+		link_button = True if self.style == dislash.ButtonStyle.link else False
+		return f'<ComponentsButton label={self.label!r} custom_id={self._get_id_name_from_id(self.custom_id, is_link_button=link_button)} style={self.style} emoji={self.emoji!r} url={self.url!r} disabled={self.disabled} total_clicks={self.__total_clicks}>'
 
 	class Followup:
 		"""A class that represents the message sent using a :class:`ComponentsButton`. Contains parameters similar to discord.py's `Messageable.send`. Only to be used with :class:`ComponentsButton` kwarg "followup".
@@ -267,9 +268,14 @@ class ComponentsButton(dislash.Button):
 		return cls(style=ComponentsButton.style.gray, label='Close', custom_id=ComponentsButton.ID_END_SESSION)
 	
 	@classmethod
-	def _get_id_name_from_id(cls, id_: str) -> str:
+	def _get_id_name_from_id(cls, id_: str, **kwargs) -> str:
 		# if its a CALLER, SEND_MESSAGE, or CUSTOM_EMBED id, convert to it's true representation, because when passed, it's form is "[ButtonID]_[unique ID]"
 		# see :meth:`_button_add_check` or :meth:`_maybe_custom_id` for details
+		
+		is_link_button = kwargs.get('is_link_button', False)
+		if is_link_button:
+			return 'LINK_BUTTON'
+		
 		unique_id_set = re.compile(ComponentsButton._RE_UNIQUE_ID_SET)
 		if re.search(unique_id_set, id_):
 			id_ = re.sub(unique_id_set, '', id_)

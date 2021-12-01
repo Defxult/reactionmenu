@@ -981,8 +981,9 @@ class ButtonsMenu:
             # NOTE: there's no need to have a check for buttons that are not navigation buttons because they have a unique ID and duplicates of those are allowed
             active_button_ids: List[str] = [btn.custom_id for btn in self._row_of_buttons]
             if button.custom_id in active_button_ids:
-                name = ComponentsButton._get_id_name_from_id(button.custom_id)
-                raise ButtonsMenuException(f'A ComponentsButton with custom_id {name!r} has already been added')
+                if not all([button.custom_id is None, button.style == ComponentsButton.style.link]):
+                    name = ComponentsButton._get_id_name_from_id(button.custom_id)
+                    raise ButtonsMenuException(f'A ComponentsButton with custom_id {name!r} has already been added')
             
             # ensure there are no more than 25 buttons
             if len(self._row_of_buttons) >= 25:
