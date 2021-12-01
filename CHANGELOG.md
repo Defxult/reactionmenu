@@ -3,7 +3,14 @@
 * `RM` = `ReactionMenu`
 * `TM` = `TextMenu`
 
+## v2.0.4 » GitHub Only
+#### Big Fixes
+* `BM` Fixed an issue where multiple link buttons couldn't be used
+
 ## v2.0.3 » Aug. 18, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * `RM|TM` The `Button` class now has similar attributes to `ComponentsButton`
   * `Button.menu`
@@ -11,12 +18,20 @@
   * `Button.total_clicks`
   * `Button.last_clicked`
 * `BM|RM|TM` `ReactionMenu.EMOJI_END_SESSION` is now ⏹️ instead of ❌
+</details>
 
 ## v2.0.2 » Jul. 6, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * `BM` Added the ability to disable or remove a button from the menu when it has been clicked x amount of times
+</details>
 
 ## v2.0.1 » Jul. 2, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * Not a new feature, but Discord has increased the embed description length limit from 2048 to 4096. Exception `DescriptionOversized`, typically raised when using a dynamic menu and the amount of `rows_requested` is too large for the amount of information received, has been updated to reflect that change
 * `BM` Added `ComponentsButton.ID_CUSTOM_EMBED` for `ComponentsButton`. Buttons that go to the specified embed when clicked and are not apart of the normal pagination process
@@ -34,8 +49,12 @@
   * Fixed an issue where if a button with `ComponentsButton.ID_CALLER` or `ComponentsButton.ID_SEND_MESSAGE` was already registered to the menu and an attempt to reuse that button during a `ButtonsMenu.update()` call, an error would occur
   * Fixed an issue where if a menu was updated and there were no `new_pages`, the page index value would still be from before the update, and clicking a back/next button would go to the wrong page
   * Fixed an issue where if a menu was updated and there were `new_pages` (embeds) that contained footers, the footer information would be removed
+</details>
 
 ## v2.0.0 » Jun. 27, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * Added new type of menu (`ButtonsMenu`). Discords new [Buttons](https://support.discord.com/hc/en-us/articles/1500012250861-Bots-Buttons) feature
 * `RM|TM` Added the ability to call a function upon menu timeout
@@ -50,8 +69,12 @@
 * `RM|TM` Added `owner` to `__repr__`
 * `RM|TM` Added the ability to get all active DM sessions
   * `ReactionMenu.get_all_dm_sessions()`
+</details>
 
 ## v1.0.9 » Jun. 1, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * Added new type of reaction menu (`TextMenu`). Just like the normal reaction menu but no embeds are involved, only plain text is used. `TextMenu` has limited options compared to `ReactionMenu`
 * Added auto-pagination. The ability for the menu to turn pages on it's own. In addition to this, the `ReactionMenu` constructors `back_button` and `next_button` parameters can now be set to `None` if you intend to set the menu as an auto-pagination menu
@@ -115,23 +138,39 @@
     * `ReactionMenu.all_buttons`
     * `ReactionMenu.next_buttons`
     * `ReactionMenu.back_buttons`
+</details>
 
 ## v1.0.8 » May 4, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * Added `ReactionMenu.delete_on_timeout`
+</details>
 
 ## v1.0.7 » Mar. 30, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### Bug Fixes
 * Fixed an issue where if a menu's timeout was set to `None` and the `navigation_speed` was set to `ReactionMenu.FAST`, an error would occur
+</details>
 
 ## v1.0.6 » Mar. 22, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * Added the ability to start a menu in a specific channel
 
 #### Bug Fixes
 * Fixed an issue where custom embeds in a dynamic menu would not display all implemented values from that embed 
+</details>
 
 ## v1.0.5 » Mar. 19, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * Added `ReactionMenu` kwarg `navigation_speed`. Used with the below class attributes
   * `ReactionMenu.NORMAL`
@@ -142,11 +181,20 @@
 * Fixed an issue where if an exception was to occur during the startup of a menu, exceptions such as discord.py's "missing permissions" exception would be suppressed and not be displayed 
 
 * Fixed an issue with `Button` objects where a duplicate name/emoji could be used
+</details>
 
 ## v1.0.4 » Mar. 13, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * Small additional update for `v1.0.3`. Support for `@client.command()` functions to be used with `ButtonType.CALLER`
+</details>
+
 ## v1.0.3 » Mar. 13, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * Added the ability for buttons to call functions
 * Added new `ButtonType` (`ButtonType.CALLER`)
@@ -154,13 +202,21 @@
 
 #### Bug Fixes
 * Fixed an issue where all exceptions were suppressed specifically inside the execution method
+</details>
 
 ## v1.0.2 » Feb. 19, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * Added class method `ReactionMenu.get_sessions_count()`
 * Added the option to delete the messages sent when interacting with the menu via `ButtonType.GO_TO_PAGE` (`ReactionMenu` kwarg `delete_interactions`). Repeatedly using `ButtonType.GO_TO_PAGE` can sometimes make the chat look like spam
+</details>
 
 ## v1.0.1 » Feb. 16, 2021
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * Added the ability to limit the amount of active menu sessions
    * `ReactionMenu.set_sessions_limit()`
@@ -168,3 +224,4 @@
 * Added `go_to_page_buttons` property
 * Added `total_pages` property
 * Added class method `ReactionMenu.cancel_all_sessions()` (**removed since** `v1.0.9`)
+</details>
