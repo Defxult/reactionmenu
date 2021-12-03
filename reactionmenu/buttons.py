@@ -103,7 +103,8 @@ class ViewButton(discord.ui.Button, BaseButton):
 	
 	def __repr__(self):
 		total_clicks = '' if self.style == discord.ButtonStyle.link else f' total_clicks={self.total_clicks}'
-		return f'<ViewButton label={self.label!r} custom_id={ViewButton._get_id_name_from_id(str(self.custom_id))} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled}{total_clicks}>'
+		is_link_button = True if self.style == discord.ButtonStyle.link else False
+		return f'<ViewButton label={self.label!r} custom_id={ViewButton._get_id_name_from_id(str(self.custom_id), is_link_button=is_link_button)} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled}{total_clicks}>'
 
 	async def callback(self, interaction: discord.Interaction):
 		"""*INTERNAL USE ONLY* - The callback function from the button interaction. This should not be manually called"""
@@ -208,9 +209,14 @@ class ViewButton(discord.ui.Button, BaseButton):
 		return (ViewButton.ID_PREVIOUS_PAGE, ViewButton.ID_NEXT_PAGE, ViewButton.ID_GO_TO_FIRST_PAGE, ViewButton.ID_GO_TO_LAST_PAGE, ViewButton.ID_GO_TO_PAGE)
 	
 	@classmethod
-	def _get_id_name_from_id(cls, id_: str) -> str:
+	def _get_id_name_from_id(cls, id_: str, **kwargs) -> str:
 		# if its a CALLER, SEND_MESSAGE, or CUSTOM_EMBED id, convert to it's true representation, because when passed, it's form is "[ButtonID]_[unique ID]"
 		# see :meth:`_button_add_check` or :meth:`_maybe_custom_id` for details
+
+		is_link_button = kwargs.get('is_link_button', False)
+		if is_link_button:
+			return 'LINK_BUTTON'
+		
 		unique_id_set = re.compile(ViewButton._RE_UNIQUE_ID_SET)
 		if re.search(unique_id_set, id_):
 			id_ = re.sub(unique_id_set, '', id_)

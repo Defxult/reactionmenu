@@ -416,8 +416,9 @@ class ViewMenu(BaseMenu):
             # Note: there's no need to have a check for buttons that are not navigation buttons because they have a unique ID and duplicates of those are allowed
             active_button_ids: List[str] = [btn.custom_id for btn in self._buttons]
             if button.custom_id in active_button_ids:
-                name = ViewButton._get_id_name_from_id(button.custom_id)
-                raise ViewMenuException(f'A ViewButton with custom_id {name!r} has already been added')
+                if not all([button.custom_id is None, button.style == discord.ButtonStyle.link]):
+                    name = ViewButton._get_id_name_from_id(button.custom_id)
+                    raise ViewMenuException(f'A ViewButton with custom_id {name!r} has already been added')
             
             # if the menu_type is TypeText, disallow custom embed buttons
             if button.style != discord.ButtonStyle.link and self._menu_type == ViewMenu.TypeText:
