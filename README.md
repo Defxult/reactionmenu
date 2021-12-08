@@ -1,9 +1,13 @@
 ![logo](https://cdn.discordapp.com/attachments/655186216060321816/820162226316378162/discord.jpg)
 <div align="center">
 
-[![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/month)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/week)](https://pepy.tech/project/reactionmenu)
+[![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu)
 
 ![python_version](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue)
+
+<!-- [![Downloads](https://pepy.tech/badge/reactionmenu/month)](https://pepy.tech/project/reactionmenu) -->
+<!-- [![Downloads](https://pepy.tech/badge/reactionmenu/week)](https://pepy.tech/project/reactionmenu) -->
+
 </div>
 
 ## reactionmenu 3.0
