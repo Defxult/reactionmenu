@@ -4,7 +4,7 @@
 * `TM` = `TextMenu`
 
 ## v2.0.4 » GitHub Only
-#### Big Fixes
+#### Bug Fixes
 * `BM` Fixed an issue where multiple link buttons couldn't be used
 
 ## v2.0.3 » Aug. 18, 2021
