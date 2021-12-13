@@ -98,6 +98,7 @@ Depending on the `menu_type`, pages can either be a `str` or `discord.Embed`
 * If the `menu_type` is `ReactionMenu.TypeText` (text only menu) or `ReactionMenu.TypeEmbedDynamic` (embed only menu), use strings.
 * Associated methods
   * `ReactionMenu.add_page(Union[discord.Embed, str])`
+  * `ReactionMenu.add_pages(pages: Sequence[Union[discord.Embed, str]])`
   * `ReactionMenu.add_row(data: str)`
   * `ReactionMenu.remove_all_pages()`
   * `ReactionMenu.clear_all_row_data()`
@@ -482,6 +483,7 @@ Depending on the `menu_type`, pages can either be a `str` or `discord.Embed`
 * If the `menu_type` is `ViewMenu.TypeText` (text only menu) or `ViewMenu.TypeEmbedDynamic` (embed only menu), use strings.
 * Associated methods
   * `ViewMenu.add_page(Union[discord.Embed, str])`
+  * `ViewMenu.add_pages(pages: Sequence[Union[discord.Embed, str]])`
   * `ViewMenu.add_row(data: str)`
   * `ViewMenu.remove_all_pages()`
   * `ViewMenu.clear_all_row_data()`

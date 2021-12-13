@@ -32,6 +32,7 @@ from typing import (
     List,
     NamedTuple,
     Optional,
+    Sequence,
     Set,
     Union
 )
@@ -895,6 +896,24 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         else:
             raise MenuSettingsMismatch('add_page method cannot be used with the current menu_type')
+    
+    @ensure_not_primed
+    def add_pages(self, pages: Sequence[Union[discord.Embed, str]]):
+        """Add multiple pages to the menu at once
+        
+        Parameters
+        ----------
+        pages: Sequence[Union[:class:`discord.Embed`, :class:`str`]]
+            The pages to add. Can only be used when the menus `menu_type` is :attr:`TypeEmbed` (adding a :class:`discord.Embed`)
+            or :attr:`TypeText` (adding a :class:`str`)
+        
+        Raises
+        ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `MenuSettingsMismatch`: The page being added does not match the menus `menu_type` 
+        """
+        for page in pages:
+            self.add_page(page)
     
     @ensure_not_primed
     def remove_all_pages(self):
