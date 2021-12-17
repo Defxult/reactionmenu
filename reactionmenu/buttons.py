@@ -68,15 +68,15 @@ class ViewButton(discord.ui.Button, BaseButton):
 	event: Optional[:class:`ViewButton.Event`]
 		Set the button to be disabled or removed when it has been pressed a certain amount of times
 	"""
-	ID_NEXT_PAGE: Final[str] =			'0'
-	ID_PREVIOUS_PAGE: Final[str] =		'1'
-	ID_GO_TO_FIRST_PAGE: Final[str] =	'2'
-	ID_GO_TO_LAST_PAGE: Final[str] =		'3'
-	ID_GO_TO_PAGE: Final[str] =			'4'
-	ID_END_SESSION: Final[str] =			'5'
-	ID_CALLER: Final[str] =				'6'
-	ID_SEND_MESSAGE: Final[str] =		'7'
-	ID_CUSTOM_EMBED: Final[str] =		'8'
+	ID_NEXT_PAGE: Final[str] = '0'
+	ID_PREVIOUS_PAGE: Final[str] = '1'
+	ID_GO_TO_FIRST_PAGE: Final[str] = '2'
+	ID_GO_TO_LAST_PAGE: Final[str] = '3'
+	ID_GO_TO_PAGE: Final[str] = '4'
+	ID_END_SESSION: Final[str] = '5'
+	ID_CALLER: Final[str] = '6'
+	ID_SEND_MESSAGE: Final[str] = '7'
+	ID_CUSTOM_EMBED: Final[str] = '8'
 
 	_RE_IDs = r'[0-8]|[0-8]_\d+'
 	_RE_UNIQUE_ID_SET = r'_\d+'
@@ -321,14 +321,14 @@ class ViewButton(discord.ui.Button, BaseButton):
 
 class ButtonType:
 	"""A helper class for :class:`ReactionMenu`. Determines the generic action a button can perform."""
-	NEXT_PAGE: Final[int] = 			0
-	PREVIOUS_PAGE: Final[int] = 		1
-	GO_TO_FIRST_PAGE: Final[int] = 	2
-	GO_TO_LAST_PAGE: Final[int] = 	3
-	GO_TO_PAGE: Final[int] = 		4
-	END_SESSION: Final[int] = 		5
-	CUSTOM_EMBED: Final[int] = 		6
-	CALLER: Final[int] = 			7
+	NEXT_PAGE: Final[int] = 0
+	PREVIOUS_PAGE: Final[int] = 1
+	GO_TO_FIRST_PAGE: Final[int] = 2
+	GO_TO_LAST_PAGE: Final[int] = 3
+	GO_TO_PAGE: Final[int] = 4
+	END_SESSION: Final[int] = 5
+	CUSTOM_EMBED: Final[int] = 6
+	CALLER: Final[int] = 7
 
 	@classmethod
 	def _get_buttontype_name_from_type(cls, type_: int):
