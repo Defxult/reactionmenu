@@ -34,6 +34,7 @@ from typing import (
     Optional,
     Sequence,
     Set,
+    Tuple,
     Union
 )
 
@@ -269,6 +270,61 @@ class BaseMenu(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     async def start(self):
         raise NotImplementedError
+    
+    @staticmethod
+    def separate(values: Sequence[Any]) -> Tuple[List[discord.Embed], List[str]]:
+        """|static method| Sorts all embeds and strings into a single tuple
+
+        Parameters
+        ----------
+        values: Sequence[:class:`Any`]
+            The values to separate
+        
+        Returns
+        -------
+        Tuple[List[:class:`discord.Embed`], List[:class:`str`]]
+        
+        Example
+        -------
+        >>> embeds, strings = .separate([...])
+        """
+        all_embeds = list(filter(lambda item: isinstance(item, discord.Embed), values))
+        all_strings = list(filter(lambda item: isinstance(item, str), values))
+        return (all_embeds, all_strings)
+    
+    @staticmethod
+    def all_embeds(values: Sequence[Any]) -> bool:
+        """|static method| Tests to see if all items in the sequence are of type :class:`discord.Embed`
+        
+        Parameters
+        ----------
+        values: Sequence[:class:`Any`]
+            The values to test
+        
+        Returns
+        -------
+        :class:`bool`: Returns `False` if the sequence is empty
+        """
+        if len(values) > 0:
+            return all([isinstance(item, discord.Embed) for item in values])
+        return False
+    
+    @staticmethod
+    def all_strings(values: Sequence[Any]) -> bool:
+        """|static method| Tests to see if all items in the sequence are of type :class:`str`
+        
+        Parameters
+        ----------
+        values: Sequence[:class:`Any`]
+            The values to test
+        
+        Returns
+        -------
+        :class:`bool`: Returns `False` if the sequence is empty
+        """
+        if len(values) > 0:
+            return all([isinstance(item, str) for item in values])
+        return False
     
     @classmethod
     def _all_menu_types(cls) -> tuple:
@@ -780,6 +836,56 @@ class BaseMenu(metaclass=abc.ABCMeta):
                     else:
                         raise MenuException(f'When using parameter "send_to" in {class_name}.start(), the channel {send_to} was not found')
 
+    @ensure_not_primed
+    async def add_from_ids(self, messageable: discord.abc.Messageable, message_ids: Sequence[int]):
+        """|coro| Add pages to the menu using the IDs of messages
+        
+        Parameters
+        ----------
+        messageable: :class:`discord.abc.Messageable`
+            A discord `Messageable` object (`discord.TextChannel`, `commands.Context`, etc.)
+        
+        message_ids: Sequence[:class:`int`]
+            The messages to fetch
+
+        Raises
+        ------
+        - `MenuSettingsMismatch`: The message IDs provided did not have the correct values when fetched. For example, the `menu_type` was set to `TypeEmbed`, but the messages you've provided for the library to fetch only contains text. If the `menu_type` is `TypeEmbed`, only messages with embeds should be provided
+        - `MenuException`: An error occurred when attempting to fetch a message or not all :param:`message_ids` were of type int
+        """
+        if all([isinstance(ID, int) for ID in message_ids]):
+            to_paginate: List[discord.Message] = []            
+            for msg_id in message_ids:
+                try:
+                    result = await messageable.fetch_message(msg_id)
+                    to_paginate.append(result)
+                except (discord.NotFound, discord.Forbidden, discord.HTTPException) as error:
+                    raise MenuException(f'An error occurred when attempting to retreive message with the ID {msg_id}: {error}')
+            
+            if self._menu_type == BaseMenu.TypeEmbed:
+                embeds_to_paginate = []
+                for msg in to_paginate:
+                    if msg.embeds:
+                        embeds_to_paginate.extend(msg.embeds)
+                if embeds_to_paginate:
+                    for embed in embeds_to_paginate:
+                        self.add_page(embed)
+                else:
+                    raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no embeds were found in the messages provided')
+            
+            elif self._menu_type == BaseMenu.TypeText:
+                content_to_paginate = []
+                for msg in to_paginate:
+                    if msg.content:
+                        content_to_paginate.append(msg.content)
+                if content_to_paginate:
+                    for content in content_to_paginate:
+                        self.add_page(content)
+                else:
+                    raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no text (discord.Message.content) was found in the messages provided')
+        else:
+            raise MenuException('Not all message IDs were of type int')
+    
     @ensure_not_primed
     def clear_all_row_data(self):
         """Delete all the data thats been added using :meth:`add_row()`

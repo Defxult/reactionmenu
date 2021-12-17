@@ -15,6 +15,13 @@ If you have used or are currently using this library and would like to upgrade, 
 * `RM|VM` Added parameter `reply` to the `start` method. Enables the menu message to reply to the message that triggered it
   * `ReactionMenu.start(..., reply: bool=False)`
 * `RM|VM` Added property `ReactionMenu.last_viewed`. Returns the last page that was seen by the user in the pagination process
+* `RM|VM` Added the ability to use a message ID to add the specified message's content into a menu
+  * `ReactionMenu.add_from_ids(messageable: discord.abc.Messageable, message_ids: Sequence[int])`
+* `RM|VM` Added the ability to separate embeds and strings
+  * `Reactionmenu.separate(values: Sequence[Any])`
+* `RM|VM` Added the ability to test whether all items in a sequence are of type `discord.Embed` or `str`
+  * `ReactionMenu.all_embeds(values: Sequence[Any])`
+  * `ReactionMenu.all_strings(values: Sequence[Any])`
 * `RM` Added factory methods for `ReactionButton`
   * `ReactionButton.back()` 
   * `ReactionButton.next()` 
@@ -23,9 +30,9 @@ If you have used or are currently using this library and would like to upgrade, 
   * `ReactionButton.go_to_page()` 
   * `ReactionButton.end_session()` 
   * `ReactionButton.all()`
+* `RM` Added attribute `ReactionMenu.remove_extra_emojis`
 * `VM` Added factory method for `ViewButton`
   * `ViewButton.link(label: str, url: str)`
-* `RM` Added attribute `ReactionMenu.remove_extra_emojis`
 * `VM` Added methods to set all button styles
   * `ViewMenu.randomize_button_styles()`
   * `ViewMenu.set_button_styles(style: discord.ButtonStyle)`
