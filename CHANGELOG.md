@@ -15,8 +15,9 @@ If you have used or are currently using this library and would like to upgrade, 
 * `RM|VM` Added parameter `reply` to the `start` method. Enables the menu message to reply to the message that triggered it
   * `ReactionMenu.start(..., reply: bool=False)`
 * `RM|VM` Added property `ReactionMenu.last_viewed`. Returns the last page that was seen by the user in the pagination process
-* `RM|VM` Added the ability to use a message ID to add the specified message's content into a menu
+* `RM|VM` Added the ability to use a message ID/message object to add the specified message's content into a menu
   * `ReactionMenu.add_from_ids(messageable: discord.abc.Messageable, message_ids: Sequence[int])`
+  * `ReactionMenu.add_from_messages(messages: Sequence[discord.Message])`
 * `RM|VM` Added the ability to separate embeds and strings
   * `Reactionmenu.separate(values: Sequence[Any])`
 * `RM|VM` Added the ability to test whether all items in a sequence are of type `discord.Embed` or `str`

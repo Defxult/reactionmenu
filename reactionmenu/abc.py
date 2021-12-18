@@ -837,6 +837,43 @@ class BaseMenu(metaclass=abc.ABCMeta):
                         raise MenuException(f'When using parameter "send_to" in {class_name}.start(), the channel {send_to} was not found')
 
     @ensure_not_primed
+    async def add_from_messages(self, messages: Sequence[discord.Message]):
+        """|coro| Add pages to the menu using the message object itself
+        
+        Parameters
+        ----------
+        messages: Sequence[:class:`discord.Message`]
+            A sequence of discord message objects
+        
+        Raises
+        ------
+        - `MenuSettingsMismatch`: The messages provided did not have the correct values. For example, the `menu_type` was set to `TypeEmbed`, but the messages you've provided only contains text. If the `menu_type` is `TypeEmbed`, only messages with embeds should be provided
+        - `MenuException`: All messages were not of type :class:`discord.Message`
+        """
+        if all([isinstance(msg, discord.Message) for msg in messages]):
+            if self._menu_type == BaseMenu.TypeEmbed:
+                embeds = []
+                for m in messages:
+                    if m.embeds:
+                        embeds.extend(m.embeds)
+                if embeds:
+                    self.add_pages(embeds)
+                else:
+                    raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no embeds were found in the messages provided')
+            
+            elif self._menu_type == BaseMenu.TypeText:
+                content = []
+                for m in messages:
+                    if m.content:
+                        content.append(m.content)
+                if content:
+                    self.add_pages(content)
+                else:
+                    raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no text (discord.Message.content) was found in the messages provided')
+        else:
+            raise MenuException('All messages were not of type discord.Message')
+    
+    @ensure_not_primed
     async def add_from_ids(self, messageable: discord.abc.Messageable, message_ids: Sequence[int]):
         """|coro| Add pages to the menu using the IDs of messages
         
