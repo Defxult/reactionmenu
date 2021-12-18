@@ -303,7 +303,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Returns
         -------
-        :class:`bool`: Returns `False` if the sequence is empty
+        :class:`bool`: Can return `False` if the sequence is empty
         """
         if len(values) > 0:
             return all([isinstance(item, discord.Embed) for item in values])
@@ -320,7 +320,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Returns
         -------
-        :class:`bool`: Returns `False` if the sequence is empty
+        :class:`bool`: Can return `False` if the sequence is empty
         """
         if len(values) > 0:
             return all([isinstance(item, str) for item in values])
