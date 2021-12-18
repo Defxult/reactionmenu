@@ -32,7 +32,6 @@ from typing import (
     List,
     NamedTuple,
     Optional,
-    Sequence,
     Set,
     Tuple,
     Union
@@ -47,6 +46,7 @@ import collections
 import inspect
 import re
 import warnings
+from collections.abc import Sequence
 from datetime import datetime
 
 import discord
