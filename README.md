@@ -17,7 +17,7 @@ As a lot of you may now, the development of discord.py has ended. Discord will b
 
 What happens to reactionmenu on January 7, 2022?
 * Support for discord.py will end
-* A separate branch will be made for discord.py & dislash.py (aka versions <=2.0.3) so users still have access to the old code if they wish to use it; although it will not be maintained
+* A separate branch will be made for discord.py & dislash.py (aka versions <=2.0.4) so users still have access to the old code if they wish to use it; although it will not be maintained
 * The 3.0 branch will be merged into the main branch
 * This library will be solely dependant on pycord
 
