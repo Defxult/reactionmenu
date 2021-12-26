@@ -212,6 +212,10 @@ class ReactionMenu(BaseMenu):
 				if self._menu_type == ReactionMenu.TypeText and button.linked_to == ReactionButton.Type.CUSTOM_EMBED:
 					raise MenuSettingsMismatch('ReactionButton with a linked_to of ReactionButton.Type.CUSTOM_EMBED cannot be used when the menu_type is TypeText')
 				
+				# if using a skip button, ensure the skip attribute was set
+				if button.linked_to == ReactionButton.Type.SKIP and button.skip is None:
+					raise ReactionMenuException('When attempting to add a button with the type ReactionButton.Type.SKIP, the "skip" kwarg was not set')
+				
 				if len(self._buttons) > 20:
 					raise TooManyButtons
 			else:
@@ -586,6 +590,11 @@ class ReactionMenu(BaseMenu):
 					# last page
 					elif emoji == btn.emoji and btn.linked_to == ReactionButton.Type.GO_TO_LAST_PAGE:
 						await self._msg.edit(**self._determine_kwargs(self._pc.last_page()))
+						await update_and_dispatch(emoji, user, btn)
+					
+					# skip
+					elif emoji == btn.emoji and btn.linked_to == ReactionButton.Type.SKIP:
+						await self._msg.edit(**self._determine_kwargs(self._pc.skip(btn.skip)))
 						await update_and_dispatch(emoji, user, btn)
 					
 					# go to page

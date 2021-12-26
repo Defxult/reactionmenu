@@ -426,6 +426,10 @@ class ViewMenu(BaseMenu):
                     if button.followup and button.followup.embed is not None:
                         raise MenuSettingsMismatch('ViewButton with custom_id ViewButton.ID_CUSTOM_EMBED cannot be used when the menu_type is ViewMenu.TypeText')
             
+            # if using a skip button, ensure the skip attribute was set
+            if button.custom_id == ViewButton.ID_SKIP and button.skip is None:
+                raise ViewMenuException('When attempting to add a button custom_id ViewButton.ID_SKIP, the "skip" kwarg was not set')
+            
             # ensure there are no more than 25 buttons
             if len(self._buttons) >= 25:
                 raise TooManyButtons('ViewMenu cannot have more than 25 buttons (discord limitation)')
@@ -433,8 +437,12 @@ class ViewMenu(BaseMenu):
             raise IncorrectType(f'When adding a button to the ViewMenu, the button type must be ViewButton, got {button.__class__.__name__}')
     
     def _maybe_unique_id(self, button: ViewButton):
-        """Create a unique ID if the custom_id is :attr:`ViewButton.ID_SEND_MESSAGE`, :attr:`ViewButton.ID_CALLER`, or :attr:`ViewButton.ID_CUSTOM_EMBED`"""
-        if button.custom_id in (ViewButton.ID_CALLER, ViewButton.ID_SEND_MESSAGE, ViewButton.ID_CUSTOM_EMBED):
+        """Create a unique ID if the `custom_id` for buttons that are allowed to have duplicates
+        
+            Note ::
+                This excludes link buttons because they don't have a `custom_id`
+        """
+        if button.custom_id in (ViewButton.ID_CALLER, ViewButton.ID_SEND_MESSAGE, ViewButton.ID_CUSTOM_EMBED, ViewButton.ID_SKIP):
             button.custom_id = f'{button.custom_id}_{id(button)}'
     
     @ensure_not_primed
@@ -631,6 +639,10 @@ class ViewMenu(BaseMenu):
                         raise ViewMenuException('ViewButton custom_id was set as ViewButton.ID_CUSTOM_EMBED but the "followup" kwargs for that ViewButton was not set or the "embed" kwarg for the followup was not set')
                    
                     await inter.response.edit_message(embed=button.followup.embed)            
+            
+            elif button.custom_id.startswith(ViewButton.ID_SKIP):
+                await inter.response.edit_message(**self._determine_kwargs(self._pc.skip(button.skip)))
+            
             else:
                 # this shouldn't execute because of :meth:`_button_add_check`, but just in case i missed something, raise the appropriate error
                 raise ViewMenuException(f'ViewButton custom_id {button.custom_id!r} was not recognized')

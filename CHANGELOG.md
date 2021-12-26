@@ -6,6 +6,8 @@
 If you have used or are currently using this library and would like to upgrade, I suggest reading the breaking changes before the new features. It will make more sense.
 
 #### New Features
+* `RM|VM` Added the ability to paginate through multiple pages in a single button press
+  * `ReactionButton(..., skip=ReactionButton.Skip(...))`
 * `RM|VM`Added the ability for relay functions to relay only the buttons of your choice instead of relaying all buttons
   * `ReactionMenu.set_relay(..., only: List[ReactionButton]=None)`
 * `RM|VM` Added the ability to remove the timeout method if you have one set
@@ -31,9 +33,11 @@ If you have used or are currently using this library and would like to upgrade, 
   * `ReactionButton.go_to_page()` 
   * `ReactionButton.end_session()` 
   * `ReactionButton.all()`
+  * `ReactionButton.skip(emoji: str, action: str, amount: int)`
 * `RM` Added attribute `ReactionMenu.remove_extra_emojis`
-* `VM` Added factory method for `ViewButton`
+* `VM` Added factory methods for `ViewButton`
   * `ViewButton.link(label: str, url: str)`
+  * `ViewButton.skip(label: str, action: str, amount: int)`
 * `VM` Added methods to set all button styles
   * `ViewMenu.randomize_button_styles()`
   * `ViewMenu.set_button_styles(style: discord.ButtonStyle)`

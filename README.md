@@ -204,6 +204,7 @@ class reactionmenu.ReactionButton(*, emoji: str, linked_to: ButtonType, **kwargs
 | `ReactionButton.Type.END_SESSION` | Stops the session and deletes the menu message
 | `ReactionButton.Type.CUSTOM_EMBED` | Used separately from the navigation buttons. Once pressed, go to the specified embed 
 | `ReactionButton.Type.CALLER` | Used when specifying the function to call and it's arguments when the button is pressed
+| `ReactionButton.Type.SKIP` | Used to paginate through multiple pages in a single button press
 
 
 ### Adding Buttons
@@ -226,11 +227,15 @@ esb = ReactionButton(emoji='⏹️', linked_to=ReactionButton.Type.END_SESSION)
 # custom embed
 ceb = ReactionButton(emoji='😎', linked_to=ReactionButton.Type.CUSTOM_EMBED, embed=discord.Embed(title='Hello'))
 
+# skip button
+sb = ReactionButton(emoji='5️⃣', linked_to=ReactionButton.Type.SKIP, skip=ReactionButton.Skip(action='+', amount=5))
+
 menu.add_button(fpb)
 menu.add_button(lpb)
 menu.add_button(gtpb)
 menu.add_button(esb)
 menu.add_button(ceb)
+menu.add_button(sb)
 ```
 ### Deleting Buttons
 Remove all buttons with `menu.remove_all_buttons()`. You can also remove an individual button using its name if you have it set, or the button object itself with `menu.remove_button()`
@@ -280,6 +285,9 @@ The `ReactionButton` class comes with a set factory methods (class methods) that
 * `ReactionButton.all()`
   * Returns a `list` of `ReactionButton` in the following order
   * `.go_to_first_page()` `.back()` `.next()` `.go_to_last_page()` `.go_to_page()` `.end_session()`
+* `ReactionButton.skip(emoji: str, action: str, amount: int)`
+  * emoji: `<emoji>`
+  * linked_to: `ReactionButton.Type.SKIP`
 
 ### Auto-pagination
 
@@ -581,6 +589,7 @@ The following are the rules set by Discord for Buttons:
   * `ViewButton.ID_CALLER`
   * `ViewButton.ID_SEND_MESSAGE`
   * `ViewButton.ID_CUSTOM_EMBED` (only valid with menu type `ViewMenu.TypeEmbedDynamic`)
+  * `ViewButton.ID_SKIP`
 * `emoji` (`Union[str, discord.PartialEmoji]`) Emoji used for the button
   * `ViewButton(..., emoji='😄')` 
   * `ViewButton(..., emoji='<:miscTwitter:705423192818450453>')`
@@ -608,6 +617,10 @@ menu = ViewMenu(ctx, menu_type=ViewMenu.TypeEmbed)
 # Link Button
 link_button = ViewButton(style=discord.ButtonStyle.link, emoji='🌍', label='Link to Google', url='https://google.com')
 menu.add_button(link_button)
+
+# skip button
+skip = ViewButton(style=discord.ButtonStyle.primary, label='+5', custom_id=ViewButton.ID_SKIP, skip=ViewButton.Skip(action='+', amount=5))
+menu.add_button(skip)
 
 # ViewButton.ID_PREVIOUS_PAGE
 back_button = ViewButton(style=discord.ButtonStyle.primary, label='Back', custom_id=ViewButton.ID_PREVIOUS_PAGE)
@@ -716,6 +729,10 @@ The `ViewButton` class comes with a set factory methods (class methods) that ret
 * `ViewButton.all()`
   * Returns a `list` of `ViewButton` in the following order
   * `.go_to_first_page()` `.back()` `.next()` `.go_to_last_page()` `.go_to_page()` `.end_session()`
+* `ViewButton.skip(label: str, action: str, amount: int)`
+  * style: `discord.ButtonStyle.gray`
+  * label: `<label>`
+  * custom_id: `ViewButton.ID_SKIP`
 
 ```py
 menu = ViewMenu(ctx, ...)

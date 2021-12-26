@@ -77,8 +77,9 @@ class ViewButton(discord.ui.Button, BaseButton):
 	ID_CALLER: Final[str] = '6'
 	ID_SEND_MESSAGE: Final[str] = '7'
 	ID_CUSTOM_EMBED: Final[str] = '8'
+	ID_SKIP: Final[str] = '9'
 
-	_RE_IDs = r'[0-8]|[0-8]_\d+'
+	_RE_IDs = r'[0-9]|[0-9]_\d+'
 	_RE_UNIQUE_ID_SET = r'_\d+'
 
 	def __init__(
@@ -95,7 +96,7 @@ class ViewButton(discord.ui.Button, BaseButton):
 		**kwargs
 		):
 		super().__init__(style=style, label=label, disabled=disabled, custom_id=custom_id, url=url, emoji=emoji, row=None)
-		BaseButton.__init__(self, name=kwargs.get('name'), event=event)
+		BaseButton.__init__(self, name=kwargs.get('name'), event=event, skip=kwargs.get('skip'))
 		self.followup = followup
 		
 		# abc
@@ -235,6 +236,16 @@ class ViewButton(discord.ui.Button, BaseButton):
 		return self._menu
 	
 	@classmethod
+	def skip(cls, label: str, action: str, amount: int) -> ViewButton:
+		"""|class method| A factory method that returns a :class:`ViewButton` with the following parameters set:
+		
+		- style: `discord.ButtonStyle.gray`
+		- label: `<label>`
+		- custom_id: :attr:`ViewButton.ID_SKIP`
+		"""
+		return cls(style=discord.ButtonStyle.gray, label=label, custom_id=ViewButton.ID_SKIP, skip=BaseButton.Skip(action, amount))
+	
+	@classmethod
 	def link(cls, label: str, url: str) -> ViewButton:
 		"""|class method| A factory method that returns a :class:`ViewButton` with the following parameters set:
 		
@@ -329,6 +340,7 @@ class ButtonType:
 	END_SESSION: Final[int] = 5
 	CUSTOM_EMBED: Final[int] = 6
 	CALLER: Final[int] = 7
+	SKIP: Final[int] = 8
 
 	@classmethod
 	def _get_buttontype_name_from_type(cls, type_: int):
@@ -341,7 +353,8 @@ class ButtonType:
 			cls.GO_TO_PAGE : 'ButtonType.GO_TO_PAGE',
 			cls.END_SESSION : 'ButtonType.END_SESSION',
 			cls.CUSTOM_EMBED : 'ButtonType.CUSTOM_EMBED',
-			cls.CALLER : 'ButtonType.CALLER'
+			cls.CALLER : 'ButtonType.CALLER',
+			cls.SKIP : 'ButtonType.SKIP'
 		}
 		return dict_[type_]
 
@@ -374,7 +387,7 @@ class ReactionButton(BaseButton):
 	Type = ButtonType
 
 	def __init__(self, *, emoji: str, linked_to: ReactionButton.Type, **kwargs):
-		super().__init__(name=kwargs.get('name'), event=kwargs.get('event'))
+		super().__init__(name=kwargs.get('name'), event=kwargs.get('event'), skip=kwargs.get('skip'))
 		self.emoji = str(emoji)
 		self.linked_to = linked_to
 		
@@ -428,6 +441,15 @@ class ReactionButton(BaseButton):
 		:class:`ReactionMenu`: The menu the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
 		"""
 		return self._menu
+	
+	@classmethod
+	def skip(cls, emoji: str, action: str, amount: int) -> ReactionButton:
+		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		
+		- emoji: `<emoji>`
+		- linked_to: :attr:`ReactionButton.Type.SKIP`
+		"""
+		return cls(emoji=emoji, linked_to=cls.Type.SKIP, skip=BaseButton.Skip(action, amount))
 	
 	@classmethod
 	def back(cls) -> ReactionButton:

@@ -78,6 +78,24 @@ class _PageController:
         """Return the total amount of pages registered to the menu"""
         return len(self.pages) - 1
     
+    def skip_loop(self, action: str, amount: int):
+        """Using `self.index += amount` does not work because this library is used to operating on a +-1 basis. This loop
+        provides a simple way to still operate on the +-1 standard.
+        """
+        while (amount != 0):
+            if action == '+':
+                self.index += 1
+            elif action == '-':
+                self.index -= 1
+            
+            self.validate_index()
+            amount -= 1
+    
+    def skip(self, skip: BaseButton.Skip) -> Union[discord.Embed, str]:
+        """Return the page that the skip value was set to"""
+        self.skip_loop(skip.action, skip.amount)
+        return self.validate_index()
+    
     def validate_index(self) -> Union[discord.Embed, str]:
         """If the index is out of bounds, assign the appropriate values so the pagination process can continue and return the associated page"""
         try:
@@ -131,9 +149,10 @@ class BaseButton(metaclass=abc.ABCMeta):
 
     Emojis: Final[PaginationEmojis] = PaginationEmojis
 
-    def __init__(self, name: str, event: BaseButton.Event):
+    def __init__(self, name: str, event: BaseButton.Event, skip: BaseButton.Skip):
         self.name: str = name
         self.event: BaseButton.Event = event
+        self.skip: BaseButton.Skip = skip
         self.__clicked_by = set()
         self.__total_clicks = 0
         self.__last_clicked: datetime = None
@@ -174,6 +193,25 @@ class BaseButton(metaclass=abc.ABCMeta):
         self.__clicked_by.add(user)
         self.__total_clicks += 1
         self.__last_clicked = datetime.utcnow()
+
+    class Skip:
+        """Initialize a skip button with the appropriate values
+        
+        Parameters
+        ----------
+        action: :class:`str`
+            Whether to go forward in the pagination process ("+") or backwards ("-")
+        
+        amount: :class:`int`
+            The amount of pages to skip. Must be >= 1. If value is <= 0, it is implicitly set to 1
+        """
+        def __init__(self, action: str, amount: int):
+            if amount <= 0: amount = 1
+            if action in ('+', '-'):
+                self.action = action
+                self.amount = amount
+            else:
+                raise MenuException('The action given was not recognized. Expected "+" or "-"')
 
     class Event:
         """Set a button to be disabled or removed when it has been pressed a certain amount of times. If the button is a :class:`ReactionButton`, only the "remove" event is available
@@ -365,7 +403,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         cls._sessions_limit_details = None
     
     @classmethod
-    def get_all_dm_sessions(cls):
+    def get_all_dm_sessions(cls) -> list:
         """|class method| Returns all active DM menu sessions
         
         Returns
