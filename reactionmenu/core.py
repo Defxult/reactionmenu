@@ -560,7 +560,7 @@ class ReactionMenu(BaseMenu):
 					reaction, user = await self._handle_fast_navigation()
 				else:
 					raise ReactionMenuException(f'Navigation speed {self.__navigation_speed!r} is not recognized')
-			except asyncio.TimeoutError:
+			except (asyncio.TimeoutError, asyncio.CancelledError):
 				self._menu_timed_out = True
 				await self.stop(delete_menu_message=self.delete_on_timeout, clear_reactions=self.clear_reactions_after)
 			else:
