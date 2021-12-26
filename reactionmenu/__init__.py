@@ -28,3 +28,9 @@ def version_info():
     return VersionInfo(version='3.0.0b1', releasetype='pre-release', patch=None)
 
 __source__ = 'https://github.com/Defxult/reactionmenu'
+__all__ = (
+    'ReactionMenu',
+    'ViewMenu',
+    'ReactionButton',
+    'ViewButton'
+)
