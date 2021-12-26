@@ -224,14 +224,9 @@ class ReactionMenu(BaseMenu):
 			raise IncorrectType(f'Parameter "button" expected ReactionButton, got {button.__class__.__name__}')
 	
 	def _session_done_callback(self, task: asyncio.Task):
-		try:
-			task.result()
-		except asyncio.CancelledError:
-			pass
-		finally:
-			self._is_running = False
-			if self in ReactionMenu._active_sessions:
-				ReactionMenu._active_sessions.remove(self)
+		self._is_running = False # already set in :meth:`.stop()`, but just in case this was reached without that method being called
+		if self in ReactionMenu._active_sessions:
+			ReactionMenu._active_sessions.remove(self)
 	
 	def get_button(self, identity: Union[str, int], *, search_by: str='name') -> Union[ReactionButton, List[ReactionButton]]:
 		"""Get a button that has been registered to the menu by name, emoji, or type
@@ -441,43 +436,6 @@ class ReactionMenu(BaseMenu):
 
 		return all([not_bot, correct_msg, correct_user])
 	
-	async def _handle_fast_navigation(self):
-		"""|coro| If either of the below events are dispatched, return the result (reaction, user) of the coroutine object. Used in :meth:`Menu._execute_session()` for :attr:`Menu.FAST`.
-		Can timeout, `.result()` raises :class:`asyncio.TimeoutError` but is caught in :meth:`Menu._execute_session()` for proper cleanup. This is the core function as to how the 
-		navigation speed system works
-		
-				.. Note :: Handling of aws's 
-					The additional time (+ 0.1) is needed because the items in :var:`wait_for_aws` timeout at the exact same time. Meaning that there will never be an object in :var:`pending` (which is what I want)
-					which renders the ~return_when param useless because the first event that was dispatched is stored in :var:`done`. Since they timeout at the same time,
-					both aws are stored in :var:`done` upon timeout. 
-					
-					The goal is to return the result of a single :meth:`discord.Client.wait_for()`, the result is returned but the :exc:`asyncio.TimeoutError`
-					exception that was raised in :meth:`asyncio.wait()` (because of the timeout by the other aws) goes unhandled and the exception is raised. The additional time allows the 
-					cancellation of the task before the exception (Task exception was never retrieved) is raised 
-		"""
-		
-		def proper_timeout():
-			"""In :var:`wait_for_aws`, if the menu does not have a timeout (`Menu.timeout = None`), :class:`None` + :class:`float`, the float being "`self._timeout + 0.1`" from v1.0.5, will fail for obvious reasons. This checks if there is no timeout, 
-			and instead of adding those two together, simply return :class:`None` to avoid :exc:`TypeError`. This would happen if the menu's :attr:`Menu.navigation_speed` was set to :attr:`Menu.FAST` and
-			the :attr:`Menu.timeout` was set to :class:`None`
-			"""
-			if self.timeout is not None:
-				return self.timeout + 0.1
-			else:
-				return None
-
-		wait_for_aws = (
-			self._ctx.bot.wait_for('reaction_add', check=self._wait_check, timeout=self.timeout),
-			self._ctx.bot.wait_for('reaction_remove', check=self._wait_check, timeout=proper_timeout()) 
-		)
-		done, pending = await asyncio.wait(wait_for_aws, return_when=asyncio.FIRST_COMPLETED)
-
-		temp_pending = list(pending)
-		temp_pending[0].cancel()
-
-		temp_done = list(done)
-		return temp_done[0].result()
-	
 	def _get_custom_embed_buttons(self) -> List[ReactionButton]:
 		return [btn for btn in self._buttons if btn.linked_to == ReactionButton.Type.CUSTOM_EMBED]
 	
@@ -542,6 +500,16 @@ class ReactionMenu(BaseMenu):
 			await determine_removal(emoji, user)
 			await self._handle_event(button)
 			await self._contact_relay(user, button)
+		
+		def proper_timeout():
+			"""In :var:`wait_for_aws`, if the menu does not have a timeout (`Menu.timeout = None`), :class:`None` + :class:`float`, the float being "`self._timeout + 0.1`" from v1.0.5, will fail for obvious reasons. This checks if there is no timeout, 
+			and instead of adding those two together, simply return :class:`None` to avoid :exc:`TypeError`. This would happen if the menu's :attr:`Menu.navigation_speed` was set to :attr:`Menu.FAST` and
+			the :attr:`Menu.timeout` was set to :class:`None`
+			"""
+			if self.timeout is not None:
+				return self.timeout + 0.1
+			else:
+				return None
 
 		# apply the reactions (buttons) to the menu message
 		for btn in self._buttons:
@@ -557,7 +525,17 @@ class ReactionMenu(BaseMenu):
 				if self.__navigation_speed == ReactionMenu.NORMAL:
 					reaction, user = await self._ctx.bot.wait_for('reaction_add', check=self._wait_check, timeout=self.timeout)
 				elif self.__navigation_speed == ReactionMenu.FAST:
-					reaction, user = await self._handle_fast_navigation()
+					wait_for_aws = (
+						self._ctx.bot.wait_for('reaction_add', check=self._wait_check, timeout=self.timeout),
+						self._ctx.bot.wait_for('reaction_remove', check=self._wait_check, timeout=proper_timeout()) 
+					)
+					done, pending = await asyncio.wait(wait_for_aws, return_when=asyncio.FIRST_COMPLETED)
+					
+					temp_pending: asyncio.Task = list(pending)[0]
+					temp_pending.cancel()
+
+					temp_done: asyncio.Task = list(done)[0]
+					reaction, user = temp_done.result()
 				else:
 					raise ReactionMenuException(f'Navigation speed {self.__navigation_speed!r} is not recognized')
 			except (asyncio.TimeoutError, asyncio.CancelledError):
@@ -670,13 +648,14 @@ class ReactionMenu(BaseMenu):
 				elif clear_reactions:
 					await self._msg.clear_reactions()
 				await self._handle_on_timeout()
-			except discord.DiscordException as dpy_error:
-				raise dpy_error
+			except discord.DiscordException as discord_error:
+				raise discord_error
 			finally:
 				if self._auto_paginator:
 					if self._auto_paginator_timer is not None and self._auto_paginator_timer.is_alive():
 						self._auto_paginator_timer.cancel()
 				
+				self._is_running = False
 				self._main_session_task.cancel()
 	
 	def _override_dm_settings(self):
