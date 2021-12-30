@@ -45,7 +45,9 @@ If you have used or are currently using this library and would like to upgrade, 
 * `VM` Added the ability for method `ViewMenu.get_button()` to get buttons by name
   * `ViewMenu.get_button(..., search_by='name')`
 * Added new exceptions. `ViewMenuException` and `MenuException`. All library exceptions can be caught using `MenuException`
-* Added `__repr__` for `ViewButton.Followup`
+* Added dunder methods for the library itself and a class
+  * `__all__` for `reactionmenu` (`from reactionmenu import *`)
+  * `__repr__` for `ViewButton.Followup`
 
 #### Breaking Changes
 * *changed* `ReactionMenu.STATIC` and `ReactionMenu.DYNAMIC` have been renamed
