@@ -379,8 +379,10 @@ class BaseMenu(metaclass=abc.ABCMeta):
         return types[menu_type]
 
     @classmethod
-    def get_menu_from_message(cls, message_id: int):
-        """|class method| Return the menu object associated with the message with the given ID
+    def get_menu_from_message(cls: Type[M], message_id: int, /) -> M:
+        """|class method|
+        
+        Return the menu object associated with the message with the given ID
         
         Parameters
         ----------

@@ -88,6 +88,7 @@ If you have used or are currently using this library and would like to upgrade, 
 * *changed* `ReactionMenu.all_can_react` is now `ReactionMenu.all_can_click`
 * *changed* Parameter `turn_every` in methods `ReactionMenu.set_as_auto_paginator()` and `ReactionMenu.update_turn_every()` are now keyword only arguments
 * *changed* A lot of `ReactionMenu` attributes are no longer property getters/setters. They are now normal attributes with type hints
+* *changed* The parameter for method `.get_menu_from_message())` is now positional only
 
 Discords Buttons feature has been implemented using pycord. Meaning this library is now only dependent on pycord. With that said, two classes have been renamed/removed to support `discord.ui.View`
 * *removed* `ButtonsMenu` class
