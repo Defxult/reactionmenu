@@ -30,7 +30,7 @@ def version_info():
 __source__ = 'https://github.com/Defxult/reactionmenu'
 __all__ = (
     'ReactionMenu',
-    'ViewMenu',
     'ReactionButton',
+    'ViewMenu',
     'ViewButton'
 )
