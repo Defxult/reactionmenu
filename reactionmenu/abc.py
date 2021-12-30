@@ -29,16 +29,21 @@ from typing import (
     Any,
     Callable,
     Final,
+    Generic,
     List,
     NamedTuple,
     Optional,
     Set,
     Tuple,
+    Type,
+    TypeVar,
     Union
 )
 
 if TYPE_CHECKING:
     from .buttons import ReactionButton, ViewButton
+    from . import ReactionMenu, ViewMenu
+    M = TypeVar('M', bound=Union[ReactionMenu, ViewMenu])
 
 import abc
 import asyncio
@@ -57,6 +62,7 @@ from .errors import *
 
 _DYNAMIC_EMBED_LIMIT = 4096
 _DEFAULT_STYLE = 'Page $/&'
+GB = TypeVar('GB')
 
 
 class _PageController:
@@ -145,7 +151,7 @@ class PaginationEmojis:
     GO_TO_PAGE: Final[str] =  	'🔢'
     END_SESSION: Final[str] = 	'⏹️'
 
-class BaseButton(metaclass=abc.ABCMeta):
+class BaseButton(Generic[GB], metaclass=abc.ABCMeta):
 
     Emojis: Final[PaginationEmojis] = PaginationEmojis
 
@@ -414,8 +420,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         cls._sessions_limit_details = None
     
     @classmethod
-    def get_all_dm_sessions(cls) -> list:
-        """|class method| Returns all active DM menu sessions
+    def get_all_dm_sessions(cls: Type[M]) -> List[M]:
         """|class method|
         
         Retrieve all active DM menu sessions
@@ -427,8 +432,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         return [session for session in cls._active_sessions if session.message.guild is None]
     
     @classmethod
-    def get_all_sessions(cls) -> list:
-        """|class method| Returns all active menu sessions
+    def get_all_sessions(cls) -> List[M]:
         """|class method|
         
         Retrieve all active menu sessions
@@ -440,8 +444,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         return cls._active_sessions
     
     @classmethod
-    def get_session(cls, name: str):
-        """|class method| Get a menu instance by it's name
+    def get_session(cls, name: str) -> List[M]:
         """|class method|
         
         Get a menu instance by it's name
