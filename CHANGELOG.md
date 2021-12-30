@@ -93,6 +93,12 @@ If you have used or are currently using this library and would like to upgrade, 
 * *changed* Parameter `turn_every` in methods `ReactionMenu.set_as_auto_paginator()` and `ReactionMenu.update_turn_every()` are now keyword only arguments
 * *changed* A lot of `ReactionMenu` attributes are no longer property getters/setters. They are now normal attributes with type hints
 * *changed* The parameter for method `.get_menu_from_message())` is now positional only
+* *changed* The following items now return only a `list` instead of `list` or `None` (if no sessions/buttons were found). If no sessions/buttons were found, an empty list is returned
+  * `.get_all_dm_sessions()` (method)
+  * `.get_all_sessions()` (method)
+  * `.get_session()` (method)
+  * `.buttons_most_clicked` (property)
+  * `.buttons` (property)
 
 Discords Buttons feature has been implemented using pycord. Meaning this library is now only dependent on pycord. With that said, two classes have been renamed/removed to support `discord.ui.View`
 * *removed* `ButtonsMenu` class

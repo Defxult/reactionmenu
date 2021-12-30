@@ -416,27 +416,35 @@ class BaseMenu(metaclass=abc.ABCMeta):
     @classmethod
     def get_all_dm_sessions(cls) -> list:
         """|class method| Returns all active DM menu sessions
+        """|class method|
+        
+        Retrieve all active DM menu sessions
         
         Returns
         -------
-        :class:`list`: Can return :class:`None` if the there are no active DM sessions
+        A :class:`list` of ALL active DM menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) that are currently running. Can be an empty list if there are no active DM sessions
         """
-        dm_sessions = [session for session in cls._active_sessions if session.message.guild is None]
-        return dm_sessions if dm_sessions else None
+        return [session for session in cls._active_sessions if session.message.guild is None]
     
     @classmethod
     def get_all_sessions(cls) -> list:
         """|class method| Returns all active menu sessions
+        """|class method|
+        
+        Retrieve all active menu sessions
         
         Returns
         -------
-        :class:`list`: A list of all menu sessions that are currently running. Can be :class:`None` if there are no active sessions
+        A :class:`list` of ALL menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) that are currently running. Can be an empty list if there are no active sessions
         """
-        return cls._active_sessions if cls._active_sessions else None
+        return cls._active_sessions
     
     @classmethod
     def get_session(cls, name: str):
         """|class method| Get a menu instance by it's name
+        """|class method|
+        
+        Get a menu instance by it's name
         
         Parameters
         ----------
@@ -445,15 +453,11 @@ class BaseMenu(metaclass=abc.ABCMeta):
         
         Returns
         -------
-        The menu instance. Can return a :class:`list` of menu instances if multiple instances of the menu with the supplied name are running. 
-        Can also return :class:`None` if the menu with the supplied name was not found in the list of active sessions
+        A :class:`list` of ALL menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) that are currently running that match the supplied name. Can be an empty list if there are no active sessions that matched the name
         """
         name = str(name)
-        sessions = [session for session in cls._active_sessions if session.name == name]
-        if sessions:
-            return sessions[0] if len(sessions) == 1 else sessions
-        else:
-            return None
+        return [session for session in cls._active_sessions if session.name == name]
+    
     @classmethod
     def split_sessions(cls) -> Tuple[List[ReactionMenu], List[ViewMenu]]:
         """|class method|
@@ -535,7 +539,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
             The menus name
         
         include_all: :class:`bool`
-            If set to `True`, it stops all menu sessions with the supplied name. If `False`, stops only the most recently started menu with the supplied name
+            If set to `True`, it stops all menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) with the supplied name. If `False`, stops only the most recently started menu with the supplied name
         
         Raises
         ------
@@ -652,25 +656,22 @@ class BaseMenu(metaclass=abc.ABCMeta):
         return self._is_running
     
     @property
-    def buttons(self) -> list:
+    def buttons(self: GB) -> List[GB]:
         """
         Returns
         -------
         :class:`list`: A list of all the buttons that have been added to the menu
         """
-        return self._buttons if self._buttons else None
+        return self._buttons
     
     @property
-    def buttons_most_clicked(self) -> list:
+    def buttons_most_clicked(self: GB) -> List[GB]:
         """
         Returns
         -------
-        :class:`list`: The list of buttons on the menu ordered from highest (button with the most clicks) to lowest (button with the least clicks). Can be :class:`None` if there are no buttons registered to the menu
+        :class:`list`: The list of buttons on the menu ordered from highest (button with the most clicks) to lowest (button with the least clicks). Can be an empty list if there are no buttons registered to the menu
         """
-        if self._buttons:
-            return sorted(self._buttons, key=lambda btn: btn.total_clicks, reverse=True)
-        else:
-            return None
+        return sorted(self._buttons, key=lambda btn: btn.total_clicks, reverse=True)
     
     @property
     def in_dms(self) -> bool:
