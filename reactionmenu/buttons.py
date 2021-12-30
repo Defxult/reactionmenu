@@ -146,6 +146,15 @@ class ViewButton(discord.ui.Button, BaseButton):
 		
 		__slots__ = ('content', 'embed', 'file', 'tts', 'allowed_mentions', 'delete_after', 'ephemeral', 'details')
 
+		def __repr__(self):
+			x = []
+			for val in self.__class__.__slots__:
+				temp = getattr(self, val)
+				if temp:
+					x.append(f'{val}={temp!r}')
+			
+			return f'<Followup {" ".join(x)}>'
+
 		def __init__(
 			self,
 			content: Optional[str]=None, 
