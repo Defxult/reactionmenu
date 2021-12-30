@@ -393,7 +393,7 @@ class ReactionButton(BaseButton):
 		Determine when a button should be removed depending on how many times it has been pressed
 	"""
 
-	Type = ButtonType
+	Type: Final[ButtonType] = ButtonType
 
 	def __init__(self, *, emoji: str, linked_to: ReactionButton.Type, **kwargs):
 		super().__init__(name=kwargs.get('name'), event=kwargs.get('event'), skip=kwargs.get('skip'))
