@@ -311,7 +311,9 @@ class BaseMenu(metaclass=abc.ABCMeta):
     
     @staticmethod
     def separate(values: Sequence[Any]) -> Tuple[List[discord.Embed], List[str]]:
-        """|static method| Sorts all embeds and strings into a single tuple
+        """|static method|
+        
+        Sorts all embeds and strings into a single tuple
 
         Parameters
         ----------
@@ -332,7 +334,9 @@ class BaseMenu(metaclass=abc.ABCMeta):
     
     @staticmethod
     def all_embeds(values: Sequence[Any]) -> bool:
-        """|static method| Tests to see if all items in the sequence are of type :class:`discord.Embed`
+        """|static method|
+        
+        Tests to see if all items in the sequence are of type :class:`discord.Embed`
         
         Parameters
         ----------
@@ -349,7 +353,9 @@ class BaseMenu(metaclass=abc.ABCMeta):
     
     @staticmethod
     def all_strings(values: Sequence[Any]) -> bool:
-        """|static method| Tests to see if all items in the sequence are of type :class:`str`
+        """|static method|
+        
+        Tests to see if all items in the sequence are of type :class:`str`
         
         Parameters
         ----------
@@ -399,8 +405,11 @@ class BaseMenu(metaclass=abc.ABCMeta):
         return None
     
     @classmethod
-    def remove_limit(cls):
-        """|class method| Remove the limits currently set for menu's"""
+    def remove_limit(cls) -> None:
+        """|class method|
+        
+        Remove the limits currently set for menu's
+        """
         cls._sessions_limited = False
         cls._sessions_limit_details = None
     
@@ -448,7 +457,9 @@ class BaseMenu(metaclass=abc.ABCMeta):
     
     @classmethod
     def get_sessions_count(cls) -> int:
-        """|class method| Returns the number of active sessions
+        """|class method|
+        
+        Returns the number of active sessions
         
         Returns
         -------
@@ -457,8 +468,10 @@ class BaseMenu(metaclass=abc.ABCMeta):
         return len(cls._active_sessions)
     
     @classmethod
-    def set_sessions_limit(cls, limit: int, per: str='guild', message: str='Too many active menus. Wait for other menus to be finished.'):
-        """|class method| Sets the amount of menu sessions that can be active at the same time per guild, channel, or member
+    def set_sessions_limit(cls, limit: int, per: str='guild', message: str='Too many active menus. Wait for other menus to be finished.') -> None:
+        """|class method|
+        
+        Sets the amount of menu sessions that can be active at the same time per guild, channel, or member
 
         Parameters
         ----------
@@ -491,8 +504,10 @@ class BaseMenu(metaclass=abc.ABCMeta):
             cls._sessions_limited = True
     
     @classmethod
-    async def stop_session(cls, name: str, include_all: bool=False):
-        """|coro class method| Stop a specific menu with the supplied name
+    async def stop_session(cls, name: str, include_all: bool=False) -> None:
+        """|coro class method|
+        
+        Stop a specific menu with the supplied name
         
         Parameters
         ----------
@@ -520,6 +535,12 @@ class BaseMenu(metaclass=abc.ABCMeta):
     @classmethod
     async def stop_all_sessions(cls):
         """|coro class method| Stops all sessions that are currently running"""
+    @classmethod
+    async def stop_all_sessions(cls) -> None:
+        """|coro class method|
+        
+        Stops ALL menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) that are currently running
+        """
         while cls._active_sessions:
             session = cls._active_sessions[0]
             await session.stop()
@@ -877,8 +898,10 @@ class BaseMenu(metaclass=abc.ABCMeta):
                         raise MenuException(f'When using parameter "send_to" in {class_name}.start(), the channel {send_to} was not found')
 
     @ensure_not_primed
-    async def add_from_messages(self, messages: Sequence[discord.Message]):
-        """|coro| Add pages to the menu using the message object itself
+    async def add_from_messages(self, messages: Sequence[discord.Message]) -> None:
+        """|coro|
+        
+        Add pages to the menu using the message object itself
         
         Parameters
         ----------
@@ -914,8 +937,10 @@ class BaseMenu(metaclass=abc.ABCMeta):
             raise MenuException('All messages were not of type discord.Message')
     
     @ensure_not_primed
-    async def add_from_ids(self, messageable: discord.abc.Messageable, message_ids: Sequence[int]):
-        """|coro| Add pages to the menu using the IDs of messages
+    async def add_from_ids(self, messageable: discord.abc.Messageable, message_ids: Sequence[int]) -> None:
+        """|coro|
+        
+        Add pages to the menu using the IDs of messages
         
         Parameters
         ----------
@@ -964,7 +989,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
             raise MenuException('Not all message IDs were of type int')
     
     @ensure_not_primed
-    def clear_all_row_data(self):
+    def clear_all_row_data(self) -> None:
         """Delete all the data thats been added using :meth:`add_row()`
         
         Raises
@@ -978,7 +1003,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
             raise MenuSettingsMismatch('Cannot clear all row data when the menu_type is not set as TypeEmbedDynamic')
     
     @ensure_not_primed
-    def add_row(self, data: str):
+    def add_row(self, data: str) -> None:
         """Add text to the embed page by rows of data
         
         Parameters
@@ -1001,7 +1026,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
             raise MenuSettingsMismatch('add_row() can only be used with a menu_type of TypeEmbedDynamic')
     
     @ensure_not_primed
-    def set_main_pages(self, *embeds: discord.Embed):
+    def set_main_pages(self, *embeds: discord.Embed) -> None:
         """On a menu with a `menu_type` of :attr:`TypeEmbedDynamic`, set the pages you would like to show first. These embeds will be shown before the embeds that contain your data
         
         Parameters
@@ -1027,7 +1052,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
             self._main_page_contents.append(embed)
 
     @ensure_not_primed
-    def set_last_pages(self, *embeds: discord.Embed):
+    def set_last_pages(self, *embeds: discord.Embed) -> None:
         """On a menu with a `menu_type` of :attr:`TypeEmbedDynamic`, set the pages you would like to show last. These embeds will be shown after the embeds that contain your data
         
         Parameters
@@ -1053,7 +1078,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
             self._last_page_contents.append(embed)
     
     @ensure_not_primed
-    def add_page(self, page: Union[discord.Embed, str]):
+    def add_page(self, page: Union[discord.Embed, str]) -> None:
         """Add a page to the menu
         
         Parameters
@@ -1081,7 +1106,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
             raise MenuSettingsMismatch('add_page method cannot be used with the current menu_type')
     
     @ensure_not_primed
-    def add_pages(self, pages: Sequence[Union[discord.Embed, str]]):
+    def add_pages(self, pages: Sequence[Union[discord.Embed, str]]) -> None:
         """Add multiple pages to the menu at once
         
         Parameters
@@ -1099,7 +1124,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
             self.add_page(page)
     
     @ensure_not_primed
-    def remove_all_pages(self):
+    def remove_all_pages(self) -> None:
         """Remove all pages from the menu
         
         Raises
@@ -1109,7 +1134,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         self._pages.clear()
     
     @ensure_not_primed
-    def remove_page(self, page_number: int):
+    def remove_page(self, page_number: int) -> None:
         """Remove a page from the menu
         
         Parameters
@@ -1129,7 +1154,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
             else:
                 raise InvalidPage(f'Page number invalid. Must be from 1 - {len(self._pages)}')
     
-    def set_on_timeout(self, func: Callable[[Any], None]):
+    def set_on_timeout(self, func: Callable[[Any], None]) -> None:
         """Set the function to be called when the menu times out
 
         Parameters
@@ -1145,11 +1170,11 @@ class BaseMenu(metaclass=abc.ABCMeta):
         if not callable(func): raise MenuException('Parameter "func" must be callable')
         self._on_timeout_details = func
     
-    def remove_on_timeout(self):
+    def remove_on_timeout(self) -> None:
         """Remove the timeout call to the function you have set when the menu times out"""
         self._on_timeout_details = None
     
-    def set_relay(self, func: Callable[[NamedTuple], None], *, only: Optional[List[Union[ReactionButton, ViewButton]]]=None):
+    def set_relay(self, func: Callable[[NamedTuple], None], *, only: Optional[List[Union[ReactionButton, ViewButton]]]=None) -> None:
         """Set a function to be called with a given set of information when a button is pressed on the menu. The information passed is `RelayPayload`, a named tuple.
         The named tuple contains the following attributes:
 
@@ -1175,6 +1200,6 @@ class BaseMenu(metaclass=abc.ABCMeta):
         else:
             raise IncorrectType('When setting the relay, argument "func" must be callable')
     
-    def remove_relay(self):
+    def remove_relay(self) -> None:
         """Remove the relay that's been set"""
         self._relay_info = None

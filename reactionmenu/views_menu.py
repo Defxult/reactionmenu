@@ -198,8 +198,10 @@ class ViewMenu(BaseMenu):
         else:
             return page
     
-    async def update(self, *, new_pages: Union[List[Union[discord.Embed, str]], None], new_buttons: Union[List[ViewButton], None]):
-        """|coro| When the menu is running, update the pages or buttons 
+    async def update(self, *, new_pages: Union[List[Union[discord.Embed, str]], None], new_buttons: Union[List[ViewButton], None]) -> None:
+        """|coro|
+        
+        When the menu is running, update the pages or buttons 
         
         Parameters
         ----------
@@ -293,7 +295,7 @@ class ViewMenu(BaseMenu):
             
             await self._msg.edit(**kwargs_to_pass)
     
-    def randomize_button_styles(self):
+    def randomize_button_styles(self) -> None:
         """Set all buttons currently registered to the menu to a random :class:`discord.ButtonStyle` excluding link buttons"""
         all_styles = (
             discord.ButtonStyle.blurple,
@@ -304,7 +306,7 @@ class ViewMenu(BaseMenu):
         for btn in [button for button in self._buttons if button.style not in (discord.ButtonStyle.link, discord.ButtonStyle.url)]:
             btn.style = random.choice(all_styles)
     
-    def set_button_styles(self, style: discord.ButtonStyle):
+    def set_button_styles(self, style: discord.ButtonStyle) -> None:
         """Set all buttons currently registered to the menu to the specified :class:`discord.ButtonStyle` excluding link buttons
         
         Parameters
@@ -315,8 +317,10 @@ class ViewMenu(BaseMenu):
         for btn in [button for button in self._buttons if button.style not in (discord.ButtonStyle.link, discord.ButtonStyle.url)]:
             btn.style = style
 
-    async def refresh_menu_buttons(self):
-        """|coro| When the menu is running, update the message to reflect the buttons that were removed, enabled, or disabled"""
+    async def refresh_menu_buttons(self) -> None:
+        """|coro|
+        
+        When the menu is running, update the message to reflect the buttons that were removed, enabled, or disabled"""
         if self._is_running:
             current_buttons = self._buttons.copy()
             self.remove_all_buttons()
@@ -327,7 +331,7 @@ class ViewMenu(BaseMenu):
                 self.add_button(btn)
             await self._msg.edit(view=self._view)
     
-    def remove_button(self, button: ViewButton):
+    def remove_button(self, button: ViewButton) -> None:
         """Remove a button from the menu
         
         Parameters
@@ -346,14 +350,14 @@ class ViewMenu(BaseMenu):
         else:
             raise ButtonNotFound('Cannot remove a button that is not registered')
     
-    def remove_all_buttons(self):
+    def remove_all_buttons(self) -> None:
         """Remove all buttons from the menu"""
         for btn in self._buttons:
             btn._menu = None
         self._buttons.clear()
         self._view.clear_items()
     
-    def disable_button(self, button: ViewButton):
+    def disable_button(self, button: ViewButton) -> None:
         """Disable a button on the menu
         
         Parameters
@@ -371,12 +375,12 @@ class ViewMenu(BaseMenu):
         else:
             raise ButtonNotFound('Cannot disable a button that is not registered')
     
-    def disable_all_buttons(self):
+    def disable_all_buttons(self) -> None:
         """Disable all buttons on the menu"""
         for btn in self._buttons:
             btn.disabled = True
     
-    def enable_button(self, button: ViewButton):
+    def enable_button(self, button: ViewButton) -> None:
         """Enable the specified button
         
         Parameters
@@ -394,7 +398,7 @@ class ViewMenu(BaseMenu):
         else:
             raise ButtonNotFound('Cannot enable a button that is not registered')
     
-    def enable_all_buttons(self):
+    def enable_all_buttons(self) -> None:
         """Enable all buttons on the menu"""
         for btn in self._buttons:
             btn.disabled = False
@@ -446,7 +450,7 @@ class ViewMenu(BaseMenu):
             button.custom_id = f'{button.custom_id}_{id(button)}'
     
     @ensure_not_primed
-    def add_button(self, button: ViewButton):
+    def add_button(self, button: ViewButton) -> None:
         """Register a button to the menu
         
         Parameters
@@ -640,8 +644,10 @@ class ViewMenu(BaseMenu):
 
         await self._contact_relay(inter.user, button)
 
-    async def stop(self, *, delete_menu_message: bool=False, remove_buttons: bool=False, disable_buttons: bool=False):
-        """|coro| Stops the process of the menu with the option of deleting the menu's message, removing the buttons, or disabling the buttons upon stop
+    async def stop(self, *, delete_menu_message: bool=False, remove_buttons: bool=False, disable_buttons: bool=False) -> None:
+        """|coro|
+        
+        Stops the process of the menu with the option of deleting the menu's message, removing the buttons, or disabling the buttons upon stop
         
         Parameters
         ----------
@@ -690,8 +696,10 @@ class ViewMenu(BaseMenu):
                 await self._handle_on_timeout()
     
     @ensure_not_primed
-    async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel]]=None, reply: bool=False):
-        """|coro| Start the menu
+    async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel]]=None, reply: bool=False) -> None:
+        """|coro|
+        
+        Start the menu
         
         Parameters
         ----------

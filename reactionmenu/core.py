@@ -149,8 +149,10 @@ class ReactionMenu(BaseMenu):
 		return self._auto_turn_every
 	
 	@classmethod
-	def update_all_turn_every(cls, *, turn_every: Union[int, float]):
-		"""|class method| Update the amount of seconds to wait before going to the next page for all active auto-paginated sessions. When updated, the new value doesn't go into effect until the last
+	def update_all_turn_every(cls, *, turn_every: Union[int, float]) -> None:
+		"""|class method|
+		
+		Update the amount of seconds to wait before going to the next page for all active auto-paginated sessions. When updated, the new value doesn't go into effect until the last
 		round of waiting (:param:`turn_every`) completes for each menu
 		
 		Warning
@@ -175,8 +177,10 @@ class ReactionMenu(BaseMenu):
 			raise ReactionMenuException('Parameter "turn_every" must be greater than or equal to one')
 	
 	@classmethod
-	async def stop_all_auto_sessions(cls):
-		"""|coro class method| Stops all auto-paginated sessions that are currently running"""
+	async def stop_all_auto_sessions(cls) -> None:
+		"""|coro class method|
+		
+		Stops all auto-paginated sessions that are currently running"""
 		auto_sessions = [session for session in cls._active_sessions if session.auto_paginator]
 		for session in auto_sessions:
 			await session.stop()
@@ -270,7 +274,7 @@ class ReactionMenu(BaseMenu):
 			raise ReactionMenuException(f'Parameter "search_by" expected "name", "emoji", or "type", got {search_by!r}')
 
 	@ensure_not_primed
-	def add_button(self, button: ReactionButton):
+	def add_button(self, button: ReactionButton) -> None:
 		"""Adds a button to the menu. Buttons can also be linked to custom embeds. So when you press the emoji you've assigned, it goes to that page and is separate from the normal menu
 
 		Parameters
@@ -290,7 +294,7 @@ class ReactionMenu(BaseMenu):
 		self._buttons.append(button)
 	
 	@ensure_not_primed
-	def remove_button(self, button: ReactionButton):
+	def remove_button(self, button: ReactionButton) -> None:
 		"""Remove a button from the menu
 
 		Parameters
@@ -310,7 +314,7 @@ class ReactionMenu(BaseMenu):
 			raise ButtonNotFound('Cannot remove a button that is not registered')
 	
 	@ensure_not_primed
-	def remove_all_buttons(self):
+	def remove_all_buttons(self) -> None:
 		"""Remove all buttons from the menu
 		
 		Raises
@@ -321,7 +325,7 @@ class ReactionMenu(BaseMenu):
 			btn._menu = None
 		self._buttons.clear()
 	
-	def refresh_auto_pagination_data(self, *data: Union[str, discord.Embed]):
+	def refresh_auto_pagination_data(self, *data: Union[str, discord.Embed]) -> None:
 		"""Update the data displayed in the auto-pagination menu. When refreshed, the new data doesn't go into effect until the last round of waiting (what you set for `turn_every`) completes
 		
 		Parameters
@@ -349,7 +353,7 @@ class ReactionMenu(BaseMenu):
 			raise ReactionMenuException('ReactionMenu is not set as auto-paginator')
 	
 	@ensure_not_primed
-	def set_as_auto_paginator(self, *, turn_every: Union[int, float]):
+	def set_as_auto_paginator(self, *, turn_every: Union[int, float]) -> None:
 		"""Set the menu to turn pages on it's own every x seconds. If this is set, reactions will not be applied to the menu
 		
 		Warning
@@ -373,7 +377,7 @@ class ReactionMenu(BaseMenu):
 		else:
 			raise ReactionMenuException('Parameter "turn_every" must be greater than or equal to one')
 			
-	def update_turn_every(self, *, turn_every: Union[int, float]):
+	def update_turn_every(self, *, turn_every: Union[int, float]) -> None:
 		"""Change the amount of seconds to wait before going to the next page. When updated, the new value doesn't go into effect until the last round of waiting (:param:`turn_every`) completes
 		
 		Warning
@@ -620,8 +624,10 @@ class ReactionMenu(BaseMenu):
 						await update_and_dispatch(emoji, user, btn)
 						await self._msg.edit(embed=btn.custom_embed)
 
-	async def stop(self, *, delete_menu_message=False, clear_reactions=False):
-		"""|coro| Stops the process of the menu with the option of deleting the menu's message or clearing reactions upon stop
+	async def stop(self, *, delete_menu_message=False, clear_reactions=False) -> None:
+		"""|coro|
+		
+		Stops the process of the menu with the option of deleting the menu's message or clearing reactions upon stop
 		
 		Parameters
 		----------
@@ -675,8 +681,10 @@ class ReactionMenu(BaseMenu):
 				self._auto_paginator = False
 		
 	@ensure_not_primed
-	async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel]]=None, reply: bool=False):
-		"""|coro| Start the menu
+	async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel]]=None, reply: bool=False) -> None:
+		"""|coro|
+		
+		Start the menu
 
 		Parameters
 		----------
