@@ -111,7 +111,7 @@ Discords Buttons feature has been implemented using pycord. Meaning this library
 * *changed* `ReactionButton` names are now case sensitive if you were to `get` a button
 * *changed* Getting a button with `ReactionMenu` has been replaced by a new method
   * Old: `ReactionMenu.get_button_by_name(name: str)`
-  * New: `ReactionMenu.get_button(identity: Union[str, int], *, search_by='name')`
+  * New: `ReactionMenu.get_button(identity: Union[str, int], *, search_by='name')`. This method now returns only a `list` of buttons instead of either a single button or multiple buttons
 * *changed* Setting the `ID_CALLER` information is different now. See the documentation for proper implementation
 
 ## v2.0.3 » Aug. 18, 2021

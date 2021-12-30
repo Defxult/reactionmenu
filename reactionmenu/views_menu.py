@@ -469,7 +469,7 @@ class ViewMenu(BaseMenu):
         self._view.add_item(button)
         self._buttons.append(button)
     
-    def get_button(self, identity: str, *, search_by: str='label') -> Union[ViewButton, List[ViewButton]]:
+    def get_button(self, identity: str, *, search_by: str='label') -> List[ViewButton]:
         """Get a button that has been registered to the menu by it's label, custom_id, or name
         
         Parameters
@@ -483,7 +483,7 @@ class ViewMenu(BaseMenu):
         
         Returns
         -------
-        Union[:class:`ViewButton`, List[:class:`ViewButton`]]: The button(s) matching the given identity. Can be :class:`None` if the button was not found
+        List[:class:`ViewButton`]: The button(s) matching the given identity
         
         Raises
         ------
@@ -494,24 +494,15 @@ class ViewMenu(BaseMenu):
 
         if search_by == 'label':
             matched_labels: List[ViewButton] = [btn for btn in self._buttons if btn.label and btn.label == identity]
-            if matched_labels:
-                return matched_labels[0] if len(matched_labels) == 1 else matched_labels
-            else:
-                return None
+            return matched_labels
         
         elif search_by == 'id':
             matched_ids: List[ViewButton] = [btn for btn in self._buttons if btn.custom_id and btn.custom_id.startswith(identity)]
-            if matched_ids:
-                return matched_ids[0] if len(matched_ids) == 1 else matched_ids
-            else:
-                return None
+            return matched_ids
         
         elif search_by == 'name':
             matched_names: List[ViewButton] = [btn for btn in self._buttons if btn.name and btn.name == identity]
-            if matched_names:
-                return matched_names[0] if len(matched_names) == 1 else matched_names
-            else:
-                return None
+            return matched_names
         
         else:
             raise ViewMenuException(f'Parameter "search_by" expected "label", "id", or "name", got {search_by!r}')

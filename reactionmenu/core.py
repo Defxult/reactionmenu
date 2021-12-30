@@ -228,7 +228,7 @@ class ReactionMenu(BaseMenu):
 		if self in ReactionMenu._active_sessions:
 			ReactionMenu._active_sessions.remove(self)
 	
-	def get_button(self, identity: Union[str, int], *, search_by: str='name') -> Union[ReactionButton, List[ReactionButton]]:
+	def get_button(self, identity: Union[str, int], *, search_by: str='name') -> List[ReactionButton]:
 		"""Get a button that has been registered to the menu by name, emoji, or type
 
 		Parameters
@@ -242,7 +242,7 @@ class ReactionMenu(BaseMenu):
 
 		Returns
 		-------
-		Union[:class:`ReactionButton`, List[:class:`ReactionButton`]]: The button(s) matching the given identity. Can be :class:`None` if the button was not found
+		List[:class:`ReactionButton`]: The button(s) matching the given identity
 		
 		Raises
 		------
@@ -253,24 +253,18 @@ class ReactionMenu(BaseMenu):
 			identity = str(identity)
 
 		if search_by == 'name':
-			matched_names = [btn for btn in self._buttons if btn.name == identity]
-			if matched_names:
-				return matched_names[0] if len(matched_names) == 1 else matched_names
-			else:
-				return None
+			matched_names: List[ReactionButton] = [btn for btn in self._buttons if btn.name == identity]
+			return matched_names
 
 		elif search_by == 'emoji':
 			for btn in self._buttons:
 				if btn.emoji == identity:
-					return btn
-			return None
+					return [btn]
+			return []
 		
 		elif search_by == 'type':
-			matched_types = [btn for btn in self._buttons if btn.linked_to == identity]
-			if matched_types:
-				return matched_types[0] if len(matched_types) == 1 else matched_types
-			else:
-				return None
+			matched_types: List[ReactionButton] = [btn for btn in self._buttons if btn.linked_to == identity]
+			return matched_types
 		
 		else:
 			raise ReactionMenuException(f'Parameter "search_by" expected "name", "emoji", or "type", got {search_by!r}')
