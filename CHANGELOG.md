@@ -25,6 +25,10 @@ If you have used or are currently using this library and would like to upgrade, 
 * `RM|VM` Added the ability to test whether all items in a sequence are of type `discord.Embed` or `str`
   * `ReactionMenu.all_embeds(values: Sequence[Any])`
   * `ReactionMenu.all_strings(values: Sequence[Any])`
+* `RM|VM` Added the ability to filter all active menu's into separate lists
+  * `ReactionMenu.split_sessions()`
+* `RM|VM` Added the ability to stop all `ReactionMenu`'s or `ViewMenu`'s
+  * `ReactionMenu.stop_only(session_type: str)`
 * `RM` Added factory methods for `ReactionButton`
   * `ReactionButton.back()` 
   * `ReactionButton.next()` 

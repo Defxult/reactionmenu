@@ -454,6 +454,26 @@ class BaseMenu(metaclass=abc.ABCMeta):
             return sessions[0] if len(sessions) == 1 else sessions
         else:
             return None
+    @classmethod
+    def split_sessions(cls) -> Tuple[List[ReactionMenu], List[ViewMenu]]:
+        """|class method|
+        
+        Separate ALL menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) into two different lists accessible from a single :class:`tuple`
+
+        Returns
+        -------
+        Tuple[List[:class:`ReactionMenu`], List[:class:`ViewMenu`]]: Can be an :class:`tuple` with two empty lists if there are no active sessions
+
+        Example
+        -------
+        >>> reaction_menus, view_menus = .split_sessions()
+        """
+        rm = []
+        vm = []
+        for session in cls._active_sessions:
+            if session.__class__.__name__ == 'ReactionMenu': rm.append(session)
+            elif  session.__class__.__name__ == 'ViewMenu':  vm.append(session)
+        return (rm, vm)
     
     @classmethod
     def get_sessions_count(cls) -> int:
@@ -535,6 +555,32 @@ class BaseMenu(metaclass=abc.ABCMeta):
     @classmethod
     async def stop_all_sessions(cls):
         """|coro class method| Stops all sessions that are currently running"""
+    async def stop_only(cls, session_type: str) -> None:
+        """|coro class method|
+
+        Stops all :class:`ReactionMenu`'s or :class:`ViewMenu`'s that are currently running
+
+        Parameters
+        ----------
+        session_type: :class:`str`
+            Can be "reaction" to stop all :class:`ReactionMenu`'s or "view" to stop all :class:`ViewMenu`'s
+        
+        Raises
+        ------
+        - `MenuException`: The parameter given was not recognized
+        """
+        session_type = session_type.lower()
+        if session_type in ('reaction', 'view'):
+            rms, vms = cls.split_sessions()
+            if session_type == 'reaction':
+                for rm in rms:
+                    await rm.stop()
+            else:
+                for vm in vms:
+                    await vm.stop() 
+        else:
+            raise MenuException(f'Parameter "session_type" not recognized. Expected "reaction" or "view", got {session_type!r}')
+    
     @classmethod
     async def stop_all_sessions(cls) -> None:
         """|coro class method|
