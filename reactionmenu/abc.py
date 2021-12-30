@@ -557,8 +557,6 @@ class BaseMenu(metaclass=abc.ABCMeta):
             raise MenuException(f'Menu with name {name!r} was not found in the list of active menu sessions')
 
     @classmethod
-    async def stop_all_sessions(cls):
-        """|coro class method| Stops all sessions that are currently running"""
     async def stop_only(cls, session_type: str) -> None:
         """|coro class method|
 
