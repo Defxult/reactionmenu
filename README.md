@@ -7,13 +7,13 @@
 
 ![python_version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue)
 
-### reactionmenu 3.0 • beta testing
+### reactionmenu 3.0 • beta
 </div>
 
 ---
-As a lot of you may now, the development of discord.py has ended. Discord will be pushing breaking changes to their API in the future, so it would be unwise to stick with a library that is no longer being maintained. With that said, a lot of developers are searching for alternatives to replace discord.py. There are plenty of forks out there, but from what I've seen a majority of developers are migrating over to [pycord](https://github.com/Pycord-Development/pycord). I've tested pycord with this library and it works well. Pycord is the Discord library I have chosen to continue development of this library. Pycord has a release date of January 7, 2022.
+As a lot of you may now, the development of discord.py has ended. Discord will be pushing breaking changes to their API in the future, so it would be unwise to stick with a library that is no longer being maintained. With that said, a lot of developers are searching for alternatives to replace discord.py. There are plenty of forks out there, but from what I've seen a majority of developers are migrating over to [pycord](https://github.com/Pycord-Development/pycord). I've tested pycord with this library and it works well. Pycord is the Discord library I have chosen to continue development of this library. Pycord has a release date of January 7th, 2022.
 
-If you've previously used this library and plan on updating to 3.0, I suggest reading the readme once more. A lot of things have stayed the same, but yet a handful of things have changed. If you decide to test out reactionmenu 3.0 and discover any bugs, please submit an [issue](https://github.com/Defxult/reactionmenu/issues/new/choose).
+If you've previously used this library and plan on updating to 3.0, I suggest reading the documentation again because a lot has changed. If you discover any bugs, please submit an [issue](https://github.com/Defxult/reactionmenu/issues/new/choose).
 
 ---
 
