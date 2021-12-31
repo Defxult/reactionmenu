@@ -946,7 +946,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
                         raise MenuException(f'When using parameter "send_to" in {class_name}.start(), the channel {send_to} was not found')
 
     def set_page_director_style(self, style_id: int) -> None:
-        """Set how the page numbers dictating what page you are one (in the footer of an embed/regular message) are displayed
+        """Set how the page numbers dictating what page you are on (in the footer of an embed/regular message) are displayed
 
         Parameters
         ----------
