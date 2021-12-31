@@ -194,7 +194,7 @@ class reactionmenu.ReactionButton(*, emoji: str, linked_to: ButtonType, **kwargs
     * `ReactionMenu.remove_all_buttons()`
     * `ReactionMenu.remove_button(button: ReactionButton)`
     * `ReactionMenu.get_button(identity: Union[str, int], *, search_by='name')`
-    * `ReactionButton.set_caller_details(func, *args, **kwargs)`
+    * `ReactionButton.set_caller_details(func: Callable[..., None], *args, **kwargs)`
 
 
 ### All ButtonTypes
@@ -247,7 +247,7 @@ Remove all buttons with `menu.remove_all_buttons()`. You can also remove an indi
 ### ReactionButtons with ReactionButton.Type.CALLER
 `ReactionButton.Type.CALLER` buttons are used to implement your own functionality into the menu. Maybe you want to add a button that creates a text channel, sends a message, or add something to a database, whatever it may be. In order to work with `ReactionButton.Type.CALLER`, use the class method below.
 
-* `ReactionButton.set_caller_details(func, *args, **kwargs)`
+* `ReactionButton.set_caller_details(func: Callable[..., None], *args, **kwargs)`
   
 This class method is used to setup a function and it's arguments that are later called when the button is pressed. The `ReactionButton` constructor has the kwarg `details`, and that's what you'll use with `.set_caller_details()` to assign the values needed. Some examples are below on how to properly implement `ReactionButton.Type.CALLER`
 
@@ -284,14 +284,14 @@ The `ReactionButton` class comes with a set factory methods (class methods) that
 	* `emoji`: "🔢"
 	* `linked_to`: `ReactionButton.Type.GO_TO_PAGE`
 * `ReactionButton.end_session()`
-	* emoji: "⏹️"
-	* linked_to: `ReactionButton.Type.END_SESSION`
+	* `emoji`: "⏹️"
+	* `linked_to`: `ReactionButton.Type.END_SESSION`
 * `ReactionButton.all()`
   * Returns a `list` of `ReactionButton` in the following order
   * `.go_to_first_page()` `.back()` `.next()` `.go_to_last_page()` `.go_to_page()` `.end_session()`
 * `ReactionButton.skip(emoji: str, action: str, amount: int)`
-  * emoji: `<emoji>`
-  * linked_to: `ReactionButton.Type.SKIP`
+  * `emoji`: `<emoji>`
+  * `linked_to`: `ReactionButton.Type.SKIP`
 
 ### Auto-pagination
 
@@ -361,7 +361,7 @@ menu.add_button(button)
 ### ReactionMenu Relays
 Menu relays are functions that are called anytime a button that is apart of a menu is pressed. It is considered as an extension of a `ReactionButton` with a `linked_to` of `ReactionButton.Type.CALLER`. Unlike caller buttons which provides no details about the interactions on the menu, relays do.
 * Associated methods
-  * `ReactionMenu.set_relay(func: object, *, only: List[ReactionButton]=None)`
+  * `ReactionMenu.set_relay(func: Callable[[NamedTuple], None], *, only: List[ReactionButton]=None)`
   * `ReactionMenu.remove_relay()`
 
 When creating a function for your relay, that function must contain a single positional argument. When a button is pressed, a `RelayPayload` object (a named tuple) is passed to that function. The attributes of `RelayPayload` are:
@@ -618,11 +618,11 @@ from reactionmenu import ViewMenu, ViewButton
 
 menu = ViewMenu(ctx, menu_type=ViewMenu.TypeEmbed)
 
-# Link Button
+# Link button
 link_button = ViewButton(style=discord.ButtonStyle.link, emoji='🌍', label='Link to Google', url='https://google.com')
 menu.add_button(link_button)
 
-# skip button
+# Skip button
 skip = ViewButton(style=discord.ButtonStyle.primary, label='+5', custom_id=ViewButton.ID_SKIP, skip=ViewButton.Skip(action='+', amount=5))
 menu.add_button(skip)
 
@@ -680,7 +680,7 @@ async def menu(ctx):
 @bot.command()
 async def disable(ctx):
     menu = ViewMenu.get_session('test')
-    link_button = menu.get_button('Link', search_by='label')
+    link_button = menu[0].get_button('Link', search_by='label')
     
     menu.disable_button(link_button)
     await menu.refresh_menu_buttons()
@@ -703,9 +703,9 @@ await menu.update(new_pages=[hello_embed, goodbye_embed], new_buttons=[link_butt
 The `ViewButton` class comes with a set factory methods (class methods) that returns a `ViewButton` with parameters set according to their `custom_id` (excluding link buttons).
 
 * `ViewButton.link(label: str, url: str)`
-  * style: `discord.ButtonStyle.link`
-  * label: `<label>`
-  * url: `<url>`
+  * `style`: `discord.ButtonStyle.link`
+  * `label`: `<label>`
+  * `url`: `<url>`
 * `ViewButton.back()`
   * `style`: `discord.ButtonStyle.gray`
   * `label`: "Back"
@@ -734,9 +734,9 @@ The `ViewButton` class comes with a set factory methods (class methods) that ret
   * Returns a `list` of `ViewButton` in the following order
   * `.go_to_first_page()` `.back()` `.next()` `.go_to_last_page()` `.go_to_page()` `.end_session()`
 * `ViewButton.skip(label: str, action: str, amount: int)`
-  * style: `discord.ButtonStyle.gray`
-  * label: `<label>`
-  * custom_id: `ViewButton.ID_SKIP`
+  * `style`: `discord.ButtonStyle.gray`
+  * `label`: `<label>`
+  * `custom_id`: `ViewButton.ID_SKIP`
 
 ```py
 menu = ViewMenu(ctx, ...)
@@ -777,7 +777,7 @@ menu.add_button(button_2)
 ### ViewMenu Relays
 Menu relays are functions that are called anytime a button that is apart of a menu is pressed. It is considered as an extension of a `ViewButton` with an ID of `ViewButton.ID_CALLER`. Unlike caller buttons which provides no details about the interactions on the menu, relays do.
 * Associated methods
-  * `ViewMenu.set_relay(func: object, *, only: List[ViewButton]=None)`
+  * `ViewMenu.set_relay(func: Callable[[NamedTuple], None], *, only: List[ViewButton]=None)`
   * `ViewMenu.remove_relay()`
 
 When creating a function for your relay, that function must contain a single positional argument. When a button is pressed, a `RelayPayload` object (a named tuple) is passed to that function. The attributes of `RelayPayload` are:
