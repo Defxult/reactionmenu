@@ -68,8 +68,6 @@ GB = TypeVar('GB')
 class _PageController:
     """A helper class to control the pagination process"""
 
-    __slots__ = ('pages', 'index')
-
     def __init__(self, pages: List[Union[discord.Embed, str]]):
         self.pages = pages
         self.index = 0
@@ -353,9 +351,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         -------
         :class:`bool`: Can return `False` if the sequence is empty
         """
-        if len(values) > 0:
-            return all([isinstance(item, discord.Embed) for item in values])
-        return False
+        return all([isinstance(item, discord.Embed) for item in values]) if values else False
     
     @staticmethod
     def all_strings(values: Sequence[Any]) -> bool:
@@ -372,9 +368,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         -------
         :class:`bool`: Can return `False` if the sequence is empty
         """
-        if len(values) > 0:
-            return all([isinstance(item, str) for item in values])
-        return False
+        return all([isinstance(item, str) for item in values]) if values else False
     
     @classmethod
     def _all_menu_types(cls) -> tuple:
