@@ -29,6 +29,8 @@ If you have used or are currently using this library and would like to upgrade, 
   * `ReactionMenu.split_sessions()`
 * `RM|VM` Added the ability to stop all `ReactionMenu`'s or `ViewMenu`'s
   * `ReactionMenu.stop_only(session_type: str)`
+* `RM|VM` Added a method that allows you to set the page director style from a set of pre-defined styles
+  * `ReactionMenu.set_page_director_style(style_id: int)`
 * `RM` Added factory methods for `ReactionButton`
   * `ReactionButton.back()` 
   * `ReactionButton.next()` 
