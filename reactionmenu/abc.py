@@ -97,7 +97,7 @@ class _PageController:
             self.validate_index()
             amount -= 1
     
-    def skip(self, skip: BaseButton.Skip) -> Union[discord.Embed, str]:
+    def skip(self, skip: _BaseButton.Skip) -> Union[discord.Embed, str]:
         """Return the page that the skip value was set to"""
         self.skip_loop(skip.action, skip.amount)
         return self.validate_index()
@@ -151,14 +151,14 @@ class PaginationEmojis:
     GO_TO_PAGE: Final[str] =  	'🔢'
     END_SESSION: Final[str] = 	'⏹️'
 
-class BaseButton(Generic[GB], metaclass=abc.ABCMeta):
+class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
 
     Emojis: Final[PaginationEmojis] = PaginationEmojis
 
-    def __init__(self, name: str, event: BaseButton.Event, skip: BaseButton.Skip):
+    def __init__(self, name: str, event: _BaseButton.Event, skip: _BaseButton.Skip):
         self.name: str = name
-        self.event: BaseButton.Event = event
-        self.skip: BaseButton.Skip = skip
+        self.event: _BaseButton.Event = event
+        self.skip: _BaseButton.Skip = skip
         self.__clicked_by = set()
         self.__total_clicks = 0
         self.__last_clicked: datetime = None
@@ -243,7 +243,7 @@ class BaseButton(Generic[GB], metaclass=abc.ABCMeta):
             else:
                 raise MenuException('The value for parameter "event_type" was not recognized')
 
-class BaseMenu(metaclass=abc.ABCMeta):
+class _BaseMenu(metaclass=abc.ABCMeta):
     TypeEmbed: Final[int] = 1
     TypeEmbedDynamic: Final[int] = 2
     TypeText: Final[int] = 3
@@ -621,7 +621,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         -------
         :class:`int`: The amount of pages that have been added to the menu. If the `menu_type` is :attr:`TypeEmbedDynamic`, the amount of pages is not known until after the menu has started and will return a value of 0
         """
-        if self._menu_type == BaseMenu.TypeEmbedDynamic:
+        if self._menu_type == _BaseMenu.TypeEmbedDynamic:
             return len(self._pages) if self._is_running else 0
         else:
             return len(self._pages)
@@ -712,7 +712,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
                 if self._last_page_contents:
                     self._pages.extend(self._last_page_contents)
             
-            self._refresh_page_director_info(BaseMenu.TypeEmbedDynamic, self._pages)
+            self._refresh_page_director_info(_BaseMenu.TypeEmbedDynamic, self._pages)
             cls = self.__class__
 
             # make sure data has been added to create at least 1 page
@@ -750,11 +750,11 @@ class BaseMenu(metaclass=abc.ABCMeta):
     def _determine_kwargs(self, content: Union[discord.Embed, str]) -> dict:
         """Determine the `inter.response.edit_message()` and :meth:`_msg.edit()` kwargs for the pagination process. Used in :meth:`ViewMenu._paginate()` and :meth:`ReactionMenu._paginate()`"""
         kwargs = {
-            'embed' if self._menu_type in (BaseMenu.TypeEmbed, BaseMenu.TypeEmbedDynamic) else 'content' : content
+            'embed' if self._menu_type in (_BaseMenu.TypeEmbed, _BaseMenu.TypeEmbedDynamic) else 'content' : content
             # Note to self: Take a look at the note below as to why the following item in this dict is commented out
             #'view' : self._view
         }
-        if self.__class__.__name__ != 'ViewMenu' and self._menu_type == BaseMenu.TypeText:
+        if self.__class__.__name__ != 'ViewMenu' and self._menu_type == _BaseMenu.TypeText:
             kwargs['allowed_mentions'] = self.allowed_mentions
         return kwargs
         """
@@ -779,9 +779,9 @@ class BaseMenu(metaclass=abc.ABCMeta):
             The pagination contents
         """
         if self.show_page_director:
-            if type_ not in (BaseMenu.TypeEmbed, BaseMenu.TypeEmbedDynamic, BaseMenu.TypeText): raise Exception('Needs to be of type BaseMenu.TypeEmbed, BaseMenu.TypeEmbedDynamic or BaseMenu.TypeText')
+            if type_ not in (_BaseMenu.TypeEmbed, _BaseMenu.TypeEmbedDynamic, _BaseMenu.TypeText): raise Exception('Needs to be of type _BaseMenu.TypeEmbed, _BaseMenu.TypeEmbedDynamic or _BaseMenu.TypeText')
             
-            if type_ == BaseMenu.TypeEmbed or type_ == BaseMenu.TypeEmbedDynamic:
+            if type_ == _BaseMenu.TypeEmbed or type_ == _BaseMenu.TypeEmbedDynamic:
                 page = 1
                 outof = len(pages)
                 for embed in pages:
@@ -858,7 +858,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         else:
             return f'Page {counter}/{total_pages}'
     
-    async def _contact_relay(self, member: discord.Member, button: BaseButton):
+    async def _contact_relay(self, member: discord.Member, button: _BaseButton):
         """|coro| Dispatch the information to the relay function if a relay has been set"""
         if self._relay_info:
             func: object = self._relay_info.func
@@ -994,7 +994,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         - `MenuException`: All messages were not of type :class:`discord.Message`
         """
         if all([isinstance(msg, discord.Message) for msg in messages]):
-            if self._menu_type == BaseMenu.TypeEmbed:
+            if self._menu_type == _BaseMenu.TypeEmbed:
                 embeds = []
                 for m in messages:
                     if m.embeds:
@@ -1004,7 +1004,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
                 else:
                     raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no embeds were found in the messages provided')
             
-            elif self._menu_type == BaseMenu.TypeText:
+            elif self._menu_type == _BaseMenu.TypeText:
                 content = []
                 for m in messages:
                     if m.content:
@@ -1044,7 +1044,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
                 except (discord.NotFound, discord.Forbidden, discord.HTTPException) as error:
                     raise MenuException(f'An error occurred when attempting to retreive message with the ID {msg_id}: {error}')
             
-            if self._menu_type == BaseMenu.TypeEmbed:
+            if self._menu_type == _BaseMenu.TypeEmbed:
                 embeds_to_paginate = []
                 for msg in to_paginate:
                     if msg.embeds:
@@ -1055,7 +1055,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
                 else:
                     raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no embeds were found in the messages provided')
             
-            elif self._menu_type == BaseMenu.TypeText:
+            elif self._menu_type == _BaseMenu.TypeText:
                 content_to_paginate = []
                 for msg in to_paginate:
                     if msg.content:
@@ -1077,7 +1077,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `MenuSettingsMismatch`: This method was called but the menus `menu_type` was not :attr:`TypeEmbedDynamic`
         """
-        if self._menu_type == BaseMenu.TypeEmbedDynamic:
+        if self._menu_type == _BaseMenu.TypeEmbedDynamic:
             self._dynamic_data_builder.clear()
         else:
             raise MenuSettingsMismatch('Cannot clear all row data when the menu_type is not set as TypeEmbedDynamic')
@@ -1097,7 +1097,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         - `MenuSettingsMismatch`: This method was called but the menus `menu_type` was not :attr:`TypeEmbedDynamic`
         - `MissingSetting`: The kwarg "rows_requested" (int) has not been set for the menu
         """
-        if self._menu_type == BaseMenu.TypeEmbedDynamic:
+        if self._menu_type == _BaseMenu.TypeEmbedDynamic:
             if self.rows_requested:
                 self._dynamic_data_builder.append(str(data))
             else:
@@ -1123,7 +1123,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         """
         if not embeds: raise MenuException('The argument list when setting main pages was empty')
         if not all([isinstance(e, discord.Embed) for e in embeds]): raise IncorrectType('All values in the argument list when setting main pages were not of type discord.Embed')
-        if self._menu_type != BaseMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_main_pages is only available for menus with menu_type TypeEmbedDynamic')
+        if self._menu_type != _BaseMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_main_pages is only available for menus with menu_type TypeEmbedDynamic')
         
         # if they've set any values, remove it. Each set should be from the call and should not stack
         self._main_page_contents.clear()
@@ -1149,7 +1149,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         """
         if not embeds: raise MenuException('The argument list when setting last pages was empty')
         if not all([isinstance(e, discord.Embed) for e in embeds]): raise IncorrectType('All values in the argument list when setting last pages were not of type discord.Embed')
-        if self._menu_type != BaseMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_last_pages is only available for menus with menu_type TypeEmbedDynamic')
+        if self._menu_type != _BaseMenu.TypeEmbedDynamic: raise MenuSettingsMismatch('Method set_last_pages is only available for menus with menu_type TypeEmbedDynamic')
         
         # if they've set any values, remove it. Each set should be from the call and should not stack
         self._last_page_contents.clear()

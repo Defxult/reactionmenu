@@ -31,13 +31,13 @@ from typing import Final, List, Optional, Union
 import discord
 from discord.ext.commands import Context
 
-from .abc import BaseMenu, _PageController
+from .abc import _BaseMenu, _PageController
 from .buttons import ReactionButton
 from .decorators import ensure_not_primed
 from .errors import *
 
 
-class ReactionMenu(BaseMenu):
+class ReactionMenu(_BaseMenu):
 	"""A class to create a discord pagination menu using reactions
 
 	Parameters

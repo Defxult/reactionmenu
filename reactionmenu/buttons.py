@@ -35,11 +35,11 @@ from collections import namedtuple
 import discord
 from discord.ext.commands import Command
 
-from .abc import BaseButton, PaginationEmojis
+from .abc import _BaseButton, PaginationEmojis
 from .errors import IncorrectType
 
 
-class ViewButton(discord.ui.Button, BaseButton):
+class ViewButton(discord.ui.Button, _BaseButton):
 	"""A helper class for :class:`ViewMenu`. Represents a UI button.
 	
 	Parameters
@@ -96,7 +96,7 @@ class ViewButton(discord.ui.Button, BaseButton):
 		**kwargs
 		):
 		super().__init__(style=style, label=label, disabled=disabled, custom_id=custom_id, url=url, emoji=emoji, row=None)
-		BaseButton.__init__(self, name=kwargs.get('name'), event=event, skip=kwargs.get('skip'))
+		_BaseButton.__init__(self, name=kwargs.get('name'), event=event, skip=kwargs.get('skip'))
 		self.followup = followup
 		
 		# abc
@@ -252,7 +252,7 @@ class ViewButton(discord.ui.Button, BaseButton):
 		- label: `<label>`
 		- custom_id: :attr:`ViewButton.ID_SKIP`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label=label, custom_id=ViewButton.ID_SKIP, skip=BaseButton.Skip(action, amount))
+		return cls(style=discord.ButtonStyle.gray, label=label, custom_id=ViewButton.ID_SKIP, skip=_BaseButton.Skip(action, amount))
 	
 	@classmethod
 	def link(cls, label: str, url: str) -> ViewButton:
@@ -367,7 +367,7 @@ class ButtonType:
 		}
 		return dict_[type_]
 
-class ReactionButton(BaseButton):
+class ReactionButton(_BaseButton):
 	"""A helper class for :class:`ReactionMenu`. Represents a reaction.
 	
 	Parameters
@@ -458,7 +458,7 @@ class ReactionButton(BaseButton):
 		- emoji: `<emoji>`
 		- linked_to: :attr:`ReactionButton.Type.SKIP`
 		"""
-		return cls(emoji=emoji, linked_to=cls.Type.SKIP, skip=BaseButton.Skip(action, amount))
+		return cls(emoji=emoji, linked_to=cls.Type.SKIP, skip=_BaseButton.Skip(action, amount))
 	
 	@classmethod
 	def back(cls) -> ReactionButton:

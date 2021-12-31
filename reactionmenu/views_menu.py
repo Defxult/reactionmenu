@@ -32,12 +32,12 @@ import discord
 from discord.ext.commands import Context
 
 from . import ViewButton
-from .abc import _DEFAULT_STYLE, BaseMenu, _PageController
+from .abc import _DEFAULT_STYLE, _BaseMenu, _PageController
 from .decorators import ensure_not_primed
 from .errors import *
 
 
-class ViewMenu(BaseMenu):
+class ViewMenu(_BaseMenu):
     """A class to create a discord pagination menu using :class:`discord.ui.View`
     
     Parameters
