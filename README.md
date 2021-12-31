@@ -1,7 +1,9 @@
 ![logo](https://cdn.discordapp.com/attachments/655186216060321816/820162226316378162/discord.jpg)
 <div align="center">
 
-<!-- [![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/month)](https://pepy.tech/project/reactionmenu) [![Downloads](https://pepy.tech/badge/reactionmenu/week)](https://pepy.tech/project/reactionmenu) -->
+[![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) 
+<!-- [![Downloads](https://pepy.tech/badge/reactionmenu/month)](https://pepy.tech/project/reactionmenu)
+[![Downloads](https://pepy.tech/badge/reactionmenu/week)](https://pepy.tech/project/reactionmenu) -->
 
 ![python_version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue)
 
@@ -11,21 +13,15 @@
 ---
 As a lot of you may now, the development of discord.py has ended. Discord will be pushing breaking changes to their API in the future, so it would be unwise to stick with a library that is no longer being maintained. With that said, a lot of developers are searching for alternatives to replace discord.py. There are plenty of forks out there, but from what I've seen a majority of developers are migrating over to [pycord](https://github.com/Pycord-Development/pycord). I've tested pycord with this library and it works well. Pycord is the Discord library I have chosen to continue development of this library. Pycord has a release date of January 7, 2022. After further testing (most likely a few days after), reactionmenu 3.0 will be released to PyPi.
 
-What happens to reactionmenu on January 7, 2022?
-* Support for discord.py will end
-* A separate branch will be made for discord.py & dislash.py (aka versions <=2.0.3) so users still have access to the old code if they wish to use it; although it will not be maintained
-* This branch (3.0) will be merged into the main branch
-* This library will be solely dependant on pycord
-
 If you've previously used this library and plan on updating to 3.0, I suggest reading the readme once more. A lot of things have stayed the same, but yet a handful of things have changed. If you decide to test out reactionmenu 3.0 and discover any bugs, please submit an [issue](https://github.com/Defxult/reactionmenu/issues/new/choose).
 
-P.S: Thank you all for using reactionmenu! Over 75,000 downloads! 😃 Never thought I'd see a number that high for this library! 
+
 
 ## Requirements
 * Python 3.8 or higher
 * reactionmenu 3.0 development version
 ```
-$ pip install -U git+https://github.com/Defxult/reactionmenu@3.0
+$ pip install -U git+https://github.com/Defxult/reactionmenu
 ```
 
 * pycord 2.0 development version
