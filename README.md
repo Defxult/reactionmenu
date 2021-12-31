@@ -1,7 +1,7 @@
 ![logo](https://cdn.discordapp.com/attachments/655186216060321816/820162226316378162/discord.jpg)
 <div align="center">
 
-[![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu)
+<!-- [![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) -->
 
 ![python_version](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue)
 
@@ -10,40 +10,14 @@
 
 </div>
 
-## reactionmenu 3.0
-The [reactionmenu 3.0 branch](https://github.com/Defxult/reactionmenu/tree/3.0) is now available for testing. 
 
-As a lot of you may now, the development of discord.py has ended. Discord will be pushing breaking changes to their API in the future, so it would be unwise to stick with a library that is no longer being maintained. With that said, a lot of developers are searching for alternatives to replace discord.py. There are plenty of forks out there, but from what I've seen a majority of developers are migrating over to [pycord](https://github.com/Pycord-Development/pycord). I've tested pycord with this library and it works well. Pycord is the Discord library I have chosen to continue development of this library. Pycord has a release date of January 7, 2022. After further testing (most likely a few days after), reactionmenu 3.0 will be released to PyPi.
-
-What happens to reactionmenu on January 7, 2022?
-* Support for discord.py will end
-* A separate branch will be made for discord.py & dislash.py (aka versions <=2.0.4) so users still have access to the old code if they wish to use it; although it will not be maintained
-* The 3.0 branch will be merged into the main branch
-* This library will be solely dependant on pycord
-
-If you've previously used this library and plan on updating to 3.0, I suggest reading the readme once more. A lot of things have stayed the same, but yet a handful of things have changed. If you decide to test out reactionmenu 3.0 and discover any bugs, please submit an [issue](https://github.com/Defxult/reactionmenu/issues/new/choose).
-
-P.S: Thank you all for using reactionmenu! Over 75,000 downloads! 😃 Never thought I'd see a number that high for this library! 
-
----
-
-## GitHub Updates vs PyPI Updates
-The GitHub version of this library will always have the latest changes, fixes, and additions before the [PyPI](https://pypi.org/project/reactionmenu/) version. You can install the GitHub version by doing:
+## Notice
+With the end of discord.py, this branch will permanently stay at `v2.0.4`. This branch will not be maintained and it's sole purpose is so users still have access to the old code if they wish to use it. If you wish to install this branch, you can do so with the following:
 ```
-$ pip install git+https://github.com/Defxult/reactionmenu.git
-```
-You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the GitHub version of this library. If you are using the PyPI version of this library, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
-
-* `GitHub: v2.0.4`
-* `PyPI: v2.0.3`
-
----
-
-## How to install
-```
-$ pip install reactionmenu
+$ pip install git+https://github.com/Defxult/reactionmenu@discord-and-dislash
 ```
 ---
+
 ## Showcase
 ![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
 
