@@ -11,11 +11,19 @@
 </div>
 
 ---
-As a lot of you may now, the development of discord.py has ended. Discord will be pushing breaking changes to their API in the future, so it would be unwise to stick with a library that is no longer being maintained. With that said, a lot of developers are searching for alternatives to replace discord.py. There are plenty of forks out there, but from what I've seen a majority of developers are migrating over to [pycord](https://github.com/Pycord-Development/pycord). I've tested pycord with this library and it works well. Pycord is the Discord library I have chosen to continue development of this library. Pycord has a release date of January 7, 2022. After further testing (most likely a few days after), reactionmenu 3.0 will be released to PyPi.
+As a lot of you may now, the development of discord.py has ended. Discord will be pushing breaking changes to their API in the future, so it would be unwise to stick with a library that is no longer being maintained. With that said, a lot of developers are searching for alternatives to replace discord.py. There are plenty of forks out there, but from what I've seen a majority of developers are migrating over to [pycord](https://github.com/Pycord-Development/pycord). I've tested pycord with this library and it works well. Pycord is the Discord library I have chosen to continue development of this library. Pycord has a release date of January 7, 2022.
 
 If you've previously used this library and plan on updating to 3.0, I suggest reading the readme once more. A lot of things have stayed the same, but yet a handful of things have changed. If you decide to test out reactionmenu 3.0 and discover any bugs, please submit an [issue](https://github.com/Defxult/reactionmenu/issues/new/choose).
 
+---
 
+<b>When will reactionmenu 3.0 be released to PyPI?</b><br>
+It is scheduled to be released on January 15th, 2022
+
+<b>Can you still access the old code?</b><br>
+Yes. The old code can be found on this [branch](https://github.com/Defxult/reactionmenu/tree/discord-and-dislash)
+
+---
 
 ## Requirements
 * Python 3.8 or higher
