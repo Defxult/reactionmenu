@@ -12,7 +12,7 @@
 
 
 ## Notice
-With the end of discord.py, this branch will permanently stay at `v2.0.4`. This branch will not be maintained and it's sole purpose is so users still have access to the old code if they wish to use it. If you wish to install this branch, you can do so with the following:
+With the end of discord.py, this branch will permanently stay at `v2.0.4`. This branch will not be maintained and it's sole purpose is so users still have access to the old code if they wish to use it. The code here is dependent on discord.py & dislash.py, and both libraries are now archived. If you wish to install this branch, you can do so with the following:
 ```
 $ pip install git+https://github.com/Defxult/reactionmenu@discord-and-dislash
 ```
