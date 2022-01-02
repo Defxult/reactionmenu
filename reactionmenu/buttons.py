@@ -186,7 +186,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		
 		@classmethod
 		def set_caller_details(cls, func: Callable[..., None], *args, **kwargs) -> NamedTuple:
-			"""|class method| Set the parameters for the function you set for a :class:`ViewButton` with the custom_id :attr:`ViewButton.ID_CALLER`
+			"""|class method|
+			
+			Set the parameters for the function you set for a :class:`ViewButton` with the custom_id :attr:`ViewButton.ID_CALLER`
 			
 			Parameters
 			----------
@@ -246,7 +248,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	@classmethod
 	def skip(cls, label: str, action: str, amount: int) -> ViewButton:
-		"""|class method| A factory method that returns a :class:`ViewButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ViewButton` with the following parameters set:
 		
 		- style: `discord.ButtonStyle.gray`
 		- label: `<label>`
@@ -256,7 +260,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	@classmethod
 	def link(cls, label: str, url: str) -> ViewButton:
-		"""|class method| A factory method that returns a :class:`ViewButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ViewButton` with the following parameters set:
 		
 		- style: `discord.ButtonStyle.link`
 		- label: `<label>`
@@ -266,7 +272,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	@classmethod
 	def back(cls) -> ViewButton:
-		"""|class method| A factory method that returns a :class:`ViewButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ViewButton` with the following parameters set:
 		
 		- style: `discord.ButtonStyle.gray`
 		- label: "Back"
@@ -276,7 +284,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	@classmethod
 	def next(cls) -> ViewButton:
-		"""|class method| A factory method that returns a :class:`ViewButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ViewButton` with the following parameters set:
 		
 		- style: `discord.ButtonStyle.gray`
 		- label: "Next"
@@ -286,7 +296,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	@classmethod
 	def go_to_first_page(cls) -> ViewButton:
-		"""|class method| A factory method that returns a :class:`ViewButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ViewButton` with the following parameters set:
 		
 		- style: `discord.ButtonStyle.gray`
 		- label: "First Page"
@@ -296,7 +308,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	@classmethod
 	def go_to_last_page(cls) -> ViewButton:
-		"""|class method| A factory method that returns a :class:`ViewButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ViewButton` with the following parameters set:
 		
 		- style: `discord.ButtonStyle.gray`
 		- label: "Last Page"
@@ -306,7 +320,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	@classmethod
 	def go_to_page(cls) -> ViewButton:
-		"""|class method| A factory method that returns a :class:`ViewButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ViewButton` with the following parameters set:
 		
 		- style: `discord.ButtonStyle.gray`
 		- label: "Page Selection"
@@ -316,7 +332,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	@classmethod
 	def end_session(cls) -> ViewButton:
-		"""|class method| A factory method that returns a :class:`ViewButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ViewButton` with the following parameters set:
 		
 		- style: `discord.ButtonStyle.gray`
 		- label: "Close"
@@ -326,7 +344,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	@classmethod
 	def all(cls) -> List[ViewButton]:
-		"""|class method| A factory method that returns a `list` of all base navigation buttons. Base navigation buttons are :class:`ViewButton` with the `custom_id`:
+		"""|class method|
+		
+		A factory method that returns a `list` of all base navigation buttons. Base navigation buttons are :class:`ViewButton` with the `custom_id`:
 		
 		- :attr:`ViewButton.ID_GO_TO_FIRST_PAGE`
 		- :attr:`ViewButton.ID_PREVIOUS_PAGE`
@@ -414,7 +434,9 @@ class ReactionButton(_BaseButton):
 	
 	@classmethod
 	def set_caller_details(cls, func: Callable[..., None], *args, **kwargs) -> NamedTuple:
-		"""|class method| Set the parameters for the function you set for a :class:`ReactionButton` with a `linked_to` of :attr:`ReactionButton.Type.CALLER`
+		"""|class method|
+		
+		Set the parameters for the function you set for a :class:`ReactionButton` with a `linked_to` of :attr:`ReactionButton.Type.CALLER`
 
 		Parameters
 		----------
@@ -453,7 +475,9 @@ class ReactionButton(_BaseButton):
 	
 	@classmethod
 	def skip(cls, emoji: str, action: str, amount: int) -> ReactionButton:
-		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ReactionButton` with the following parameters set:
 		
 		- emoji: `<emoji>`
 		- linked_to: :attr:`ReactionButton.Type.SKIP`
@@ -462,7 +486,9 @@ class ReactionButton(_BaseButton):
 	
 	@classmethod
 	def back(cls) -> ReactionButton:
-		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ReactionButton` with the following parameters set:
 		
 		- emoji: ◀️
 		- linked_to: :attr:`ReactionButton.Type.PREVIOUS_PAGE`
@@ -471,7 +497,9 @@ class ReactionButton(_BaseButton):
 	
 	@classmethod
 	def next(cls) -> ReactionButton:
-		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ReactionButton` with the following parameters set:
 		
 		- emoji: ▶️
 		- linked_to: :attr:`ReactionButton.Type.NEXT_PAGE`
@@ -480,7 +508,9 @@ class ReactionButton(_BaseButton):
 	
 	@classmethod
 	def go_to_first_page(cls) -> ReactionButton:
-		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ReactionButton` with the following parameters set:
 		
 		- emoji: ⏪
 		- linked_to: :attr:`ReactionButton.Type.GO_TO_FIRST_PAGE`
@@ -489,7 +519,9 @@ class ReactionButton(_BaseButton):
 	
 	@classmethod
 	def go_to_last_page(cls) -> ReactionButton:
-		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ReactionButton` with the following parameters set:
 		
 		- emoji: ⏩
 		- linked_to: :attr:`ReactionButton.Type.GO_TO_LAST_PAGE`
@@ -498,7 +530,9 @@ class ReactionButton(_BaseButton):
 	
 	@classmethod
 	def go_to_page(cls) -> ReactionButton:
-		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ReactionButton` with the following parameters set:
 		
 		- emoji: 🔢
 		- linked_to: :attr:`ReactionButton.Type.GO_TO_PAGE`
@@ -507,7 +541,9 @@ class ReactionButton(_BaseButton):
 	
 	@classmethod
 	def end_session(cls) -> ReactionButton:
-		"""|class method| A factory method that returns a :class:`ReactionButton` with the following parameters set:
+		"""|class method|
+		
+		A factory method that returns a :class:`ReactionButton` with the following parameters set:
 		
 		- emoji: ⏹️
 		- linked_to: :attr:`ReactionButton.Type.END_SESSION`
@@ -516,7 +552,9 @@ class ReactionButton(_BaseButton):
 	
 	@classmethod
 	def all(cls) -> List[ReactionButton]:
-		"""|class method| A factory method that returns a `list` of all base navigation buttons. Base navigation buttons are :class:`ReactionButton` with a `linked_to` of:
+		"""|class method|
+		
+		A factory method that returns a `list` of all base navigation buttons. Base navigation buttons are :class:`ReactionButton` with a `linked_to` of:
 		
 		- :attr:`ReactionButton.Type.GO_TO_FIRST_PAGE`
 		- :attr:`ReactionButton.Type.PREVIOUS_PAGE`
