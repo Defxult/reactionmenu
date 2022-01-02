@@ -855,7 +855,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     async def _contact_relay(self, member: discord.Member, button: _BaseButton):
         """|coro| Dispatch the information to the relay function if a relay has been set"""
         if self._relay_info:
-            func: object = self._relay_info.func
+            func: Callable = self._relay_info.func
             only = self._relay_info.only
             RelayPayload = collections.namedtuple('RelayPayload', ['member', 'button'])
             payload = RelayPayload(member=member, button=button)
