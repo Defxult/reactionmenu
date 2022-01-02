@@ -107,7 +107,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		is_link_button = True if self.style == discord.ButtonStyle.link else False
 		return f'<ViewButton label={self.label!r} custom_id={ViewButton._get_id_name_from_id(str(self.custom_id), is_link_button=is_link_button)} style={self.style} emoji={self.emoji!r} url={self.url} disabled={self.disabled}{total_clicks}>'
 
-	async def callback(self, interaction: discord.Interaction):
+	async def callback(self, interaction: discord.Interaction) -> None:
 		"""*INTERNAL USE ONLY* - The callback function from the button interaction. This should not be manually called"""
 		await self._menu._paginate(self, interaction)
 	
@@ -217,7 +217,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 				raise IncorrectType('Parameter "func" must be callable')
 
 	@classmethod
-	def _base_nav_buttons(cls) -> Tuple[str]:
+	def _base_nav_buttons(cls) -> Tuple[str, str, str, str, str]:
 		return (ViewButton.ID_PREVIOUS_PAGE, ViewButton.ID_NEXT_PAGE, ViewButton.ID_GO_TO_FIRST_PAGE, ViewButton.ID_GO_TO_LAST_PAGE, ViewButton.ID_GO_TO_PAGE)
 	
 	@classmethod
@@ -372,7 +372,7 @@ class ButtonType:
 	SKIP: Final[int] = 8
 
 	@classmethod
-	def _get_buttontype_name_from_type(cls, type_: int):
+	def _get_buttontype_name_from_type(cls, type_: int) -> str:
 		"""|class method| Used to determine the `linked_to` type. Returns the :class:`str` representation of that type"""
 		dict_ = {
 			cls.NEXT_PAGE : 'ButtonType.NEXT_PAGE',

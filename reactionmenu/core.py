@@ -189,7 +189,7 @@ class ReactionMenu(_BaseMenu):
 		"""Return a list of all the emojis registered to each button. Can return an empty list if there are no buttons"""
 		return [button.emoji for button in self._buttons]
 	
-	async def _handle_event(self, button: ReactionButton):
+	async def _handle_event(self, button: ReactionButton) -> None:
 		"""|coro| If an event is set, remove the buttons from the menu when the click requirement has been met"""
 		if button.event:
 			event_type = button.event.event_type
@@ -200,7 +200,7 @@ class ReactionMenu(_BaseMenu):
 					self.remove_button(button)
 					await self._msg.clear_reaction(button.emoji)
 	
-	def _button_add_check(self, button: ReactionButton):
+	def _button_add_check(self, button: ReactionButton) -> None:
 		if isinstance(button, ReactionButton):
 			if button.emoji not in self._extract_all_emojis():
 				if button.linked_to == ReactionButton.Type.CUSTOM_EMBED and not button.custom_embed:
@@ -227,7 +227,7 @@ class ReactionMenu(_BaseMenu):
 		else:
 			raise IncorrectType(f'Parameter "button" expected ReactionButton, got {button.__class__.__name__}')
 	
-	def _session_done_callback(self, task: asyncio.Task):
+	def _session_done_callback(self, task: asyncio.Task) -> None:
 		self._is_running = False # already set in :meth:`.stop()`, but just in case this was reached without that method being called
 		if self in ReactionMenu._active_sessions:
 			ReactionMenu._active_sessions.remove(self)
@@ -465,7 +465,7 @@ class ReactionMenu(_BaseMenu):
 			ReactionButton.Type.GO_TO_PAGE
 		)]
 	
-	async def _auto_paginate(self, send_to):
+	async def _auto_paginate(self, send_to) -> None:
 		"""|coro| Handles the pagination process for auto-paginator menu's"""
 		if self._menu_type in (ReactionMenu.TypeEmbed, ReactionMenu.TypeText):
 			
@@ -503,7 +503,7 @@ class ReactionMenu(_BaseMenu):
 		else:
 			raise MenuSettingsMismatch('The menu_type for auto-pagination menus must be TypeEmbed or TypeText')
 
-	async def _paginate(self, ready_event: asyncio.Event):
+	async def _paginate(self, ready_event: asyncio.Event) -> None:
 		"""|coro| Handles the pagination process for all menu types"""
 		
 		async def determine_removal(emoji: str, user: Union[discord.Member, discord.User]):
@@ -677,7 +677,7 @@ class ReactionMenu(_BaseMenu):
 				self._is_running = False
 				self._main_session_task.cancel()
 	
-	def _override_dm_settings(self):
+	def _override_dm_settings(self) -> None:
 		"""If a menu session is in a direct message and the menu is set as an auto-paginator, the following settings are disabled/changed because of discord limitations and resource/safety reasons"""
 		if self.in_dms:
 			if self.clear_reactions_after:

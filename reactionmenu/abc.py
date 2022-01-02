@@ -82,7 +82,7 @@ class _PageController:
         """Return the total amount of pages registered to the menu"""
         return len(self.pages) - 1
     
-    def skip_loop(self, action: str, amount: int):
+    def skip_loop(self, action: str, amount: int) -> None:
         """Using `self.index += amount` does not work because this library is used to operating on a +-1 basis. This loop
         provides a simple way to still operate on the +-1 standard.
         """
@@ -193,7 +193,7 @@ class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
         """
         return self.__last_clicked
 
-    def _update_statistics(self, user: Union[discord.Member, discord.User]):
+    def _update_statistics(self, user: Union[discord.Member, discord.User]) -> None:
         self.__clicked_by.add(user)
         self.__total_clicks += 1
         self.__last_clicked = datetime.utcnow()
@@ -375,7 +375,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         return all([isinstance(item, str) for item in values]) if values else False
     
     @classmethod
-    def _all_menu_types(cls) -> tuple:
+    def _all_menu_types(cls) -> Tuple[int, int, int]:
         return (cls.TypeEmbed, cls.TypeEmbedDynamic, cls.TypeText)
     
     @classmethod
@@ -681,12 +681,12 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """
         return self._ctx.guild is None
     
-    def _chunks(self, list_, n):
+    def _chunks(self, list_, n) -> None:
         """Yield successive n-sized chunks from list. Core component of a dynamic menu"""
         for i in range(0, len(list_), n):
             yield list_[i:i + n]
     
-    async def _build_dynamic_pages(self, send_to):
+    async def _build_dynamic_pages(self, send_to) -> None:
         for data_clump in self._chunks(self._dynamic_data_builder, self.rows_requested):
             joined_data = '\n'.join(data_clump)
             if len(joined_data) <= _DYNAMIC_EMBED_LIMIT:
@@ -721,7 +721,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             else:
                 self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0])
     
-    def _display_timeout_warning(self, error: Exception):
+    def _display_timeout_warning(self, error: Exception) -> None:
         warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}'
         warnings.warn(inspect.cleandoc(
             f"""
@@ -732,7 +732,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             """
         ))
     
-    async def _handle_on_timeout(self):
+    async def _handle_on_timeout(self) -> None:
         if self._on_timeout_details and self._menu_timed_out:
             func = self._on_timeout_details
             
@@ -765,7 +765,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             that I was having
         """
     
-    def _refresh_page_director_info(self, type_: int, pages: List[Union[discord.Embed, str]]):
+    def _refresh_page_director_info(self, type_: int, pages: List[Union[discord.Embed, str]]) -> None:
         """Sets the page count at the bottom of embeds/text if set
         
         Parameters
@@ -856,7 +856,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         else:
             return f'Page {counter}/{total_pages}'
     
-    async def _contact_relay(self, member: discord.Member, button: _BaseButton):
+    async def _contact_relay(self, member: discord.Member, button: _BaseButton) -> None:
         """|coro| Dispatch the information to the relay function if a relay has been set"""
         if self._relay_info:
             func: Callable = self._relay_info.func

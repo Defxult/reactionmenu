@@ -26,7 +26,7 @@ import asyncio
 import inspect
 import random
 import re
-from typing import List, Optional, Sequence, Union
+from typing import List, NoReturn, Optional, Sequence, Union
 
 import discord
 from discord.ext.commands import Context
@@ -110,11 +110,11 @@ class ViewMenu(_BaseMenu):
         cls = self.__class__
         return f'<ViewMenu name={self.name!r} owner={str(self._ctx.author)!r} is_running={self._is_running} timeout={self.timeout} menu_type={cls._get_menu_type(self._menu_type)!r}>'
 
-    async def _on_dpy_view_timeout(self):
+    async def _on_dpy_view_timeout(self) -> None:
         self._menu_timed_out = True
         await self.stop(delete_menu_message=self.delete_on_timeout, remove_buttons=self.remove_buttons_on_timeout, disable_buttons=self.disable_buttons_on_timeout)
     
-    async def _on_dpy_view_error(self, error: Exception, item: discord.ui.Item, inter: discord.Interaction):
+    async def _on_dpy_view_error(self, error: Exception, item: discord.ui.Item, inter: discord.Interaction) -> NoReturn:
         try:
             raise error
         finally:
@@ -140,7 +140,7 @@ class ViewMenu(_BaseMenu):
         else:
             raise IncorrectType(f'"timeout" expected int, float, or None, got {value.__class__.__name__}')
     
-    def _check(self, inter: discord.Interaction):
+    def _check(self, inter: discord.Interaction) -> None:
         """Base menu button interaction check"""
         author_pass = False
         if self._ctx.author.id == inter.user.id: author_pass = True
@@ -156,7 +156,7 @@ class ViewMenu(_BaseMenu):
 
         return author_pass
     
-    async def _handle_event(self, button: ViewButton):
+    async def _handle_event(self, button: ViewButton) -> None:
         """|coro| If an event is set, disable/remove the buttons from the menu when the click requirement has been met"""
         if button.event:
             event_type = button.event.event_type
@@ -170,7 +170,7 @@ class ViewMenu(_BaseMenu):
                 
                 await self.refresh_menu_buttons()
     
-    def _remove_director(self, page: Union[discord.Embed, str]):
+    def _remove_director(self, page: Union[discord.Embed, str]) -> Union[discord.Embed, str]:
         """Removes the page director contents from the page. This is used for :meth:`ViewMenu.update()`"""
         style = self.style
         if style is None:
@@ -403,7 +403,7 @@ class ViewMenu(_BaseMenu):
         for btn in self._buttons:
             btn.disabled = False
     
-    def _button_add_check(self, button: ViewButton):
+    def _button_add_check(self, button: ViewButton) -> None:
         """A set of checks to ensure the proper button is being added"""
         # ensure they are using only the ViewButton and not ReactionMenus :class:`ReactionButton`
         if isinstance(button, ViewButton):
@@ -440,7 +440,7 @@ class ViewMenu(_BaseMenu):
         else:
             raise IncorrectType(f'When adding a button to the ViewMenu, the button type must be ViewButton, got {button.__class__.__name__}')
     
-    def _maybe_unique_id(self, button: ViewButton):
+    def _maybe_unique_id(self, button: ViewButton) -> None:
         """Create a unique ID if the `custom_id` for buttons that are allowed to have duplicates
         
             Note ::
@@ -531,7 +531,7 @@ class ViewMenu(_BaseMenu):
         else:
             raise ViewMenuException(f'Parameter "search_by" expected "label", "id", or "name", got {search_by!r}')
 
-    async def _paginate(self, button: ViewButton, inter: discord.Interaction):
+    async def _paginate(self, button: ViewButton, inter: discord.Interaction) -> None:
         """When the button is pressed, handle the pagination process"""
         if not self._check(inter):
             await inter.response.defer()
