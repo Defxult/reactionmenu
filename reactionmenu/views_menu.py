@@ -26,7 +26,7 @@ import asyncio
 import inspect
 import random
 import re
-from typing import List, Optional, Union
+from typing import List, Optional, Sequence, Union
 
 import discord
 from discord.ext.commands import Context
@@ -451,7 +451,7 @@ class ViewMenu(_BaseMenu):
     
     @ensure_not_primed
     def add_button(self, button: ViewButton) -> None:
-        """Register a button to the menu
+        """Add a button to the menu
         
         Parameters
         ----------
@@ -472,6 +472,26 @@ class ViewMenu(_BaseMenu):
         button._menu = self
         self._view.add_item(button)
         self._buttons.append(button)
+    
+    @ensure_not_primed
+    def add_buttons(self, buttons: Sequence[ViewButton]) -> None:
+        """Add multiple buttons to the menu at once
+        
+        Parameters
+        ----------
+        buttons: Sequence[:class:`ViewButton`]
+            The buttons to add
+        
+        Raises
+        ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `MenuSettingsMismatch`: One of the buttons `custom_id` was set as :attr:`ViewButton.ID_CUSTOM_EMBED` but the `menu_type` is :attr:`ViewMenu.TypeText`
+        - `ViewMenuException`: The `custom_id` for a button was not recognized or a button with that `custom_id` has already been added
+        - `TooManyButtons`: There are already 25 buttons on the menu
+        - `IncorrectType`: One or more values supplied in parameter :param:`buttons` was not of type :class:`ViewButton`
+        """
+        for btn in buttons:
+            self.add_button(btn)
     
     def get_button(self, identity: str, *, search_by: str='label') -> List[ViewButton]:
         """Get a button that has been registered to the menu by it's label, custom_id, or name

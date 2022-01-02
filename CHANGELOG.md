@@ -12,8 +12,9 @@ If you have used or are currently using this library and would like to upgrade, 
   * `ReactionMenu.set_relay(..., only: List[ReactionButton]=None)`
 * `RM|VM` Added the ability to remove the timeout method if you have one set
   * `ReactionMenu.remove_on_timeout()`
-* `RM|VM` Added the ability to add multiple pages to the menu at once
+* `RM|VM` Added the ability to add multiple pages/buttons to the menu at once
   * `ReactionMenu.add_pages(pages: Sequence[Union[discord.Embed, str]])`
+  * `ReactionMenu.add_buttons(buttons: Sequence[ReactionButton])`
 * `RM|VM` Added parameter `reply` to the `start` method. Enables the menu message to reply to the message that triggered it
   * `ReactionMenu.start(..., reply: bool=False)`
 * `RM|VM` Added property `ReactionMenu.last_viewed`. Returns the last page that was seen by the user in the pagination process

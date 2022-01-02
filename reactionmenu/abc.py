@@ -306,6 +306,10 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         raise NotImplementedError
     
     @abc.abstractmethod
+    def add_buttons(self):
+        raise NotImplementedError
+    
+    @abc.abstractmethod
     def stop(self):
         raise NotImplementedError
     

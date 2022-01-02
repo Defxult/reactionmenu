@@ -26,7 +26,7 @@ import asyncio
 import inspect
 import itertools
 from threading import Timer
-from typing import Final, List, Optional, Union
+from typing import Final, List, Optional, Sequence, Union
 
 import discord
 from discord.ext.commands import Context
@@ -275,7 +275,7 @@ class ReactionMenu(_BaseMenu):
 
 	@ensure_not_primed
 	def add_button(self, button: ReactionButton) -> None:
-		"""Adds a button to the menu. Buttons can also be linked to custom embeds. So when you press the emoji you've assigned, it goes to that page and is separate from the normal menu
+		"""Add a button to the menu
 
 		Parameters
 		----------
@@ -292,6 +292,25 @@ class ReactionMenu(_BaseMenu):
 		self._button_add_check(button)
 		button._menu = self
 		self._buttons.append(button)
+	
+	@ensure_not_primed
+	def add_buttons(self, buttons: Sequence[ReactionButton]) -> None:
+		"""Add multiple buttons to the menu at once
+		
+		Parameters
+		----------
+		buttons: Sequence[:class:`ReactionButton`]
+			The buttons to add
+
+		Raises
+		------
+		- `MenuAlreadyRunning`: Attempted to call this method after the menu has started
+		- `MissingSetting`: One of the buttons `linked_to` was set as :attr:`ReactionButton.Type.CUSTOM_EMBED` / :attr:`ReactionButton.Type.CALLER` but did not assign the :class:`ReactionButton` kwarg "embed" / "details" a value
+		- `DuplicateButton`: A buttons emoji is already registered as a button
+		- `TooManyButtons`: More than 20 buttons were added. Discord has a reaction limit of 20
+		"""
+		for btn in buttons:
+			self.add_button(btn)
 	
 	@ensure_not_primed
 	def remove_button(self, button: ReactionButton) -> None:
