@@ -20,7 +20,6 @@
 * *changed* Method `ButtonType.caller_details()` has been renamed and moved to `ReactionButton`
   * Old: `Button(..., details=ButtonType.caller_details())`
   * New: `ReactionButton(..., details=ReactionButton.set_caller_details())`
-* *changed* The `ViewMenu.update()` method arguments are now keyword only
 * *removed* `ReactionMenu` parameters `back_button` and `next_button` have been removed. Use `ReactionMenu.add_button()` instead
 * *removed* `ReactionMenu` parameter `config` has been removed/replaced with parameter `menu_type`
 * *removed* Attribute `ReactionMenu.run_time`
@@ -52,6 +51,7 @@
 Discords Buttons feature has been implemented using pycord. Two classes have been renamed/removed to support `discord.ui.View`
 * *removed* `ButtonsMenu` class
   * This has been replaced with `ViewMenu`
+* *changed* The `ViewMenu.update()` method arguments are now keyword only
 * *removed* `ComponentsButton` class
   * This has been replaced with `ViewButton`
 * *changed* All `ComponentsButton` factory methods. They've been renamed and are now apart of the `ViewButton` class
@@ -128,6 +128,7 @@ Discords Buttons feature has been implemented using pycord. Two classes have bee
 
 ##### Miscellaneous
 * Added new exceptions. `ViewMenuException` and `MenuException`. All library exceptions can be caught using `MenuException`
+* Added function `reactionmenu.version_info()`. Used if submitting a GitHub issue
 * Added dunder methods for the library itself and a class
   * `__all__` for `reactionmenu` (`from reactionmenu import *`)
   * `__repr__` for `ViewButton.Followup`
