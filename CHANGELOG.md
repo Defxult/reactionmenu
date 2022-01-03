@@ -2,8 +2,9 @@
 * `RM` = `ReactionMenu`
 * `VM` = `ViewMenu`
 
-## v3.0.0 » After pycord 2.0 officially releases
-If you have used or are currently using this library and would like to upgrade, I suggest reading the breaking changes before the new features. It will make more sense.
+## v3.0.0 » Future release
+#### Library Change
+* With the discontinuation of discord.py, this library is now dependant on [pycord](https://github.com/Pycord-Development/pycord)
 
 #### New Features
 * `RM|VM` Added the ability to paginate through multiple pages in a single button press
