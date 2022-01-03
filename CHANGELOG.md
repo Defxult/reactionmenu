@@ -1,61 +1,6 @@
-## Key
-* `RM` = `ReactionMenu`
-* `VM` = `ViewMenu`
-
 ## v3.0.0 » Future release
 #### Library Change
-* With the discontinuation of discord.py, this library is now dependant on [pycord](https://github.com/Pycord-Development/pycord)
-
-#### New Features
-* `RM|VM` Added the ability to paginate through multiple pages in a single button press
-  * `ReactionButton(..., skip=ReactionButton.Skip(...))`
-* `RM|VM`Added the ability for relay functions to relay only the buttons of your choice instead of relaying all buttons
-  * `ReactionMenu.set_relay(..., only: List[ReactionButton]=None)`
-* `RM|VM` Added the ability to remove the timeout method if you have one set
-  * `ReactionMenu.remove_on_timeout()`
-* `RM|VM` Added the ability to add multiple pages/buttons to the menu at once
-  * `ReactionMenu.add_pages(pages: Sequence[Union[discord.Embed, str]])`
-  * `ReactionMenu.add_buttons(buttons: Sequence[ReactionButton])`
-* `RM|VM` Added parameter `reply` to the `start` method. Enables the menu message to reply to the message that triggered it
-  * `ReactionMenu.start(..., reply: bool=False)`
-* `RM|VM` Added property `ReactionMenu.last_viewed`. Returns the last page that was seen by the user in the pagination process
-* `RM|VM` Added the ability to use a message ID/message object to add the specified message's content into a menu
-  * `ReactionMenu.add_from_ids(messageable: discord.abc.Messageable, message_ids: Sequence[int])`
-  * `ReactionMenu.add_from_messages(messages: Sequence[discord.Message])`
-* `RM|VM` Added the ability to separate embeds and strings
-  * `Reactionmenu.separate(values: Sequence[Any])`
-* `RM|VM` Added the ability to test whether all items in a sequence are of type `discord.Embed` or `str`
-  * `ReactionMenu.all_embeds(values: Sequence[Any])`
-  * `ReactionMenu.all_strings(values: Sequence[Any])`
-* `RM|VM` Added the ability to filter all active menu's into separate lists
-  * `ReactionMenu.split_sessions()`
-* `RM|VM` Added the ability to stop all `ReactionMenu`'s or `ViewMenu`'s
-  * `ReactionMenu.stop_only(session_type: str)`
-* `RM|VM` Added a method that allows you to set the page director style from a set of pre-defined styles
-  * `ReactionMenu.set_page_director_style(style_id: int)`
-* `RM` Added factory methods for `ReactionButton`
-  * `ReactionButton.back()` 
-  * `ReactionButton.next()` 
-  * `ReactionButton.go_to_first_page()` 
-  * `ReactionButton.go_to_last_page()` 
-  * `ReactionButton.go_to_page()` 
-  * `ReactionButton.end_session()` 
-  * `ReactionButton.all()`
-  * `ReactionButton.skip(emoji: str, action: str, amount: int)`
-* `RM` Added attribute `ReactionMenu.remove_extra_emojis`
-* `VM` Added factory methods for `ViewButton`
-  * `ViewButton.link(label: str, url: str)`
-  * `ViewButton.skip(label: str, action: str, amount: int)`
-* `VM` Added methods to set all button styles
-  * `ViewMenu.randomize_button_styles()`
-  * `ViewMenu.set_button_styles(style: discord.ButtonStyle)`
-* `VM` `ViewButton` now has a `name` attribute
-* `VM` Added the ability for method `ViewMenu.get_button()` to get buttons by name
-  * `ViewMenu.get_button(..., search_by='name')`
-* Added new exceptions. `ViewMenuException` and `MenuException`. All library exceptions can be caught using `MenuException`
-* Added dunder methods for the library itself and a class
-  * `__all__` for `reactionmenu` (`from reactionmenu import *`)
-  * `__repr__` for `ViewButton.Followup`
+* With the discontinuation of discord.py, this library is now dependent on [pycord](https://github.com/Pycord-Development/pycord)
 
 #### Breaking Changes
 * *changed* `ReactionMenu.STATIC` and `ReactionMenu.DYNAMIC` have been renamed
@@ -96,15 +41,15 @@
 * *changed* `ReactionMenu.all_can_react` is now `ReactionMenu.all_can_click`
 * *changed* Parameter `turn_every` in methods `ReactionMenu.set_as_auto_paginator()` and `ReactionMenu.update_turn_every()` are now keyword only arguments
 * *changed* A lot of `ReactionMenu` attributes are no longer property getters/setters. They are now normal attributes with type hints
-* *changed* The parameter for method `.get_menu_from_message())` is now positional only
+* *changed* The parameter for method `.get_menu_from_message()` is now positional only
 * *changed* The following items now return only a `list` instead of `list` or `None` (if no sessions/buttons were found). If no sessions/buttons were found, an empty list is returned
-  * `.get_all_dm_sessions()` (method)
-  * `.get_all_sessions()` (method)
-  * `.get_session()` (method)
-  * `.buttons_most_clicked` (property)
-  * `.buttons` (property)
+  * `.get_all_dm_sessions()`
+  * `.get_all_sessions()`
+  * `.get_session()`
+  * `.buttons_most_clicked`
+  * `.buttons`
 
-Discords Buttons feature has been implemented using pycord. Meaning this library is now only dependent on pycord. With that said, two classes have been renamed/removed to support `discord.ui.View`
+Discords Buttons feature has been implemented using pycord. Two classes have been renamed/removed to support `discord.ui.View`
 * *removed* `ButtonsMenu` class
   * This has been replaced with `ViewMenu`
 * *removed* `ComponentsButton` class
@@ -128,6 +73,64 @@ Discords Buttons feature has been implemented using pycord. Meaning this library
   * Old: `ReactionMenu.get_button_by_name(name: str)`
   * New: `ReactionMenu.get_button(identity: Union[str, int], *, search_by='name')`. This method now returns only a `list` of buttons instead of either a single button or multiple buttons
 * *changed* Setting the `ID_CALLER` information is different now. See the documentation for proper implementation
+
+#### New Features
+##### ReactionMenu & ViewMenu
+* Added the ability to paginate through multiple pages in a single button press
+  * `ReactionButton(..., skip=ReactionButton.Skip(...))`
+* Added the ability for relay functions to relay only the buttons of your choice instead of relaying all buttons
+  * `ReactionMenu.set_relay(..., only: List[ReactionButton]=None)`
+* Added the ability to remove the call to a timeout method if you have one set
+  * `ReactionMenu.remove_on_timeout()`
+* Added the ability to add multiple pages/buttons to the menu at once
+  * `ReactionMenu.add_pages(pages: Sequence[Union[discord.Embed, str]])`
+  * `ReactionMenu.add_buttons(buttons: Sequence[ReactionButton])`
+* Added parameter `reply` to the `start` method. Enables the menu message to reply to the message that triggered it
+  * `ReactionMenu.start(..., reply: bool=False)`
+* Added property `ReactionMenu.last_viewed`. Returns the last page that was seen by the user in the pagination process
+* Added the ability to use a message ID/message object to add the specified message's content into a menu
+  * `ReactionMenu.add_from_ids(messageable: discord.abc.Messageable, message_ids: Sequence[int])`
+  * `ReactionMenu.add_from_messages(messages: Sequence[discord.Message])`
+* Added the ability to separate embeds and strings
+  * `Reactionmenu.separate(values: Sequence[Any])`
+* Added the ability to test whether all items in a sequence are of type `discord.Embed` or `str`
+  * `ReactionMenu.all_embeds(values: Sequence[Any])`
+  * `ReactionMenu.all_strings(values: Sequence[Any])`
+* Added the ability to filter all active menu's into separate lists
+  * `ReactionMenu.split_sessions()`
+* Added the ability to stop all `ReactionMenu`'s or `ViewMenu`'s
+  * `ReactionMenu.stop_only(session_type: str)`
+* Added a method that allows you to set the page director style from a set of pre-defined styles
+  * `ReactionMenu.set_page_director_style(style_id: int)`
+
+##### ReactionMenu Only
+* Added factory methods for `ReactionButton`
+  * `ReactionButton.back()` 
+  * `ReactionButton.next()` 
+  * `ReactionButton.go_to_first_page()` 
+  * `ReactionButton.go_to_last_page()` 
+  * `ReactionButton.go_to_page()` 
+  * `ReactionButton.end_session()` 
+  * `ReactionButton.all()`
+  * `ReactionButton.skip(emoji: str, action: str, amount: int)`
+* Added attribute `ReactionMenu.remove_extra_emojis`
+
+##### ViewMenu Only
+* Added factory methods for `ViewButton`
+  * `ViewButton.link(label: str, url: str)`
+  * `ViewButton.skip(label: str, action: str, amount: int)`
+* Added methods to set all button styles
+  * `ViewMenu.randomize_button_styles()`
+  * `ViewMenu.set_button_styles(style: discord.ButtonStyle)`
+* `ViewButton` now has a `name` attribute
+* Added the ability for method `ViewMenu.get_button()` to get buttons by name
+  * `ViewMenu.get_button(..., search_by='name')`
+
+##### Miscellaneous
+* Added new exceptions. `ViewMenuException` and `MenuException`. All library exceptions can be caught using `MenuException`
+* Added dunder methods for the library itself and a class
+  * `__all__` for `reactionmenu` (`from reactionmenu import *`)
+  * `__repr__` for `ViewButton.Followup`
 
 ## v2.0.3 » Aug. 18, 2021
 <details>
