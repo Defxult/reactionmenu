@@ -687,8 +687,8 @@ class ViewMenu(_BaseMenu):
         - `disable_buttons` > `remove_buttons`
 
         Raises
-		------
-		- `discord.DiscordException`: Any exception that can be raised when deleting a message
+        ------
+        - `discord.DiscordException`: Any exception that can be raised when deleting or editing a message
         """
         if self._is_running:
             try:
