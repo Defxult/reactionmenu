@@ -123,7 +123,7 @@ menu.add_page('Its so cold!')
 #### ReactionMenu.TypeText
 A `TypeText` menu is a text based pagination menu. No embeds are involved in the pagination process, only plain text is used.
 
-![showcase-text](https://cdn.discordapp.com/attachments/655186216060321816/840161666108620800/text_showcase.gif)
+![showcase-text](https://cdn.discordapp.com/attachments/655186216060321816/929172629947027466/text_showcase.gif)
 
 #### ReactionMenu.TypeEmbedDynamic
 A dynamic menu is used when you do not know how much information will be applied to the menu. For example, if you were to request information from a database, that information can always change. You query something and you might get 1,500 results back, and the next maybe only 800. A dynamic menu pieces all this information together for you and adds it to an embed page by rows of data. `ReactionMenu.add_row()` is best used in some sort of `Iterable` where everything can be looped through, but only add the amount of data you want to the menu page.
