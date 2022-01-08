@@ -488,7 +488,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         
         Returns
         -------
-        :class:`int`: The amount of active sessions
+        :class:`int`: The amount of ALL menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) that are active
         """
         return len(cls._active_sessions)
     
@@ -496,7 +496,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     def set_sessions_limit(cls, limit: int, per: str='guild', message: str='Too many active menus. Wait for other menus to be finished.') -> None:
         """|class method|
         
-        Sets the amount of menu sessions that can be active at the same time per guild, channel, or member
+        Sets the amount of menu sessions that can be active at the same time per guild, channel, or member. This applies to both :class:`ReactionMenu` & :class:`ViewMenu`
 
         Parameters
         ----------
