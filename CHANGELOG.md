@@ -128,6 +128,9 @@ Discords Buttons feature has been implemented using pycord. Two classes have bee
 
 ##### Miscellaneous
 * The `send_to` parameter in method `.start()` now supports threads
+* Method `.set_on_timeout()` now raises `IncorrectType` instead of `MenuException` if the parameter given was not callable
+* Method `ReactionMenu.add_button()` now also raises `MenuSettingsMismatch`
+* Method `ReactionMenu.refresh_auto_pagination_data()` now raises an error if no data was given in it's parameter
 * Added new exceptions. `ViewMenuException` and `MenuException`. All library exceptions can be caught using `MenuException`
 * Added function `reactionmenu.version_info()`. Used if submitting a GitHub issue
 * Added dunder methods for the library itself and a class

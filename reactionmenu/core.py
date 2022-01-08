@@ -285,9 +285,12 @@ class ReactionMenu(_BaseMenu):
 		Raises
 		------
 		- `MenuAlreadyRunning`: Attempted to call this method after the menu has started
-		- `MissingSetting`: Set the buttons `linked_to` as :attr:`ReactionButton.Type.CUSTOM_EMBED` / :attr:`ReactionButton.Type.CALLER` but did not assign the :class:`ReactionButton` kwarg "embed" / "details" a value
+		- `MissingSetting`: Set the buttons `linked_to` as :attr:`ReactionButton.Type.CALLER` but did not assign the :class:`ReactionButton` kwarg "details" a value
 		- `DuplicateButton`: The emoji used is already registered as a button
 		- `TooManyButtons`: More than 20 buttons were added. Discord has a reaction limit of 20
+		- `IncorrectType`: Parameter :param:`button` was not of type :class:`ReactionButton`
+		- `ReactionMenuException`: When attempting to add a button with the type `ReactionButton.Type.SKIP`, the "skip" kwarg was not set
+		- `MenuSettingsMismatch`: A :class:`ReactionButton` with a `linked_to` of :attr:`ReactionButton.Type.CUSTOM_EMBED` cannot be used when the `menu_type` is `TypeText`
 		"""
 		self._button_add_check(button)
 		button._menu = self
@@ -305,9 +308,12 @@ class ReactionMenu(_BaseMenu):
 		Raises
 		------
 		- `MenuAlreadyRunning`: Attempted to call this method after the menu has started
-		- `MissingSetting`: One of the buttons `linked_to` was set as :attr:`ReactionButton.Type.CUSTOM_EMBED` / :attr:`ReactionButton.Type.CALLER` but did not assign the :class:`ReactionButton` kwarg "embed" / "details" a value
-		- `DuplicateButton`: A buttons emoji is already registered as a button
+		- `MissingSetting`: Set the buttons `linked_to` as :attr:`ReactionButton.Type.CALLER` but did not assign the :class:`ReactionButton` kwarg "details" a value
+		- `DuplicateButton`: The emoji used is already registered as a button
 		- `TooManyButtons`: More than 20 buttons were added. Discord has a reaction limit of 20
+		- `IncorrectType`: Parameter :param:`button` was not of type :class:`ReactionButton`
+		- `ReactionMenuException`: When attempting to add a button with the type `ReactionButton.Type.SKIP`, the "skip" kwarg was not set
+		- `MenuSettingsMismatch`: A :class:`ReactionButton` with a `linked_to` of :attr:`ReactionButton.Type.CUSTOM_EMBED` cannot be used when the `menu_type` is `TypeText`
 		"""
 		for btn in buttons:
 			self.add_button(btn)
@@ -354,17 +360,19 @@ class ReactionMenu(_BaseMenu):
 		
 		Raises
 		------
-		- `ReactionMenuException`: The menu was not set as an auto-paginator menu
+		- `ReactionMenuException`: The menu was not set as an auto-paginator menu or no data was given to refresh
 		- `IncorrectType`: All values in the argument list were not of type :class:`discord.Embed` or :class:`str`
 		"""
 		if self._auto_paginator and self._is_running:
+			if not data:
+				raise ReactionMenuException('Cannot refresh pagination data when no data has been given')
 			if self._menu_type == ReactionMenu.TypeEmbed:
-				if all([isinstance(i, discord.Embed) for i in data]):
+				if ReactionMenu.all_embeds(data):
 					self._auto_data = itertools.cycle(data)
 				else:
 					raise IncorrectType('Parameter "data" expected only discord.Embed values because the current menu_type is TypeEmbed. One or more values were not of type discord.Embed')
 			else:
-				if all([isinstance(i, str) for i in data]):
+				if ReactionMenu.all_strings(data):
 					self._auto_data = itertools.cycle(data)
 				else:
 					raise IncorrectType('Parameter "data" expected only str values because the current menu_type is TypeText. One or more values were not of type str')

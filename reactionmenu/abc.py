@@ -996,7 +996,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         Raises
         ------
         - `MenuSettingsMismatch`: The messages provided did not have the correct values. For example, the `menu_type` was set to `TypeEmbed`, but the messages you've provided only contains text. If the `menu_type` is `TypeEmbed`, only messages with embeds should be provided
-        - `MenuException`: All messages were not of type :class:`discord.Message`
+        - `IncorrectType`: All messages were not of type :class:`discord.Message`
         """
         if all([isinstance(msg, discord.Message) for msg in messages]):
             if self._menu_type == _BaseMenu.TypeEmbed:
@@ -1019,7 +1019,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 else:
                     raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no text (discord.Message.content) was found in the messages provided')
         else:
-            raise MenuException('All messages were not of type discord.Message')
+            raise IncorrectType('All messages were not of type discord.Message')
     
     @ensure_not_primed
     async def add_from_ids(self, messageable: discord.abc.Messageable, message_ids: Sequence[int]) -> None:
@@ -1250,9 +1250,9 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         
         Raises
         ------
-        - `MenuException`: Parameter "func" was not a callable object
+        - `IncorrectType`: Parameter "func" was not a callable object
         """
-        if not callable(func): raise MenuException('Parameter "func" must be callable')
+        if not callable(func): raise IncorrectType('Parameter "func" must be callable')
         self._on_timeout_details = func
     
     def remove_on_timeout(self) -> None:
