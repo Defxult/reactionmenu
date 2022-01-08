@@ -467,7 +467,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        Tuple[List[:class:`ReactionMenu`], List[:class:`ViewMenu`]]: Can be an :class:`tuple` with two empty lists if there are no active sessions
+        Tuple[List[:class:`ReactionMenu`], List[:class:`ViewMenu`]]: Can be a :class:`tuple` with two empty lists if there are no active sessions
 
         Example
         -------

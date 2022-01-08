@@ -685,6 +685,10 @@ class ViewMenu(_BaseMenu):
         Only one option is available when stopping the menu. If you have multiple parameters as `True`, only one will execute
         - `delete_menu_message` > `disable_buttons`
         - `disable_buttons` > `remove_buttons`
+
+        Raises
+		------
+		- `discord.DiscordException`: Any exception that can be raised when deleting a message
         """
         if self._is_running:
             try:
