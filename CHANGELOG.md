@@ -127,6 +127,7 @@ Discords Buttons feature has been implemented using pycord. Two classes have bee
   * `ViewMenu.get_button(..., search_by='name')`
 
 ##### Miscellaneous
+* The `send_to` parameter in method `.start()` now supports threads
 * Added new exceptions. `ViewMenuException` and `MenuException`. All library exceptions can be caught using `MenuException`
 * Added function `reactionmenu.version_info()`. Used if submitting a GitHub issue
 * Added dunder methods for the library itself and a class

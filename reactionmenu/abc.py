@@ -915,20 +915,22 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             if send_to is None:
                 return self._ctx
             else:
-                if not isinstance(send_to, (str, int, discord.TextChannel)):
-                    raise IncorrectType(f'Parameter "send_to" expected str, int, or discord.TextChannel, got {send_to.__class__.__name__}')
+                if not isinstance(send_to, (str, int, discord.TextChannel, discord.Thread)):
+                    raise IncorrectType(f'Parameter "send_to" expected str, int, discord.TextChannel, or discord.Thread, got {send_to.__class__.__name__}')
                 else:
                     class_name = self.__class__.__name__
-                    # before we continue, check if there are any duplicate named channels/no matching names found if a str was provided
+                    all_messageable_channels: List[Union[discord.TextChannel, discord.Thread]] = self._ctx.guild.text_channels + self._ctx.guild.threads
+                    
+                    # before we continue, check if there are any duplicate named text channels or threads/no matching names found if a str was provided
                     if isinstance(send_to, str):
-                        matched_channels = [ch for ch in self._ctx.guild.text_channels if ch.name == send_to]
+                        matched_channels = [ch for ch in all_messageable_channels if ch.name == send_to]
                         if len(matched_channels) == 0:
-                            raise MenuException(f'When using parameter "send_to" in {class_name}.start(), there were no channels with the name {send_to!r}')
+                            raise MenuException(f'When using parameter "send_to" in {class_name}.start(), there were no channels/threads with the name {send_to!r}')
                         
                         elif len(matched_channels) >= 2:
-                            raise MenuException(f'When using parameter "send_to" in {class_name}.start(), there were {len(matched_channels)} channels with the name {send_to!r}. With multiple channels having the same name, the intended channel is unknown')
+                            raise MenuException(f'When using parameter "send_to" in {class_name}.start(), there were {len(matched_channels)} channels/threads with the name {send_to!r}. With multiple channels/threads having the same name, the intended channel is unknown')
                     
-                    for channel in self._ctx.guild.text_channels:
+                    for channel in all_messageable_channels:
                         if isinstance(send_to, str):
                             if channel.name == send_to:
                                 return channel
@@ -940,6 +942,11 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                         elif isinstance(send_to, discord.TextChannel):
                             if channel == send_to:
                                 return channel
+                        
+                        elif isinstance(send_to, discord.Thread):
+                            if channel == send_to:
+                                return channel
+
                     else:
                         raise MenuException(f'When using parameter "send_to" in {class_name}.start(), the channel {send_to} was not found')
 
