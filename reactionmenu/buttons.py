@@ -432,6 +432,15 @@ class ReactionButton(_BaseButton):
 	def __repr__(self):
 		return f'<ReactionButton emoji={self.emoji!r} linked_to={ButtonType._get_buttontype_name_from_type(self.linked_to)} total_clicks={self.total_clicks} name={self.name!r}>'
 	
+	@property
+	def menu(self) -> ReactionMenu:
+		"""
+		Returns
+		-------
+		:class:`ReactionMenu`: The menu the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
+		"""
+		return self._menu
+	
 	@classmethod
 	def set_caller_details(cls, func: Callable[..., None], *args, **kwargs) -> NamedTuple:
 		"""|class method|
@@ -463,15 +472,6 @@ class ReactionButton(_BaseButton):
 			return Details(func=func, args=args, kwargs=kwargs)
 		else:
 			raise IncorrectType('Parameter "func" must be callable')
-	
-	@property
-	def menu(self) -> ReactionMenu:
-		"""
-		Returns
-		-------
-		:class:`ReactionMenu`: The menu the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
-		"""
-		return self._menu
 	
 	@classmethod
 	def skip(cls, emoji: str, action: str, amount: int) -> ReactionButton:
