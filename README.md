@@ -512,6 +512,11 @@ menu.add_page('Its so hot!')
 menu.add_page('Its so cold!')
 ```
 
+#### ViewMenu.TypeText
+A `TypeText` menu is a text based pagination menu. No embeds are involved in the pagination process, only plain text is used.
+
+![text_view_showcase](https://cdn.discordapp.com/attachments/655186216060321816/929744985656549386/text_view_showcase.gif)
+
 #### ViewMenu.TypeEmbedDynamic
 A dynamic menu is used when you do not know how much information will be applied to the menu. For example, if you were to request information from a database, that information can always change. You query something and you might get 1,500 results back, and the next maybe only 800. A dynamic menu pieces all this information together for you and adds it to an embed page by rows of data. `ViewMenu.add_row()` is best used in some sort of `Iterable` where everything can be looped through, but only add the amount of data you want to the menu page.
 > **NOTE:** In a dynamic menu, all added data is placed in the description section of an embed. If you choose to use a `custom_embed`, all text in the description will be overridden with the data you add
