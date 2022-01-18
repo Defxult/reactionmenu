@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help improve the library
+about: Report an issue with v3.0 beta
 title: ''
 labels: v3.0 beta
 assignees: ''
