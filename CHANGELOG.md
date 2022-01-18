@@ -3,7 +3,7 @@
 * `RM` = `ReactionMenu`
 * `TM` = `TextMenu`
 
-## v2.0.4 » GitHub Only
+## v2.0.4 » Jan. 17, 2022
 #### Bug Fixes
 * `BM` Fixed an issue where multiple link buttons couldn't be used
 
