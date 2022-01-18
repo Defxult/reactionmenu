@@ -137,6 +137,13 @@ Discords Buttons feature has been implemented using pycord. Two classes have bee
   * `__all__` for `reactionmenu` (`from reactionmenu import *`)
   * `__repr__` for `ViewButton.Followup`
 
+---
+
+## Note
+For `v1.0.9 - v2.0.4`, the following displays what each acronym represents
+* `BM` = `ButtonsMenu`
+* `RM` = `ReactionMenu`
+* `TM` = `TextMenu`
 
 ## v2.0.4 » Jan. 17, 2022
 <details>
