@@ -137,6 +137,19 @@ Discords Buttons feature has been implemented using pycord. Two classes have bee
   * `__all__` for `reactionmenu` (`from reactionmenu import *`)
   * `__repr__` for `ViewButton.Followup`
 
+
+## v2.0.4 » Jan. 17, 2022
+<details>
+  <summary>Click to display changelog</summary>
+
+#### Bug Fixes
+* `BM` Fixed an issue where multiple link buttons couldn't be used
+
+</details>
+
+
+
+
 ## v2.0.3 » Aug. 18, 2021
 <details>
   <summary>Click to display changelog</summary>
