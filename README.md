@@ -18,7 +18,7 @@ If you've previously used this library and plan on updating to 3.0, I suggest re
 ---
 
 <b>When will reactionmenu 3.0 be released to PyPI?</b><br>
-It is scheduled to be released on February 4th, 2022
+It is scheduled to be released on January 29th, 2022
 
 <b>Can you still access the old code?</b><br>
 Yes. The old code can be found on this [branch](https://github.com/Defxult/reactionmenu/tree/discord-and-dislash)
