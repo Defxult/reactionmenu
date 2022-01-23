@@ -843,7 +843,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             await self._ctx.send(details.message)
             return False
     
-    def _maybe_new_style(self, counter, total_pages) -> str: 
+    def _maybe_new_style(self, counter: int, total_pages: int) -> str: 
         """Sets custom page director styles"""
         if self.style:
             if self.style.count('$') == 1 and self.style.count('&') == 1:
@@ -874,7 +874,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 not spec.kwonlyargs,
                 not spec.kwonlydefaults
             ]):
-                async def call():
+                async def call() -> None:
                     """Dispatch the information to the relay function. If any errors occur during the call, report it to the user"""
                     try:
                         if asyncio.iscoroutinefunction(func):
@@ -907,7 +907,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             'mention_author' : self.allowed_mentions.replied_user
         }
     
-    def _handle_send_to(self, send_to) -> discord.abc.Messageable:
+    def _handle_send_to(self, send_to: Union[str, int, discord.TextChannel, discord.Thread]) -> discord.abc.Messageable:
         """For the :param:`send_to` kwarg in :meth:`Menu.start()`. Determine what channel the menu should start in"""
         if self.in_dms:
             return self._ctx

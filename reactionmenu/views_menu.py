@@ -320,7 +320,8 @@ class ViewMenu(_BaseMenu):
     async def refresh_menu_buttons(self) -> None:
         """|coro|
         
-        When the menu is running, update the message to reflect the buttons that were removed, enabled, or disabled"""
+        When the menu is running, update the message to reflect the buttons that were removed, enabled, or disabled
+        """
         if self._is_running:
             current_buttons = self._buttons.copy()
             self.remove_all_buttons()
