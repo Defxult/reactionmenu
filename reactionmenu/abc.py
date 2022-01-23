@@ -960,12 +960,13 @@ class _BaseMenu(metaclass=abc.ABCMeta):
 
             - `1` = Page 1/10
             - `2` = Page 1 out of 10
-            - `3` = 1 • 10
-            - `4` = 1 » 10
-            - `5` = 1 | 10
-            - `6` = 1 : 10
-            - `7` = 1 - 10
-            - `8` = 1 / 10
+            - `3` = 1 out of 10
+            - `4` = 1 • 10
+            - `5` = 1 » 10
+            - `6` = 1 | 10
+            - `7` = 1 : 10
+            - `8` = 1 - 10
+            - `9` = 1 / 10
         
         Raises
         ------
@@ -973,12 +974,13 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """
         if style_id == 1:   self.style = _DEFAULT_STYLE
         elif style_id == 2: self.style = 'Page $ out of &'
-        elif style_id == 3: self.style = '$ • &'
-        elif style_id == 4: self.style = '$ » &'
-        elif style_id == 5: self.style = '$ | &'
-        elif style_id == 6: self.style = '$ : &'
-        elif style_id == 7: self.style = '$ - &'
-        elif style_id == 8: self.style = '$ / &'
+        elif style_id == 3: self.style = '$ out of &'
+        elif style_id == 4: self.style = '$ • &'
+        elif style_id == 5: self.style = '$ » &'
+        elif style_id == 6: self.style = '$ | &'
+        elif style_id == 7: self.style = '$ : &'
+        elif style_id == 8: self.style = '$ - &'
+        elif style_id == 9: self.style = '$ / &'
         else:
             raise MenuException(f'Parameter "style_id" expected a number 1-8, got {style_id!r}')
     
