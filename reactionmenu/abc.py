@@ -982,7 +982,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         elif style_id == 8: self.style = '$ - &'
         elif style_id == 9: self.style = '$ / &'
         else:
-            raise MenuException(f'Parameter "style_id" expected a number 1-8, got {style_id!r}')
+            raise MenuException(f'Parameter "style_id" expected a number 1-9, got {style_id!r}')
     
     @ensure_not_primed
     async def add_from_messages(self, messages: Sequence[discord.Message]) -> None:
