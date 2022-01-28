@@ -228,8 +228,8 @@ class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
         value: :class:`int`
             The amount set for the specified event. Must be >= 1. If value is <= 0, it is implicitly set to 1"""
         
-        _disable = 'disable'
-        _remove = 'remove'
+        _DISABLE = 'disable'
+        _REMOVE = 'remove'
 
         def __init__(self, event_type: str, value: int):
             if value <= 0: value = 1

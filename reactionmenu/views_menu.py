@@ -162,10 +162,10 @@ class ViewMenu(_BaseMenu):
             event_type = button.event.event_type
             event_value = button.event.value
             if button.total_clicks == event_value:
-                if event_type == ViewButton.Event._disable:
+                if event_type == ViewButton.Event._DISABLE:
                     self.disable_button(button)
                 
-                elif event_type == ViewButton.Event._remove:
+                elif event_type == ViewButton.Event._REMOVE:
                     self.remove_button(button)
                 
                 await self.refresh_menu_buttons()

@@ -195,7 +195,7 @@ class ReactionMenu(_BaseMenu):
 			event_type = button.event.event_type
 			event_value = button.event.value
 			if button.total_clicks == event_value:
-				if event_type == ReactionButton.Event._remove:
+				if event_type == ReactionButton.Event._REMOVE:
 					self._bypass_primed = True
 					self.remove_button(button)
 					await self._msg.clear_reaction(button.emoji)
