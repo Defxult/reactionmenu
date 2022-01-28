@@ -67,6 +67,14 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	event: Optional[:class:`ViewButton.Event`]
 		Set the button to be disabled or removed when it has been pressed a certain amount of times
+	
+	Kwargs
+	------
+	name: :class:`str`
+		An optional name for the button. Can be set to retrieve it later via :meth:`ViewMenu.get_button()`
+	
+	skip: :class:`ViewButton.Skip`
+		Set the action and the amount of pages to skip when using a `custom_id` of `ViewButton.ID_SKIP`
 	"""
 	ID_NEXT_PAGE: Final[str] = '0'
 	ID_PREVIOUS_PAGE: Final[str] = '1'
@@ -255,6 +263,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- style: `discord.ButtonStyle.gray`
 		- label: `<label>`
 		- custom_id: :attr:`ViewButton.ID_SKIP`
+		- skip: `ViewButton.Skip(<action>, <amount>)`
 		"""
 		return cls(style=discord.ButtonStyle.gray, label=label, custom_id=ViewButton.ID_SKIP, skip=_BaseButton.Skip(action, amount))
 	
@@ -411,6 +420,9 @@ class ReactionButton(_BaseButton):
 	
 	event: :class:`ReactionButton.Event`
 		Determine when a button should be removed depending on how many times it has been pressed
+
+	skip: :class:`ReactionButton.Skip`
+		Set the action and the amount of pages to skip when using a `linked_to` of `ReactionButton.Type.SKIP`
 	"""
 
 	Type: Final[ButtonType] = ButtonType

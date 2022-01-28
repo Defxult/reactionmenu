@@ -175,11 +175,11 @@ class reactionmenu.ReactionButton(*, emoji: str, linked_to: ButtonType, **kwargs
 ### Kwargs of the ReactionButton constructor
 | Name | Type | Default Value | Used for
 |------|------|---------------|----------
-| `name` | `str` |`None` | The name of the button
-| `embed` | `discord.Embed` | `None` | When the reaction is pressed, go to the specified embed. 
+| `embed` | `discord.Embed` | `None` | When the reaction is pressed, go to the specified embed
+| `name` | `str` | `None` | The name of the button
 | `details` | [info below](#reactionbuttons-with-reactionbuttontypecaller) | `None` | Assigns the function and it's arguments to call when a `ReactionButton` with `ReactionButton.Type.CALLER` is pressed
-
-> **NOTE:** All `ReactionButton` kwargs can also be set using an instance of `ReactionButton`
+| `event` | `ReactionButton.Event` | `None` | Determine when a button should be removed depending on how many times it has been pressed
+| `skip` | `ReactionButton.Skip` | `None` | Set the action and the amount of pages to skip when using a `linked_to` of `ReactionButton.Type.SKIP`
 
 ### Attributes for ReactionButton
 | Property | Return Type | Info
@@ -608,6 +608,12 @@ The following are the rules set by Discord for Buttons:
 * `disabled` (`bool`) If the button should be disabled
 * `followup` (`ViewButton.Followup`) The message sent after the button is pressed. Only available for buttons that have a `custom_id` of `ViewButton.ID_CALLER` or `ViewButton.ID_SEND_MESSAGE`. `ViewButton.Followup` is a class that has parameters similar to `discord.abc.Messageable.send()`, and is used to control if a message is ephemeral (hidden), contains a file, embed, tts, etc...
 * `event` (`ViewButton.Event`) Set a button to be disabled or removed when it has been pressed a certain amount of times
+
+#### Kwargs of the ViewButton constructor
+| Name | Type | Default Value | Used for
+|------|------|---------------|----------
+| `name` | `str` | `None` | The name of the button
+| `skip` | `ViewButton.Skip` | `None` | Set the action and the amount of pages to skip when using a `custom_id` of `ViewButton.ID_SKIP`
 
 #### Attributes for ViewButton
 | Property | Return Type | Info
