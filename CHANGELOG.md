@@ -96,7 +96,7 @@ Discords Buttons feature has been implemented using pycord. Two classes have bee
 * Added the ability to test whether all items in a sequence are of type `discord.Embed` or `str`
   * `ReactionMenu.all_embeds(values: Sequence[Any])`
   * `ReactionMenu.all_strings(values: Sequence[Any])`
-* Added the ability to filter all active menu's into separate lists
+* Added the ability to filter all active `ReactionMenu`'s and `ViewMenu`'s into two separate lists
   * `ReactionMenu.split_sessions()`
 * Added the ability to stop all `ReactionMenu`'s or `ViewMenu`'s
   * `ReactionMenu.stop_only(session_type: str)`
@@ -127,7 +127,7 @@ Discords Buttons feature has been implemented using pycord. Two classes have bee
   * `ViewMenu.get_button(..., search_by='name')`
 
 ##### Miscellaneous
-* `ReactionButton` & `ViewButton` attribute `last_clicked` now supports an aware `datetime.datetime` (`discord.utils.utcnow()`)
+* `ReactionButton` & `ViewButton` attribute `last_clicked` now supports an aware `datetime.datetime`
 * The `send_to` parameter in method `.start()` now supports threads
 * Method `.set_on_timeout()` now raises `IncorrectType` instead of `MenuException` if the parameter given was not callable
 * Method `ReactionMenu.add_button()` now also raises `MenuSettingsMismatch`
