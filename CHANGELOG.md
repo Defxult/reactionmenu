@@ -127,6 +127,7 @@ Discords Buttons feature has been implemented using pycord. Two classes have bee
   * `ViewMenu.get_button(..., search_by='name')`
 
 ##### Miscellaneous
+* `ReactionButton` & `ViewButton` attribute `last_clicked` now supports an aware `datetime.datetime` (`discord.utils.utcnow()`)
 * The `send_to` parameter in method `.start()` now supports threads
 * Method `.set_on_timeout()` now raises `IncorrectType` instead of `MenuException` if the parameter given was not callable
 * Method `ReactionMenu.add_button()` now also raises `MenuSettingsMismatch`

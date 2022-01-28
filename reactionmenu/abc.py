@@ -42,6 +42,7 @@ from typing import (
 
 if TYPE_CHECKING:
     from .buttons import ReactionButton, ViewButton
+    from datetime import datetime
     from . import ReactionMenu, ViewMenu
     M = TypeVar('M', bound=Union[ReactionMenu, ViewMenu])
 
@@ -52,7 +53,6 @@ import inspect
 import re
 import warnings
 from collections.abc import Sequence
-from datetime import datetime
 
 import discord
 from discord.ext.commands import Context
@@ -196,7 +196,7 @@ class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
     def _update_statistics(self, user: Union[discord.Member, discord.User]) -> None:
         self.__clicked_by.add(user)
         self.__total_clicks += 1
-        self.__last_clicked = datetime.utcnow()
+        self.__last_clicked = discord.utils.utcnow()
 
     class Skip:
         """Initialize a skip button with the appropriate values
