@@ -383,16 +383,17 @@ class ButtonType:
 	@classmethod
 	def _get_buttontype_name_from_type(cls, type_: int) -> str:
 		"""|class method| Used to determine the `linked_to` type. Returns the :class:`str` representation of that type"""
+		BASE = 'ButtonType.'
 		dict_ = {
-			cls.NEXT_PAGE : 'ButtonType.NEXT_PAGE',
-			cls.PREVIOUS_PAGE : 'ButtonType.PREVIOUS_PAGE',
-			cls.GO_TO_FIRST_PAGE : 'ButtonType.GO_TO_FIRST_PAGE',
-			cls.GO_TO_LAST_PAGE : 'ButtonType.GO_TO_LAST_PAGE',
-			cls.GO_TO_PAGE : 'ButtonType.GO_TO_PAGE',
-			cls.END_SESSION : 'ButtonType.END_SESSION',
-			cls.CUSTOM_EMBED : 'ButtonType.CUSTOM_EMBED',
-			cls.CALLER : 'ButtonType.CALLER',
-			cls.SKIP : 'ButtonType.SKIP'
+			cls.NEXT_PAGE : BASE + 'NEXT_PAGE',
+			cls.PREVIOUS_PAGE : BASE + 'PREVIOUS_PAGE',
+			cls.GO_TO_FIRST_PAGE : BASE + 'GO_TO_FIRST_PAGE',
+			cls.GO_TO_LAST_PAGE : BASE + 'GO_TO_LAST_PAGE',
+			cls.GO_TO_PAGE : BASE + 'GO_TO_PAGE',
+			cls.END_SESSION : BASE + 'END_SESSION',
+			cls.CUSTOM_EMBED : BASE + 'CUSTOM_EMBED',
+			cls.CALLER : BASE + 'CALLER',
+			cls.SKIP : BASE + 'SKIP'
 		}
 		return dict_[type_]
 
