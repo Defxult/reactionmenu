@@ -967,6 +967,8 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             - `7` = 1 : 10
             - `8` = 1 - 10
             - `9` = 1 / 10
+            - `10` = 1 🔹 10
+            - `11` = 1 🔸 10
         
         Raises
         ------
@@ -981,8 +983,10 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         elif style_id == 7: self.style = '$ : &'
         elif style_id == 8: self.style = '$ - &'
         elif style_id == 9: self.style = '$ / &'
+        elif style_id == 10: self.style = '$ 🔹 &'
+        elif style_id == 11: self.style = '$ 🔸 &'
         else:
-            raise MenuException(f'Parameter "style_id" expected a number 1-9, got {style_id!r}')
+            raise MenuException(f'Parameter "style_id" expected a number 1-11, got {style_id!r}')
     
     @ensure_not_primed
     async def add_from_messages(self, messages: Sequence[discord.Message]) -> None:
