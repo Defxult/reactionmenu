@@ -1,4 +1,4 @@
-## v3.0.0 » Future release
+## v3.0.0 » Jan. 29, 2022
 #### Library Change
 * With the discontinuation of discord.py, this library is now dependent on [pycord](https://github.com/Pycord-Development/pycord)
 
