@@ -2,40 +2,35 @@
 <div align="center">
 
 [![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) 
-<!-- [![Downloads](https://pepy.tech/badge/reactionmenu/month)](https://pepy.tech/project/reactionmenu)
-[![Downloads](https://pepy.tech/badge/reactionmenu/week)](https://pepy.tech/project/reactionmenu) -->
+[![Downloads](https://pepy.tech/badge/reactionmenu/month)](https://pepy.tech/project/reactionmenu)
+[![Downloads](https://pepy.tech/badge/reactionmenu/week)](https://pepy.tech/project/reactionmenu)
 
 ![python_version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue)
-
-### reactionmenu 3.0 • beta
 </div>
 
----
-As a lot of you may now, the development of discord.py has ended. Discord will be pushing breaking changes to their API in the future, so it would be unwise to stick with a library that is no longer being maintained. With that said, a lot of developers are searching for alternatives to replace discord.py. There are plenty of forks out there, but from what I've seen a majority of developers are migrating over to [pycord](https://github.com/Pycord-Development/pycord). I've tested pycord with this library and it works well. Pycord is the Discord library I have chosen to continue development of this library. Pycord has a release date of January 28th, 2022.
+## GitHub Updates vs PyPI Updates
+The GitHub version of this library will always have the latest changes, fixes, and additions before the [PyPI](https://pypi.org/project/reactionmenu/) version. You can install the GitHub version by doing:
+```
+$ pip install git+https://github.com/Defxult/reactionmenu
+```
 
-If you've previously used this library and plan on updating to 3.0, I suggest reading the documentation again because a lot has changed. If you discover any bugs, please submit an [issue](https://github.com/Defxult/reactionmenu/issues/new/choose).
+You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the GitHub version of this library. If you are using the PyPI version of this library, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
 
----
-
-<b>When will reactionmenu 3.0 be released to PyPI?</b><br>
-It is scheduled to be released on January 29th, 2022
-
-<b>Can you still access the old code?</b><br>
-Yes. The old code can be found on this [branch](https://github.com/Defxult/reactionmenu/tree/discord-and-dislash)
+* `GitHub: v3.0.0`
+* `PyPI: v3.0.0`
 
 ---
 
-## Requirements
-* Python 3.8 or higher
-* reactionmenu 3.0 development version
+## How to install
 ```
-$ pip install -U git+https://github.com/Defxult/reactionmenu
+$ pip install reactionmenu
 ```
 
-* pycord 2.0 development version
-```
-$ pip install -U git+https://github.com/Pycord-Development/pycord
-```
+## Notice
+With the discontinuation of discord.py, this library is now dependent on [Pycord](https://github.com/Pycord-Development/pycord). Pycord has been released and is currently in beta. Until it is out of beta, pip installing this library will not automatically install Pycord. When it comes to installing Pycord, you have a few options:
+
+* Option 1 - Install their most recent PyPI 2.0 version [here](https://pypi.org/project/py-cord/#history)
+* Option 2 - Install their development version of the library following their [instructions](https://github.com/Pycord-Development/pycord#installing)
 
 ---
 ## Documentation
