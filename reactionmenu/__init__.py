@@ -25,7 +25,7 @@ def version_info():
     """
     from collections import namedtuple
     VersionInfo = namedtuple('VersionInfo', ['version', 'releasetype', 'patch'])
-    return VersionInfo(version='3.0.0', releasetype='final', patch=None)
+    return VersionInfo(version='3.0.1', releasetype='pre-release', patch=None)
 
 __source__ = 'https://github.com/Defxult/reactionmenu'
 __all__ = (
