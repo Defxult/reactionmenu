@@ -683,6 +683,7 @@ class ReactionMenu(_BaseMenu):
 						self._auto_paginator_timer.cancel()
 				
 				self._is_running = False
+				self._on_close_event.set()
 				self._main_session_task.cancel()
 	
 	def _override_dm_settings(self) -> None:

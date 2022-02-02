@@ -272,6 +272,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         self._menu_timed_out = False
         self._bypass_primed = False # used in :meth:`update()`
         self._pages: List[Union[discord.Embed, str]] = []
+        self._on_close_event = asyncio.Event()
 
         # kwargs
         self.delete_on_timeout: bool = kwargs.get('delete_on_timeout', False)
@@ -987,6 +988,15 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         elif style_id == 11: self.style = '$ 🔸 &'
         else:
             raise MenuException(f'Parameter "style_id" expected a number 1-11, got {style_id!r}')
+    
+    async def wait_until_closed(self) -> None:
+        """|coro|
+        
+        Waits until the menu session ends using `.stop()` or when the menu times out. This should not be used inside relays
+        
+            .. added:: v3.0.1
+        """
+        await self._on_close_event.wait()
     
     @ensure_not_primed
     async def add_from_messages(self, messages: Sequence[discord.Message]) -> None:

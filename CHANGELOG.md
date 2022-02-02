@@ -1,4 +1,12 @@
+
+#### New Features
+##### ReactionMenu & ViewMenu
+* Added method `ReactionMenu.wait_until_close()`
+
 ## v3.0.0 » Jan. 29, 2022
+<details>
+  <summary>Click to display changelog</summary>
+
 #### Library Change
 * With the discontinuation of discord.py, this library is now dependent on [pycord](https://github.com/Pycord-Development/pycord)
 
@@ -138,7 +146,8 @@ Discords Buttons feature has been implemented using pycord. Two classes have bee
   * `__all__` for `reactionmenu` (`from reactionmenu import *`)
   * `__repr__` for `ViewButton.Followup`
 
----
+</details>
+
 
 ## Note
 For `v1.0.9 - v2.0.4`, the following displays what each acronym represents

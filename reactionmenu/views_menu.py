@@ -718,6 +718,7 @@ class ViewMenu(_BaseMenu):
                 if self in ViewMenu._active_sessions:
                     ViewMenu._active_sessions.remove(self)
                 
+                self._on_close_event.set()
                 await self._handle_on_timeout()
     
     @ensure_not_primed
