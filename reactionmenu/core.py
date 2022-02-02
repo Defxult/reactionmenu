@@ -228,9 +228,14 @@ class ReactionMenu(_BaseMenu):
 			raise IncorrectType(f'Parameter "button" expected ReactionButton, got {button.__class__.__name__}')
 	
 	def _session_done_callback(self, task: asyncio.Task) -> None:
-		self._is_running = False # already set in :meth:`.stop()`, but just in case this was reached without that method being called
-		if self in ReactionMenu._active_sessions:
-			ReactionMenu._active_sessions.remove(self)
+		try:
+			task.result() # this is needed to raise ANY exception that occurred during the pagination process
+		except asyncio.CancelledError:
+			pass
+		finally:
+			self._is_running = False # already set in :meth:`.stop()`, but just in case this was reached without that method being called
+			if self in ReactionMenu._active_sessions:
+				ReactionMenu._active_sessions.remove(self)
 	
 	def get_button(self, identity: Union[str, int], *, search_by: str='name') -> List[ReactionButton]:
 		"""Get a button that has been registered to the menu by name, emoji, or type

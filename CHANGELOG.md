@@ -1,3 +1,6 @@
+## v3.0.1 » Future release
+#### Bug Fixes
+* Fixed an issue where exceptions were being suppressed if one was to occur during the pagination process (`ReactionMenu` only)
 
 #### New Features
 ##### ReactionMenu & ViewMenu
