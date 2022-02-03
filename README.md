@@ -17,7 +17,7 @@ $ pip install git+https://github.com/Defxult/reactionmenu
 You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the GitHub version of this library. If you are using the PyPI version of this library, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
 
 * `GitHub: v3.0.1`
-* `PyPI: v3.0.0`
+* `PyPI: v3.0.1`
 
 ---
 
