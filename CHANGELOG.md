@@ -1,10 +1,10 @@
-## v3.0.1 » Future release
+## v3.0.1 » Feb. 02, 2022
 #### Bug Fixes
 * Fixed an issue where exceptions were being suppressed if one was to occur during the pagination process (`ReactionMenu` only)
 
 #### New Features
 ##### ReactionMenu & ViewMenu
-* Added method `ReactionMenu.wait_until_close()`
+* Added method ` await wait_until_close()`
 
 ## v3.0.0 » Jan. 29, 2022
 <details>
