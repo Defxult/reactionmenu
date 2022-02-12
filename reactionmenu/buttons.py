@@ -494,6 +494,7 @@ class ReactionButton(_BaseButton):
 		
 		- emoji: `<emoji>`
 		- linked_to: :attr:`ReactionButton.Type.SKIP`
+		- skip: `ReactionButton.Skip(<action>, <amount>)`
 		"""
 		return cls(emoji=emoji, linked_to=cls.Type.SKIP, skip=_BaseButton.Skip(action, amount))
 	

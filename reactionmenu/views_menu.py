@@ -596,9 +596,7 @@ class ViewMenu(_BaseMenu):
             try:
                 selection_message: discord.Message = await self._ctx.bot.wait_for('message', check=lambda m: all([m.channel.id == self._msg.channel.id, m.author.id == inter.user.id]), timeout=self.timeout)
                 page = int(selection_message.content)
-            except asyncio.TimeoutError:
-                return
-            except ValueError:
+            except (asyncio.TimeoutError, ValueError):
                 return
             else:
                 if 1 <= page <= len(self._pages):

@@ -235,8 +235,9 @@ class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
         def __init__(self, event_type: str, value: int):
             if value <= 0: value = 1
             event_type = str(event_type).lower()
+            cls = self.__class__
             
-            if event_type in ('disable', 'remove'):
+            if event_type in (cls._DISABLE, cls._REMOVE):
                 self.event_type = event_type
                 self.value = value
             else:
@@ -269,11 +270,11 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         self.custom_embed: Union[discord.Embed, None] = kwargs.get('custom_embed')
 
         self._relay_info: NamedTuple = None
-        self._on_timeout_details: 'function' = None
+        self._on_timeout_details: Callable[[_BaseMenu], None] = None
         self._menu_timed_out = False
         self._bypass_primed = False # used in :meth:`update()`
         self._pages: List[Union[discord.Embed, str]] = []
-        self._on_close_event = asyncio.Event()
+        self._on_close_event = asyncio.Event() # used for :meth:`wait_until_close()`
 
         # kwargs
         self.delete_on_timeout: bool = kwargs.get('delete_on_timeout', False)
@@ -615,7 +616,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """
         Returns
         -------
-        Union[:class:`discord.Member`, :class:`str`]: The last page that was viewed in the pagination process. Can be :class:`None` if the menu has not been started
+        Union[:class:`discord.Embed`, :class:`str`]: The last page that was viewed in the pagination process. Can be :class:`None` if the menu has not been started
         """
         return self._pc.current_page if self._pc is not None else None
     
