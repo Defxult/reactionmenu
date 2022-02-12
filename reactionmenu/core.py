@@ -22,6 +22,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from __future__ import annotations
+
 import asyncio
 import inspect
 import itertools
@@ -31,7 +33,7 @@ from typing import Final, List, Optional, Sequence, Union
 import discord
 from discord.ext.commands import Context
 
-from .abc import _BaseMenu, _PageController
+from .abc import _BaseMenu, DEFAULT_BUTTONS, _PageController
 from .buttons import ReactionButton
 from .decorators import ensure_not_primed
 from .errors import *
@@ -147,6 +149,41 @@ class ReactionMenu(_BaseMenu):
 		Union[:class:`int`, :class:`float`]: The turn every value currently set for the auto-pagination menu. Can be :class:`None` if the menu is not an auto-paginator menu
 		"""
 		return self._auto_turn_every
+	
+	@classmethod
+	async def quick_start(cls, ctx: Context, pages: Sequence[Union[discord.Embed, str]], buttons: Sequence[ReactionButton]=DEFAULT_BUTTONS) -> ReactionMenu:
+		"""|coro class method|
+		
+		Start a menu with default settings either with a `menu_type` of `ReactionMenu.TypeEmbed` (all values in `pages` are of type `discord.Embed`) or `ReactionMenu.TypeText` (all values in `pages` are of type `str`)
+
+		Parameters
+		----------
+		ctx: :class:`discord.ext.commands.Context`
+			The Context object. You can get this using a command or if you're in a `discord.on_message` event
+
+		pages: Sequence[Union[:class:`discord.Embed`, :class:`str`]]
+			The pages to add
+
+		buttons: Sequence[:class:`ReactionButton`]
+			The buttons to add. If left as `DEFAULT_BUTTONS`, that is equivalent to `ReactionButton.all()`
+		
+		Returns
+		-------
+		:class:`ReactionMenu`: The menu that was started
+		
+		Raises
+		------
+		- `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+		- `NoPages`: The menu was started when no pages have been added
+		- `NoButtons`: Attempted to start the menu when no Buttons have been registered
+
+			.. added v3.0.2
+		"""
+		menu = cls(ctx, menu_type=cls._quick_check(pages))
+		menu.add_pages(pages)
+		menu.add_buttons(ReactionButton.all() if buttons == DEFAULT_BUTTONS else buttons)
+		await menu.start()
+		return menu
 	
 	@classmethod
 	def update_all_turn_every(cls, *, turn_every: Union[int, float]) -> None:

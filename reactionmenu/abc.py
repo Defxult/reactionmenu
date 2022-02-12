@@ -63,6 +63,7 @@ from .errors import *
 _DYNAMIC_EMBED_LIMIT = 4096
 _DEFAULT_STYLE = 'Page $/&'
 GB = TypeVar('GB')
+DEFAULT_BUTTONS = 0 # used for quick_start()
 
 
 class _PageController:
@@ -318,6 +319,10 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     async def start(self):
         raise NotImplementedError
     
+    @abc.abstractclassmethod
+    async def quick_start(cls):
+        raise NotImplementedError
+    
     @staticmethod
     def separate(values: Sequence[Any]) -> Tuple[List[discord.Embed], List[str]]:
         """|static method|
@@ -374,6 +379,16 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         :class:`bool`: Can return `False` if the sequence is empty
         """
         return all([isinstance(item, str) for item in values]) if values else False
+    
+    @classmethod
+    def _quick_check(cls, pages: Sequence[Union[discord.Embed, str]]) -> int:
+        """Verification for :meth:`quick_start()`
+        
+            .. added v3.0.2
+        """
+        if cls.all_embeds(pages):  return cls.TypeEmbed
+        if cls.all_strings(pages): return cls.TypeText
+        raise IncorrectType(f'All items in the sequence were not of type discord.Embed or str')
     
     @classmethod
     def _all_menu_types(cls) -> Tuple[int, int, int]:

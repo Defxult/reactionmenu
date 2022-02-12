@@ -22,6 +22,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from __future__ import annotations
+
 import asyncio
 import inspect
 import random
@@ -32,7 +34,7 @@ import discord
 from discord.ext.commands import Context
 
 from . import ViewButton
-from .abc import _DEFAULT_STYLE, _BaseMenu, _PageController
+from .abc import _DEFAULT_STYLE, DEFAULT_BUTTONS, _BaseMenu, _PageController
 from .decorators import ensure_not_primed
 from .errors import *
 
@@ -139,6 +141,41 @@ class ViewMenu(_BaseMenu):
             self.__timeout = value
         else:
             raise IncorrectType(f'"timeout" expected int, float, or None, got {value.__class__.__name__}')
+    
+    @classmethod
+    async def quick_start(cls, ctx: Context, pages: Sequence[Union[discord.Embed, str]], buttons: Sequence[ViewButton]=DEFAULT_BUTTONS) -> ViewMenu:
+        """|coro class method|
+        
+        Start a menu with default settings either with a `menu_type` of `ViewMenu.TypeEmbed` (all values in `pages` are of type `discord.Embed`) or `ViewMenu.TypeText` (all values in `pages` are of type `str`)
+
+        Parameters
+        ----------
+        ctx: :class:`discord.ext.commands.Context`
+            The Context object. You can get this using a command or if you're in a `discord.on_message` event
+
+        pages: Sequence[Union[:class:`discord.Embed`, :class:`str`]]
+            The pages to add
+
+        buttons: Sequence[:class:`ViewButton`]
+            The buttons to add. If left as `DEFAULT_BUTTONS`, that is equivalent to `ViewButton.all()`
+        
+        Returns
+        -------
+        :class:`ViewMenu`: The menu that was started
+        
+        Raises
+        ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `NoPages`: The menu was started when no pages have been added
+        - `NoButtons`: Attempted to start the menu when no Buttons have been registered
+        
+            .. added v3.0.2
+        """
+        menu = cls(ctx, menu_type=cls._quick_check(pages))
+        menu.add_pages(pages)
+        menu.add_buttons(ViewButton.all() if buttons == DEFAULT_BUTTONS else buttons)
+        await menu.start()
+        return menu
     
     def _check(self, inter: discord.Interaction) -> None:
         """Base menu button interaction check"""

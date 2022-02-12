@@ -1,10 +1,25 @@
+## v3.0.2 » Future Release
+#### New Features
+##### ReactionMenu & ViewMenu
+* Added class method `quick_start()`
+
+
+
+
 ## v3.0.1 » Feb. 02, 2022
+<details>
+  <summary>Click to display changelog</summary>
+
 #### Bug Fixes
 * Fixed an issue where exceptions were being suppressed if one was to occur during the pagination process (`ReactionMenu` only)
 
 #### New Features
 ##### ReactionMenu & ViewMenu
-* Added method ` await wait_until_close()`
+* Added method `wait_until_close()`
+</details>
+
+
+
 
 ## v3.0.0 » Jan. 29, 2022
 <details>
