@@ -176,6 +176,7 @@ class ReactionMenu(_BaseMenu):
 		- `MenuAlreadyRunning`: Attempted to call method after the menu has already started
 		- `NoPages`: The menu was started when no pages have been added
 		- `NoButtons`: Attempted to start the menu when no Buttons have been registered
+		- `IncorrectType`: All items in :param:`pages` were not of type :class:`discord.Embed` or :class:`str`
 
 			.. added v3.0.2
 		"""
