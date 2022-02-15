@@ -143,7 +143,7 @@ class ViewMenu(_BaseMenu):
             raise IncorrectType(f'"timeout" expected int, float, or None, got {value.__class__.__name__}')
     
     @classmethod
-    async def quick_start(cls, ctx: Context, pages: Sequence[Union[discord.Embed, str]], buttons: Sequence[ViewButton]=DEFAULT_BUTTONS) -> ViewMenu:
+    async def quick_start(cls, ctx: Context, pages: Sequence[Union[discord.Embed, str]], buttons: Optional[Sequence[ViewButton]]=DEFAULT_BUTTONS) -> ViewMenu:
         """|coro class method|
         
         Start a menu with default settings either with a `menu_type` of `ViewMenu.TypeEmbed` (all values in `pages` are of type `discord.Embed`) or `ViewMenu.TypeText` (all values in `pages` are of type `str`)
@@ -156,7 +156,7 @@ class ViewMenu(_BaseMenu):
         pages: Sequence[Union[:class:`discord.Embed`, :class:`str`]]
             The pages to add
 
-        buttons: Sequence[:class:`ViewButton`]
+        buttons: Optional[Sequence[:class:`ViewButton`]]
             The buttons to add. If left as `DEFAULT_BUTTONS`, that is equivalent to `ViewButton.all()`
         
         Returns

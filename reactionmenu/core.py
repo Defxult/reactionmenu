@@ -151,7 +151,7 @@ class ReactionMenu(_BaseMenu):
 		return self._auto_turn_every
 	
 	@classmethod
-	async def quick_start(cls, ctx: Context, pages: Sequence[Union[discord.Embed, str]], buttons: Sequence[ReactionButton]=DEFAULT_BUTTONS) -> ReactionMenu:
+	async def quick_start(cls, ctx: Context, pages: Sequence[Union[discord.Embed, str]], buttons: Optional[Sequence[ReactionButton]]=DEFAULT_BUTTONS) -> ReactionMenu:
 		"""|coro class method|
 		
 		Start a menu with default settings either with a `menu_type` of `ReactionMenu.TypeEmbed` (all values in `pages` are of type `discord.Embed`) or `ReactionMenu.TypeText` (all values in `pages` are of type `str`)
@@ -164,7 +164,7 @@ class ReactionMenu(_BaseMenu):
 		pages: Sequence[Union[:class:`discord.Embed`, :class:`str`]]
 			The pages to add
 
-		buttons: Sequence[:class:`ReactionButton`]
+		buttons: Optional[Sequence[:class:`ReactionButton`]]
 			The buttons to add. If left as `DEFAULT_BUTTONS`, that is equivalent to `ReactionButton.all()`
 		
 		Returns
