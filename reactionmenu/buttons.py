@@ -77,7 +77,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		Set the action and the amount of pages to skip when using a `custom_id` of `ViewButton.ID_SKIP`
 	
 	persist: :class:`bool`
-		Available only when using link buttons. When the menu times out or is stopped, leave the link button enabled so it remains clickable
+		Available only when using link buttons. This prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
 	
 		.. added v3.0.2
 			:param:`persist`

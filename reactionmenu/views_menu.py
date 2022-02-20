@@ -184,6 +184,7 @@ class ViewMenu(_BaseMenu):
             .. added:: v3.0.2
         """
         return True if all([
+            #? Maybe add: button.style == discord.ButtonStyle.link
             button.custom_id is None,
             button.url,
             button.persist,
