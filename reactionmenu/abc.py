@@ -260,6 +260,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         self._pc: _PageController = None
         self._buttons: List[Union[ReactionButton, ViewButton]] = []
         self._is_running = False
+        self._stop_initiated = False
 
         # dynamic session
         self._main_page_contents = collections.deque()

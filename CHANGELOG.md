@@ -1,7 +1,9 @@
 ## v3.0.2 » Future Release
 #### New Features
 ##### ReactionMenu & ViewMenu
-* Added class method `quick_start()`
+* Added class method `quick_start()`. Start a menu with it's default settings only adding the pages
+##### ViewMenu Only
+* Added the `persist` kwarg to `ViewButton`. This allows link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
 
 
 

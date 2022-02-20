@@ -178,6 +178,18 @@ class ViewMenu(_BaseMenu):
         await menu.start()
         return menu
     
+    def _should_persist(self, button: ViewButton) -> bool:
+        """Determine if a link button should stay enabled on the menu when it times out or is stopped
+
+            .. added:: v3.0.2
+        """
+        return True if all([
+            button.custom_id is None,
+            button.url,
+            button.persist,
+            self._stop_initiated
+        ]) else False
+    
     def _check(self, inter: discord.Interaction) -> None:
         """Base menu button interaction check"""
         author_pass = False
@@ -391,10 +403,20 @@ class ViewMenu(_BaseMenu):
     
     def remove_all_buttons(self) -> None:
         """Remove all buttons from the menu"""
+        persistent_buttons = []
+        
         for btn in self._buttons:
+            if self._should_persist(btn):
+                persistent_buttons.append(btn)
+                continue
             btn._menu = None
+        
         self._buttons.clear()
+        self._buttons.extend(persistent_buttons)
+        
         self._view.clear_items()
+        for subclassed_item in persistent_buttons:
+            self._view.add_item(subclassed_item)
     
     def disable_button(self, button: ViewButton) -> None:
         """Disable a button on the menu
@@ -417,6 +439,7 @@ class ViewMenu(_BaseMenu):
     def disable_all_buttons(self) -> None:
         """Disable all buttons on the menu"""
         for btn in self._buttons:
+            if self._should_persist(btn): continue
             btn.disabled = True
     
     def enable_button(self, button: ViewButton) -> None:
@@ -728,6 +751,7 @@ class ViewMenu(_BaseMenu):
         - `discord.DiscordException`: Any exception that can be raised when deleting or editing a message
         """
         if self._is_running:
+            self._stop_initiated = True
             try:
                 if delete_menu_message:
                     await self._msg.delete()

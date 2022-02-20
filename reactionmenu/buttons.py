@@ -75,6 +75,12 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	skip: :class:`ViewButton.Skip`
 		Set the action and the amount of pages to skip when using a `custom_id` of `ViewButton.ID_SKIP`
+	
+	persist: :class:`bool`
+		Available only when using link buttons. When the menu times out or is stopped, leave the link button enabled so it remains clickable
+	
+		.. added v3.0.2
+			:param:`persist`
 	"""
 	ID_NEXT_PAGE: Final[str] = '0'
 	ID_PREVIOUS_PAGE: Final[str] = '1'
@@ -106,6 +112,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		super().__init__(style=style, label=label, disabled=disabled, custom_id=custom_id, url=url, emoji=emoji, row=None)
 		_BaseButton.__init__(self, name=kwargs.get('name'), event=event, skip=kwargs.get('skip'))
 		self.followup = followup
+		self.persist: bool = kwargs.get('persist', False)
 		
 		# abc
 		self._menu: ViewMenu = None
