@@ -609,7 +609,7 @@ The following are the rules set by Discord for Buttons:
 |------|------|---------------|----------
 | `name` | `str` | `None` | The name of the button
 | `skip` | `ViewButton.Skip` | `None` | Set the action and the amount of pages to skip when using a `custom_id` of `ViewButton.ID_SKIP`
-| `persist` | `bool` | `False` | Allows link buttons from being disabled/removed when the menu times out or is stopped
+| `persist` | `bool` | `False` | Prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
 
 #### Attributes for ViewButton
 | Property | Return Type | Info
