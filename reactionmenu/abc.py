@@ -60,11 +60,14 @@ from discord.ext.commands import Context
 from .decorators import ensure_not_primed
 from .errors import *
 
+# Constants
 _DYNAMIC_EMBED_LIMIT = 4096
 _DEFAULT_STYLE = 'Page $/&'
-GB = TypeVar('GB')
+_VIEW_MENU_NAME = 'ViewMenu'
+_REACTION_MENU_NAME = 'ReactionMenu'
 DEFAULT_BUTTONS = 0 # used for quick_start()
 
+GB = TypeVar('GB')
 
 class _PageController:
     """A helper class to control the pagination process"""
@@ -494,8 +497,8 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         rm = []
         vm = []
         for session in cls._active_sessions:
-            if session.__class__.__name__ == 'ReactionMenu': rm.append(session)
-            elif  session.__class__.__name__ == 'ViewMenu':  vm.append(session)
+            if session.__class__.__name__ == _REACTION_MENU_NAME: rm.append(session)
+            elif  session.__class__.__name__ == _VIEW_MENU_NAME:  vm.append(session)
         return (rm, vm)
     
     @classmethod
@@ -734,7 +737,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             # make sure data has been added to create at least 1 page
             if not self._pages: raise NoPages(f'You cannot start a {cls.__name__} when no data has been added')
             
-            if cls.__name__ == 'ViewMenu':
+            if cls.__name__ == _VIEW_MENU_NAME:
                 self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0], view=self._view)
             else:
                 self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0])
@@ -770,7 +773,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             # Note to self: Take a look at the note below as to why the following item in this dict is commented out
             #'view' : self._view
         }
-        if self.__class__.__name__ != 'ViewMenu' and self._menu_type == _BaseMenu.TypeText:
+        if self.__class__.__name__ != _VIEW_MENU_NAME and self._menu_type == _BaseMenu.TypeText:
             kwargs['allowed_mentions'] = self.allowed_mentions
         return kwargs
         """
