@@ -179,7 +179,7 @@ class ViewMenu(_BaseMenu):
         return menu
     
     def _should_persist(self, button: ViewButton) -> bool:
-        """Determine if a link button should stay enabled on the menu when it times out or is stopped
+        """Determine if a link button should stay enabled/remain on the menu when it times out or is stopped
 
             .. added:: v3.0.2
         """
@@ -191,8 +191,8 @@ class ViewMenu(_BaseMenu):
             self._stop_initiated
         ]) else False
     
-    def _check(self, inter: discord.Interaction) -> None:
-        """Base menu button interaction check"""
+    def _check(self, inter: discord.Interaction) -> bool:
+        """Base menu button interaction check. Verifies who (user, everyone, or role) can interact with the button"""
         author_pass = False
         if self._ctx.author.id == inter.user.id: author_pass = True
         if self.only_roles: self.all_can_click = False
@@ -595,7 +595,7 @@ class ViewMenu(_BaseMenu):
             raise ViewMenuException(f'Parameter "search_by" expected "label", "id", or "name", got {search_by!r}')
 
     async def _paginate(self, button: ViewButton, inter: discord.Interaction) -> None:
-        """When the button is pressed, handle the pagination process"""
+        """|coro| When the button is pressed, handle the pagination process"""
         if not self._check(inter):
             await inter.response.defer()
             return
