@@ -616,6 +616,20 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             await session.stop()
     
     @property
+    def menu_type(self) -> str:
+        """
+        Returns
+        -------
+        :class:`str`: The `menu_type` you set via the constructor. This will either be `TypeEmbed`, `TypeEmbedDynamic`, or `TypeText`
+
+            .. added:: v3.0.2
+        """
+        if self._menu_type == _BaseMenu.TypeEmbed: return 'TypeEmbed'
+        elif self._menu_type == _BaseMenu.TypeEmbedDynamic: return 'TypeEmbedDynamic'
+        elif self._menu_type == _BaseMenu.TypeText: return 'TypeText'
+        else: raise MenuException('The menu_type you have set was not recognized')
+    
+    @property
     def last_viewed(self) -> Union[discord.Embed, str]:
         """
         Returns
