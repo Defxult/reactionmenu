@@ -439,31 +439,58 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         cls._sessions_limit_details = None
     
     @classmethod
-    def get_all_dm_sessions(cls: Type[M]) -> List[M]:
+    def _get_fixed_sessions(cls) -> List[M]:
+        invoked_from = cls.__name__
+        rm, vm = cls.split_sessions()
+        if invoked_from == _REACTION_MENU_NAME:
+            return rm
+        if invoked_from == _VIEW_MENU_NAME:
+            return vm
+        raise Exception("End of method [_get_fixed_session()]")
+    
+    @classmethod
+    def get_all_dm_sessions(cls: Type[M], fixed: bool=True) -> List[M]:
         """|class method|
         
         Retrieve all active DM menu sessions
+
+        Parameters
+        ----------
+        fixed: :class:`bool`
+            If `True`, it returns only the sessions belonging to the class from which it was invoked. If `False`, all menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) are returned
+
+            .. added:: v3.0.2
         
         Returns
         -------
-        A :class:`list` of ALL active DM menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) that are currently running. Can be an empty list if there are no active DM sessions
+        A :class:`list` of active DM menu sessions that are currently running. Can be an empty list if there are no active DM sessions
         """
-        return [session for session in cls._active_sessions if session.message.guild is None]
+        if fixed:
+            return [session for session in cls._get_fixed_sessions() if session.message.guild is None]
+        else:
+            return [session for session in cls._active_sessions if session.message.guild is None]
     
     @classmethod
-    def get_all_sessions(cls) -> List[M]:
+    def get_all_sessions(cls, fixed: bool=True) -> List[M]:
         """|class method|
         
         Retrieve all active menu sessions
+
+        Parameters
+        ----------
+        fixed: :class:`bool`
+            If `True`, it returns only the sessions belonging to the class from which it was invoked. If `False`, all menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) are returned
+
+            .. added:: v3.0.2
         
         Returns
         -------
-        A :class:`list` of ALL menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) that are currently running. Can be an empty list if there are no active sessions
+        A :class:`list` of menu sessions that are currently running. Can be an empty list if there are no active sessions
         """
-        return cls._active_sessions
+        return cls._get_fixed_sessions() if fixed else cls._active_sessions
     
     @classmethod
-    def get_session(cls, name: str) -> List[M]:
+    def get_session(cls, name: str, fixed: bool=True) -> List[M]:
         """|class method|
         
         Get a menu instance by it's name
@@ -473,12 +500,21 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         name: :class:`str`
             The name of the menu to return
         
+        fixed: :class:`bool`
+            If `True`, it returns only the sessions that matched the given :param:`name` belonging to the class from which it was invoked. If `False`, all menu sessions
+            (both :class:`ReactionMenu` & :class:`ViewMenu`) are returned
+
+            .. added:: v3.0.2
+        
         Returns
         -------
-        A :class:`list` of ALL menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) that are currently running that match the supplied name. Can be an empty list if there are no active sessions that matched the name
+        A :class:`list` of menu sessions that are currently running that match the supplied :param:`name`. Can be an empty list if there are no active sessions that matched the :param:`name`
         """
         name = str(name)
-        return [session for session in cls._active_sessions if session.name == name]
+        if fixed:
+            return [session for session in cls._get_fixed_sessions() if session.name == name]
+        else:
+            return [session for session in cls._active_sessions if session.name == name]
     
     @classmethod
     def split_sessions(cls) -> Tuple[List[ReactionMenu], List[ViewMenu]]:
@@ -502,16 +538,23 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         return (rm, vm)
     
     @classmethod
-    def get_sessions_count(cls) -> int:
+    def get_sessions_count(cls, fixed: bool=True) -> int:
         """|class method|
         
         Returns the number of active sessions
+
+        Parameters
+        ----------
+        fixed: :class:`bool`
+            If `True`, it returns the total amount of sessions belonging to the class from which it was invoked. If `False`, the total amount of sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) are returned
+
+            .. added:: v3.0.2
         
         Returns
         -------
-        :class:`int`: The amount of ALL menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) that are active
+        :class:`int`: The amount of menu sessions that are active
         """
-        return len(cls._active_sessions)
+        return len(cls._get_fixed_sessions()) if fixed else len(cls._active_sessions)
     
     @classmethod
     def set_sessions_limit(cls, limit: int, per: str='guild', message: str='Too many active menus. Wait for other menus to be finished.') -> None:
@@ -550,7 +593,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             cls._sessions_limited = True
     
     @classmethod
-    async def stop_session(cls, name: str, include_all: bool=False) -> None:
+    async def stop_session(cls, name: str, include_all: bool=False, fixed: bool=True) -> None:
         """|coro class method|
         
         Stop a specific menu with the supplied name
@@ -561,22 +604,38 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             The menus name
         
         include_all: :class:`bool`
-            If set to `True`, it stops all menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) with the supplied name. If `False`, stops only the most recently started menu with the supplied name
+            If set to `True`, it stops all menu sessions with the supplied :param:`name`. If `False`, stops only the most recently started menu with the supplied :param:`name`
+        
+        fixed: :class:`bool`
+            If `True`, it stops only the sessions belonging to the class from which it was invoked that matched the supplied :param:`name`. If `False`, the menu sessions
+            (both :class:`ReactionMenu` & :class:`ViewMenu`) are stopped that matched the supplied :param:`name` 
+
+            .. added:: v3.0.2
         
         Raises
         ------
         - `MenuException`: The session with the supplied name was not found
         """
         name = str(name)
-        matched_sessions = [session for session in cls._active_sessions if name == session.name]
-        if matched_sessions:
-            if include_all:
-                for session in matched_sessions:
-                    await session.stop()
+
+        async def determine_include_all(sessions_to_stop: List[M]) -> None:
+            if sessions_to_stop:
+                if include_all:
+                    for session in sessions_to_stop:
+                        await session.stop()
+                else:
+                    await sessions_to_stop[-1].stop()
             else:
-                await matched_sessions[-1].stop()
+                MESSAGE_WITH_FIXED = f'Menu with name {name!r} was not found in the list of active {cls.__name__} sessions'
+                MESSAGE_NOT_FIXED = f'Menu with name {name!r} was not found in the list of active menu sessions'
+                raise MenuException(MESSAGE_WITH_FIXED if fixed else MESSAGE_NOT_FIXED)
+
+        if fixed:
+            matched_fixed = [session for session in cls._get_fixed_sessions() if name == session.name]
+            await determine_include_all(matched_fixed)
         else:
-            raise MenuException(f'Menu with name {name!r} was not found in the list of active menu sessions')
+            matched_sessions = [session for session in cls._active_sessions if name == session.name]
+            await determine_include_all(matched_sessions)
 
     @classmethod
     async def stop_only(cls, session_type: str) -> None:
@@ -592,7 +651,13 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         Raises
         ------
         - `MenuException`: The parameter given was not recognized
+        
+            .. notes::
+                #+ ----- Deprecated as of v3.0.2 -----
         """
+        from warnings import warn
+        warn("This method is deprecated as of v3.0.2. Please visit the v3.0.2 section of the CHANGELOG: https://github.com/Defxult/reactionmenu/blob/main/CHANGELOG.md", DeprecationWarning, stacklevel=2)
+        
         session_type = session_type.lower()
         if session_type in ('reaction', 'view'):
             rms, vms = cls.split_sessions()
@@ -606,14 +671,23 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             raise MenuException(f'Parameter "session_type" not recognized. Expected "reaction" or "view", got {session_type!r}')
     
     @classmethod
-    async def stop_all_sessions(cls) -> None:
+    async def stop_all_sessions(cls, fixed: bool=True) -> None:
         """|coro class method|
-        
-        Stops ALL menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) that are currently running
+
+        Stops all menu sessions that are currently running
+
+        fixed: :class:`bool`
+            If `True`, it stops only the sessions belonging to the class from which it was invoked. If `False`, all menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) . If `False`, all menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) sessions are searched
+
+            .. added:: v3.0.2
         """
-        while cls._active_sessions:
-            session = cls._active_sessions[0]
-            await session.stop()
+        if fixed:
+            for session in cls._get_fixed_sessions():
+                await session.stop()
+        else:
+            while cls._active_sessions:
+                session = cls._active_sessions[0]
+                await session.stop()
     
     @property
     def menu_type(self) -> str:
