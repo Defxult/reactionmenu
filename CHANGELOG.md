@@ -1,4 +1,20 @@
-## v3.0.2 » Future Release
+## v3.1.0 » Future Release
+
+#### Breaking Changes
+* **This library is no longer dependent on Pycord. It has changed back to discord.py**
+* `ctx` has been changed to `method` in the parameters for `ReactionMenu` & `ViewMenu` (positional only)
+* The auto-paginate feature for `ReactionMenu` has been removed
+* The `Page` class has been added
+* Using `.last_viewed` now returns a `Page`. `.pages` now returns a `List[Page]`
+* The default behavior for the below methods have changed. Previously, using the below methods would return/stop menu's for both `ReactionMenu` & `ViewMenu`. With this update, each method by default now returns or stops menu's according to whichever class the method was invoked from. For example, `ViewMenu.stop_all_sessions()` only stops all `ViewMenu` sessions instead of all `ReactionMenu` sessions as well as `ViewMenu` sessions. 
+  * `.get_all_dm_sessions()`
+  * `.get_all_sessions()`
+  * `.get_session(name: str)`
+  * `.stop_all_sessions()`
+  * `.stop_session(name: str, include_all=False)`
+  * `.get_sessions_count()`
+
+With this change, methods `.split_sessions()` & `.stop_only()` have been removed
 #### New Features
 ##### ReactionMenu & ViewMenu
 * Added class method `quick_start()`. Start a menu with it's default settings only adding the pages
@@ -6,17 +22,6 @@
 ##### ViewMenu Only
 * Added the `persist` kwarg to `ViewButton`. This prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
 
-#### Changes
-##### ReactionMenu & ViewMenu
-* The default behavior for the below methods have changed. Previously, using the below methods would return/stop menu's for both `ReactionMenu` & `ViewMenu`. With this update, each method by default now returns or stops menu's according to whichever class the method was invoked from. For example, `ViewMenu.stop_all_sessions()` only stops all `ViewMenu` sessions instead of all `ReactionMenu` sessions and `ViewMenu` sessions. This is done with the addition of the `fixed` parameter for the following methods. If you like the old behavior, simply set the `fixed` parameter to `False`
-  * `.get_all_dm_sessions(fixed=True)`
-  * `.get_all_sessions(fixed=True)`
-  * `.get_session(name: str, fixed=True)`
-  * `.stop_all_sessions(fixed=True)`
-  * `.stop_session(name: str, include_all=False, fixed=True)`
-  * `.get_sessions_count(fixed=True)`
-  
-  With this change, method `.stop_only()` is now deprecated
 
 
 ## v3.0.1 » Feb. 02, 2022

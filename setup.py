@@ -55,7 +55,7 @@ details = {
 setup(
     author='Defxult#8269',
     name='reactionmenu',
-    version='3.0.2',
+    version='3.1.0',
     description='A library to create a discord paginator. Supports pagination with Discords Buttons feature and reactions.',
     url='https://github.com/Defxult/reactionmenu',
     project_urls=details,
@@ -65,5 +65,5 @@ setup(
     license='MIT',
     keywords=tags,
     packages=find_packages()
-    #! for release, install requires needs to be here
+    install_requires=['discord.py>=2.0.0']
 )
