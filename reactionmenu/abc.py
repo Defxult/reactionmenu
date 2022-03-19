@@ -30,8 +30,8 @@ from typing import (
     Callable,
     Final,
     Generic,
+    Iterable,
     List,
-    NamedTuple,
     Optional,
     Set,
     Tuple,
@@ -41,10 +41,8 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-    from .buttons import ReactionButton, ViewButton
     from datetime import datetime
-    from . import ReactionMenu, ViewMenu
-    M = TypeVar('M', bound=Union[ReactionMenu, ViewMenu])
+    from typing import NamedTuple
 
 import abc
 import asyncio
@@ -53,6 +51,8 @@ import inspect
 import re
 import warnings
 from collections.abc import Sequence
+from enum import auto, Enum
+from typing_extensions import Self
 
 import discord
 from discord.ext.commands import Context
@@ -67,75 +67,16 @@ _VIEW_MENU_NAME = 'ViewMenu'
 _REACTION_MENU_NAME = 'ReactionMenu'
 DEFAULT_BUTTONS = 0 # used for quick_start()
 
-GB = TypeVar('GB')
+GB = TypeVar('GB', bound="_BaseButton")
 
-class _PageController:
-    """A helper class to control the pagination process"""
+class Page:
 
-    def __init__(self, pages: List[Union[discord.Embed, str]]):
-        self.pages = pages
-        self.index = 0
-
-    @property
-    def current_page(self) -> Union[discord.Embed, str]:
-        """Return the current page in the pagination process"""
-        return self.pages[self.index]
+    __slots__ = ("content", "embed", "files")
     
-    @property
-    def total_pages(self) -> int:
-        """Return the total amount of pages registered to the menu"""
-        return len(self.pages) - 1
-    
-    def skip_loop(self, action: str, amount: int) -> None:
-        """Using `self.index += amount` does not work because this library is used to operating on a +-1 basis. This loop
-        provides a simple way to still operate on the +-1 standard.
-        """
-        while (amount != 0):
-            if action == '+':
-                self.index += 1
-            elif action == '-':
-                self.index -= 1
-            
-            self.validate_index()
-            amount -= 1
-    
-    def skip(self, skip: _BaseButton.Skip) -> Union[discord.Embed, str]:
-        """Return the page that the skip value was set to"""
-        self.skip_loop(skip.action, skip.amount)
-        return self.validate_index()
-    
-    def validate_index(self) -> Union[discord.Embed, str]:
-        """If the index is out of bounds, assign the appropriate values so the pagination process can continue and return the associated page"""
-        try:
-            _ = self.pages[self.index]
-        except IndexError:
-            if self.index > self.total_pages:
-                self.index = 0
-            
-            elif self.index < 0:
-                self.index = self.total_pages
-        finally:
-            return self.pages[self.index]
-
-    def next(self) -> Union[discord.Embed, str]:
-        """Return the next page in the pagination process"""
-        self.index += 1
-        return self.validate_index()
-    
-    def prev(self) -> Union[discord.Embed, str]:
-        """Return the previous page in the pagination process"""
-        self.index -= 1
-        return self.validate_index()
-    
-    def first_page(self) -> Union[discord.Embed, str]:
-        """Return the first page in the pagination process"""
-        self.index = 0
-        return self.pages[self.index]
-
-    def last_page(self) -> Union[discord.Embed, str]:
-        """Return the last page in the pagination process"""
-        self.index = self.total_pages
-        return self.pages[self.index]
+    def __init__(self, *, content: Optional[str]=None, embed: Optional[discord.Embed]=None, files: Optional[Sequence[discord.File]]=None) -> None:
+        self.content = content
+        self.embed = embed
+        self.files = files
 
 class PaginationEmojis:
     """A set of basic emojis for your convenience to use for your buttons emoji
@@ -146,16 +87,98 @@ class PaginationEmojis:
     - 🔢 as `GO_TO_PAGE`
     - ⏹️ as `END_SESSION`
     """
-    BACK_BUTTON: Final[str] = 	'◀️'
-    NEXT_BUTTON: Final[str] = 	'▶️'
-    FIRST_PAGE: Final[str] =  	'⏪'
-    LAST_PAGE: Final[str] =   	'⏩'
-    GO_TO_PAGE: Final[str] =  	'🔢'
-    END_SESSION: Final[str] = 	'⏹️'
+    BACK_BUTTON: Final[str] = '◀️'
+    NEXT_BUTTON: Final[str] = '▶️'
+    FIRST_PAGE: Final[str]  = '⏪'
+    LAST_PAGE: Final[str]   = '⏩'
+    GO_TO_PAGE: Final[str]  = '🔢'
+    END_SESSION: Final[str] = '⏹️'
+
+class _PageController:
+    def __init__(self, pages: List[Page]) -> None:
+        self.ALL_PAGES: Final[List[Page]] = pages
+        self.index = 0
+
+    @property
+    def current_page(self) -> Page:
+        return self.ALL_PAGES[self.index]
+    
+    @property
+    def total_pages(self) -> int:
+        """Return the total amount of pages registered to the menu"""
+        return len(self.ALL_PAGES) - 1
+    
+    def validate_index(self) -> Page:
+        """If the index is out of bounds, assign the appropriate values so the pagination process can continue and return the associated page"""
+        try:
+            _ = self.ALL_PAGES[self.index]
+        except IndexError:
+            if self.index > self.total_pages:
+                self.index = 0
+            
+            elif self.index < 0:
+                self.index = self.total_pages
+        finally:
+            return self.ALL_PAGES[self.index]
+    
+    def skip_loop(self, action: str, amount: int) -> None:
+        """Using `self.index += amount` does not work because this library is used to operating on a +-1 basis. This loop
+        provides a simple way to still operate on the +-1 standard.
+        """
+        while amount != 0:
+            if action == '+':
+                self.index += 1
+            elif action == '-':
+                self.index -= 1
+            
+            self.validate_index()
+            amount -= 1
+    
+    def skip(self, skip: _BaseButton.Skip) -> Page:
+        """Return the page that the skip value was set to"""
+        self.skip_loop(skip.action, skip.amount)
+        return self.validate_index()
+
+    def next(self) -> Page:
+        """Return the next page in the pagination process"""
+        self.index += 1
+        return self.validate_index()
+    
+    def prev(self) -> Page:
+        """Return the previous page in the pagination process"""
+        self.index -= 1
+        return self.validate_index()
+    
+    def first_page(self) -> Page:
+        """Return the first page in the pagination process"""
+        self.index = 0
+        return self.ALL_PAGES[self.index]
+
+    def last_page(self) -> Page:
+        """Return the last page in the pagination process"""
+        self.index = self.total_pages
+        return self.ALL_PAGES[self.index]
+
+class _MenuType(Enum):
+    TypeEmbed = auto()
+    TypeEmbedDynamic = auto()
+    TypeText = auto()
+
+MenuType = _MenuType
+
+class _LimitDetails(NamedTuple):
+    limit: int
+    per: str
+    message: str
+    set_by_user: bool = False
+
+    @classmethod
+    def default(cls) -> Self:
+        return cls(0, "", "")
 
 class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
 
-    Emojis: Final[PaginationEmojis] = PaginationEmojis
+    Emojis = PaginationEmojis
 
     def __init__(self, name: str, event: _BaseButton.Event, skip: _BaseButton.Skip):
         self.name: str = name
@@ -163,7 +186,7 @@ class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
         self.skip: _BaseButton.Skip = skip
         self.__clicked_by = set()
         self.__total_clicks = 0
-        self.__last_clicked: datetime = None
+        self.__last_clicked: Optional[datetime] = None
     
     @property
     @abc.abstractmethod
@@ -189,11 +212,11 @@ class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
         return self.__total_clicks
 
     @property
-    def last_clicked(self) -> datetime:
+    def last_clicked(self) -> Optional[datetime]:
         """
         Returns
         -------
-        :class:`datetime.datetime`: The time in UTC for when the button was last clicked. Can be :class:`None` if the button has not been clicked
+        Optional[:class:`datetime.datetime`]: The time in UTC for when the button was last clicked. Can be :class:`None` if the button has not been clicked
         """
         return self.__last_clicked
 
@@ -247,21 +270,19 @@ class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
                 raise MenuException('The value for parameter "event_type" was not recognized')
 
 class _BaseMenu(metaclass=abc.ABCMeta):
-    TypeEmbed: Final[int] = 1
-    TypeEmbedDynamic: Final[int] = 2
-    TypeText: Final[int] = 3
+    TypeEmbed: Final[_MenuType] = _MenuType.TypeEmbed
+    TypeEmbedDynamic: Final[_MenuType] = _MenuType.TypeEmbedDynamic
+    TypeText: Final[_MenuType] = _MenuType.TypeText
 
-    _active_sessions = []
-    _sessions_limited = False
-    _sessions_limit_details = None
+    _sessions_limit_details = _LimitDetails.default()
+    _active_sessions: List[Self] # actually defined in child classes
 
-    def __init__(self, ctx: Context, menu_type: int, **kwargs):
-        self._ctx = ctx
+    def __init__(self, method: Union[Context, discord.Interaction], /, menu_type: _MenuType, **kwargs):
+        self._method = method
         self._menu_type = menu_type
 
-        self._msg: discord.Message = None
-        self._pc: _PageController = None
-        self._buttons: List[Union[ReactionButton, ViewButton]] = []
+        self._msg: Optional[discord.Message] = None
+        self._pc: Optional[_PageController] = None
         self._is_running = False
         self._stop_initiated = False
 
@@ -273,11 +294,11 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         self.rows_requested: int = kwargs.get('rows_requested', 0)
         self.custom_embed: Union[discord.Embed, None] = kwargs.get('custom_embed')
 
-        self._relay_info: NamedTuple = None
-        self._on_timeout_details: Callable[[_BaseMenu], None] = None
+        self._relay_info: Optional[NamedTuple] = None
+        self._on_timeout_details: Optional[Callable[[_BaseMenu], None]] = None
         self._menu_timed_out = False
         self._bypass_primed = False # used in :meth:`update()`
-        self._pages: List[Union[discord.Embed, str]] = []
+        self._pages: List[Page] = []
         self._on_close_event = asyncio.Event() # used for :meth:`wait_until_close()`
 
         # kwargs
@@ -324,8 +345,14 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     async def start(self):
         raise NotImplementedError
     
+    # ABC class methods
+    
     @abc.abstractclassmethod
     async def quick_start(cls):
+        raise NotImplementedError
+    
+    @abc.abstractclassmethod
+    def get_menu_from_message(cls):
         raise NotImplementedError
     
     @staticmethod
@@ -369,6 +396,10 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         return all([isinstance(item, discord.Embed) for item in values]) if values else False
     
     @staticmethod
+    def _sort_buttons(buttons: List[GB]) -> List[GB]:
+        return sorted(buttons, key=lambda btn: btn.total_clicks, reverse=True)
+    
+    @staticmethod
     def all_strings(values: Sequence[Any]) -> bool:
         """|static method|
         
@@ -385,8 +416,12 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """
         return all([isinstance(item, str) for item in values]) if values else False
     
+    @staticmethod
+    def _extract_proper_user(method: Union[Context, discord.Interaction]) -> Union[discord.Member, discord.User]:
+        return method.author if isinstance(method, Context) else method.user
+    
     @classmethod
-    def _quick_check(cls, pages: Sequence[Union[discord.Embed, str]]) -> int:
+    def _quick_check(cls, pages: Sequence[Union[discord.Embed, str]]) -> _MenuType:
         """Verification for :meth:`quick_start()`
         
             .. added v3.0.2
@@ -396,38 +431,18 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         raise IncorrectType(f'All items in the sequence were not of type discord.Embed or str')
     
     @classmethod
-    def _all_menu_types(cls) -> Tuple[int, int, int]:
+    def _all_menu_types(cls) -> Tuple[_MenuType, _MenuType, _MenuType]:
         return (cls.TypeEmbed, cls.TypeEmbedDynamic, cls.TypeText)
     
     @classmethod
-    def _get_menu_type(cls, menu_type: int) -> str:
+    def _get_menu_type(cls, menu_type: _MenuType) -> str:
         """Returns the :class:`str` representation of the classes `menu_type`"""
         types = {
-            cls.TypeEmbed : 'TypeEmbed',
-            cls.TypeEmbedDynamic : 'TypeEmbedDynamic',
-            cls.TypeText : 'TypeText'
+            cls.TypeEmbed : cls.TypeEmbed.name,
+            cls.TypeEmbedDynamic : cls.TypeEmbedDynamic.name,
+            cls.TypeText : cls.TypeText.name
         }
         return types[menu_type]
-
-    @classmethod
-    def get_menu_from_message(cls: Type[M], message_id: int, /) -> M:
-        """|class method|
-        
-        Return the menu object associated with the message with the given ID
-        
-        Parameters
-        ----------
-        message_id: :class:`int`
-            The `discord.Message.id` from the menu message
-        
-        Returns
-        -------
-        The menu object. Can be :class:`None` if the menu was not found in the list of active menu sessions
-        """
-        for menu in cls._active_sessions:
-            if menu._msg.id == message_id:
-                return menu
-        return None
     
     @classmethod
     def remove_limit(cls) -> None:
@@ -435,62 +450,34 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         
         Remove the limits currently set for menu's
         """
-        cls._sessions_limited = False
-        cls._sessions_limit_details = None
+        cls._sessions_limit_details = _LimitDetails.default()
     
     @classmethod
-    def _get_fixed_sessions(cls) -> List[M]:
-        invoked_from = cls.__name__
-        rm, vm = cls.split_sessions()
-        if invoked_from == _REACTION_MENU_NAME:
-            return rm
-        if invoked_from == _VIEW_MENU_NAME:
-            return vm
-        raise Exception("End of method [_get_fixed_session()]")
-    
-    @classmethod
-    def get_all_dm_sessions(cls: Type[M], fixed: bool=True) -> List[M]:
+    def get_all_dm_sessions(cls) -> List[Self]:
         """|class method|
         
         Retrieve all active DM menu sessions
-
-        Parameters
-        ----------
-        fixed: :class:`bool`
-            If `True`, it returns only the sessions belonging to the class from which it was invoked. If `False`, all menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) are returned
-
-            .. added:: v3.0.2
         
         Returns
         -------
         A :class:`list` of active DM menu sessions that are currently running. Can be an empty list if there are no active DM sessions
         """
-        if fixed:
-            return [session for session in cls._get_fixed_sessions() if session.message.guild is None]
-        else:
-            return [session for session in cls._active_sessions if session.message.guild is None]
+        return [session for session in cls._active_sessions if session._msg.guild is None] # type: ignore
     
     @classmethod
-    def get_all_sessions(cls, fixed: bool=True) -> List[M]:
+    def get_all_sessions(cls) -> List[Self]:
         """|class method|
         
         Retrieve all active menu sessions
-
-        Parameters
-        ----------
-        fixed: :class:`bool`
-            If `True`, it returns only the sessions belonging to the class from which it was invoked. If `False`, all menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) are returned
-
-            .. added:: v3.0.2
         
         Returns
         -------
         A :class:`list` of menu sessions that are currently running. Can be an empty list if there are no active sessions
         """
-        return cls._get_fixed_sessions() if fixed else cls._active_sessions
+        return cls._active_sessions.copy() # Return a copy so the core list of sessions cannot be manipulated
     
     @classmethod
-    def get_session(cls, name: str, fixed: bool=True) -> List[M]:
+    def get_session(cls, name: str) -> List[Self]:
         """|class method|
         
         Get a menu instance by it's name
@@ -500,61 +487,24 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         name: :class:`str`
             The name of the menu to return
         
-        fixed: :class:`bool`
-            If `True`, it returns only the sessions that matched the given :param:`name` belonging to the class from which it was invoked. If `False`, all menu sessions
-            (both :class:`ReactionMenu` & :class:`ViewMenu`) are returned
-
-            .. added:: v3.0.2
-        
         Returns
         -------
         A :class:`list` of menu sessions that are currently running that match the supplied :param:`name`. Can be an empty list if there are no active sessions that matched the :param:`name`
         """
         name = str(name)
-        if fixed:
-            return [session for session in cls._get_fixed_sessions() if session.name == name]
-        else:
-            return [session for session in cls._active_sessions if session.name == name]
+        return [session for session in cls._active_sessions if session.name == name]
     
     @classmethod
-    def split_sessions(cls) -> Tuple[List[ReactionMenu], List[ViewMenu]]:
-        """|class method|
-        
-        Separate ALL menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) into two different lists accessible from a single :class:`tuple`
-
-        Returns
-        -------
-        Tuple[List[:class:`ReactionMenu`], List[:class:`ViewMenu`]]: Can be a :class:`tuple` with two empty lists if there are no active sessions
-
-        Example
-        -------
-        >>> reaction_menus, view_menus = .split_sessions()
-        """
-        rm = []
-        vm = []
-        for session in cls._active_sessions:
-            if session.__class__.__name__ == _REACTION_MENU_NAME: rm.append(session)
-            elif  session.__class__.__name__ == _VIEW_MENU_NAME:  vm.append(session)
-        return (rm, vm)
-    
-    @classmethod
-    def get_sessions_count(cls, fixed: bool=True) -> int:
+    def get_sessions_count(cls) -> int:
         """|class method|
         
         Returns the number of active sessions
-
-        Parameters
-        ----------
-        fixed: :class:`bool`
-            If `True`, it returns the total amount of sessions belonging to the class from which it was invoked. If `False`, the total amount of sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) are returned
-
-            .. added:: v3.0.2
         
         Returns
         -------
         :class:`int`: The amount of menu sessions that are active
         """
-        return len(cls._get_fixed_sessions()) if fixed else len(cls._active_sessions)
+        return len(cls._active_sessions)
     
     @classmethod
     def set_sessions_limit(cls, limit: int, per: str='guild', message: str='Too many active menus. Wait for other menus to be finished.') -> None:
@@ -588,12 +538,10 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             if per not in ('guild', 'channel', 'member'):
                 raise MenuException('Parameter value of "per" was not recognized. Expected: "channel", "guild", or "member"')
 
-            LimitDetails = collections.namedtuple('LimitDetails', ['limit', 'per', 'message'])
-            cls._sessions_limit_details = LimitDetails(limit=limit, per=per, message=message)
-            cls._sessions_limited = True
+            cls._sessions_limit_details = _LimitDetails(limit, per, message, set_by_user=True)
     
     @classmethod
-    async def stop_session(cls, name: str, include_all: bool=False, fixed: bool=True) -> None:
+    async def stop_session(cls, name: str, include_all: bool=False) -> None:
         """|coro class method|
         
         Stop a specific menu with the supplied name
@@ -606,19 +554,13 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         include_all: :class:`bool`
             If set to `True`, it stops all menu sessions with the supplied :param:`name`. If `False`, stops only the most recently started menu with the supplied :param:`name`
         
-        fixed: :class:`bool`
-            If `True`, it stops only the sessions belonging to the class from which it was invoked that matched the supplied :param:`name`. If `False`, the menu sessions
-            (both :class:`ReactionMenu` & :class:`ViewMenu`) are stopped that matched the supplied :param:`name` 
-
-            .. added:: v3.0.2
-        
         Raises
         ------
         - `MenuException`: The session with the supplied name was not found
         """
         name = str(name)
 
-        async def determine_include_all(sessions_to_stop: List[M]) -> None:
+        async def determine_include_all(sessions_to_stop: List[Self]) -> None:
             if sessions_to_stop:
                 if include_all:
                     for session in sessions_to_stop:
@@ -626,68 +568,21 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 else:
                     await sessions_to_stop[-1].stop()
             else:
-                MESSAGE_WITH_FIXED = f'Menu with name {name!r} was not found in the list of active {cls.__name__} sessions'
-                MESSAGE_NOT_FIXED = f'Menu with name {name!r} was not found in the list of active menu sessions'
-                raise MenuException(MESSAGE_WITH_FIXED if fixed else MESSAGE_NOT_FIXED)
+                MESSAGE = f'Menu with name {name!r} was not found in the list of active {cls.__name__} sessions'
+                raise MenuException(MESSAGE)
 
-        if fixed:
-            matched_fixed = [session for session in cls._get_fixed_sessions() if name == session.name]
-            await determine_include_all(matched_fixed)
-        else:
-            matched_sessions = [session for session in cls._active_sessions if name == session.name]
-            await determine_include_all(matched_sessions)
-
-    @classmethod
-    async def stop_only(cls, session_type: str) -> None:
-        """|coro class method|
-
-        Stops all :class:`ReactionMenu`'s or :class:`ViewMenu`'s that are currently running
-
-        Parameters
-        ----------
-        session_type: :class:`str`
-            Can be "reaction" to stop all :class:`ReactionMenu`'s or "view" to stop all :class:`ViewMenu`'s
-        
-        Raises
-        ------
-        - `MenuException`: The parameter given was not recognized
-        
-            .. notes::
-                #+ ----- Deprecated as of v3.0.2 -----
-        """
-        from warnings import warn
-        warn("This method is deprecated as of v3.0.2. Please visit the v3.0.2 section of the CHANGELOG: https://github.com/Defxult/reactionmenu/blob/main/CHANGELOG.md", DeprecationWarning, stacklevel=2)
-        
-        session_type = session_type.lower()
-        if session_type in ('reaction', 'view'):
-            rms, vms = cls.split_sessions()
-            if session_type == 'reaction':
-                for rm in rms:
-                    await rm.stop()
-            else:
-                for vm in vms:
-                    await vm.stop() 
-        else:
-            raise MenuException(f'Parameter "session_type" not recognized. Expected "reaction" or "view", got {session_type!r}')
+        matched_sessions = [session for session in cls._active_sessions if name == session.name]
+        await determine_include_all(matched_sessions)
     
     @classmethod
-    async def stop_all_sessions(cls, fixed: bool=True) -> None:
+    async def stop_all_sessions(cls) -> None:
         """|coro class method|
 
         Stops all menu sessions that are currently running
-
-        fixed: :class:`bool`
-            If `True`, it stops only the sessions belonging to the class from which it was invoked. If `False`, all menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) . If `False`, all menu sessions (both :class:`ReactionMenu` & :class:`ViewMenu`) sessions are searched
-
-            .. added:: v3.0.2
         """
-        if fixed:
-            for session in cls._get_fixed_sessions():
-                await session.stop()
-        else:
-            while cls._active_sessions:
-                session = cls._active_sessions[0]
-                await session.stop()
+        while cls._active_sessions:
+            session = cls._active_sessions[0]
+            await session.stop()
     
     @property
     def menu_type(self) -> str:
@@ -698,17 +593,17 @@ class _BaseMenu(metaclass=abc.ABCMeta):
 
             .. added:: v3.0.2
         """
-        if self._menu_type == _BaseMenu.TypeEmbed: return 'TypeEmbed'
-        elif self._menu_type == _BaseMenu.TypeEmbedDynamic: return 'TypeEmbedDynamic'
-        elif self._menu_type == _BaseMenu.TypeText: return 'TypeText'
+        if self._menu_type == _BaseMenu.TypeEmbed: return self._menu_type.TypeEmbed.name
+        elif self._menu_type == _BaseMenu.TypeEmbedDynamic: return self._menu_type.TypeEmbedDynamic.name
+        elif self._menu_type == _BaseMenu.TypeText: return self._menu_type.TypeText.name
         else: raise MenuException('The menu_type you have set was not recognized')
     
     @property
-    def last_viewed(self) -> Union[discord.Embed, str]:
+    def last_viewed(self) -> Optional[Page]:
         """
         Returns
         -------
-        Union[:class:`discord.Embed`, :class:`str`]: The last page that was viewed in the pagination process. Can be :class:`None` if the menu has not been started
+        Optional[:class:`Page`]: The last page that was viewed in the pagination process. Can be :class:`None` if the menu has not been started
         """
         return self._pc.current_page if self._pc is not None else None
     
@@ -719,7 +614,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         -------
         Union[:class:`discord.Member`, :class:`discord.User`]: The owner of the menu (the person that started the menu). If the menu was started in a DM, this will return :class:`discord.User`
         """
-        return self._ctx.author
+        return self._method.author if isinstance(self._method, Context) else self._method.user # (discord.Interaction)
     
     @property
     def total_pages(self) -> int:
@@ -734,23 +629,22 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             return len(self._pages)
     
     @property
-    def pages(self) -> List[Union[discord.Embed, str]]:
+    def pages(self) -> Optional[List[Page]]:
         """
         Returns
         -------
-        List[Union[:class:`discord.Embed`, :class:`str`]]: The pages currently applied to the menu. Depending on the `menu_type`, it will return a list of :class:`discord.Embed` if the menu type is :attr:`TypeEmbed`
-        or :attr:`TypeEmbedDynamic`. If :attr:`TypeText`, it will return a list of :class:`str`. Can return :class:`None` if there are no pages
+        Optional[List[:class:`Page`]]: The pages currently applied to the menu. Can return :class:`None` if there are no pages
         
         Note: If the `menu_type` is :attr:`TypeEmbedDynamic`, the pages aren't known until after the menu has started
         """
-        return self._pages if self._pages else None
+        return self._pages.copy() if self._pages else None # Return a copy so the core list of pages cannot be manipulated
 
     @property
-    def message(self) -> discord.Message:
+    def message(self) -> Optional[discord.Message]:
         """
         Returns
         -------
-        :class:`discord.Message`: The menu's message object. Can be :class:`None` if the menu has not been started
+        Optional[:class:`discord.Message`]: The menu's message object. Can be :class:`None` if the menu has not been started
         """
         return self._msg
     
@@ -764,53 +658,35 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         return self._is_running
     
     @property
-    def buttons(self: GB) -> List[GB]:
-        """
-        Returns
-        -------
-        :class:`list`: A list of all the buttons that have been added to the menu
-        """
-        return self._buttons
-    
-    @property
-    def buttons_most_clicked(self: GB) -> List[GB]:
-        """
-        Returns
-        -------
-        :class:`list`: The list of buttons on the menu ordered from highest (button with the most clicks) to lowest (button with the least clicks). Can be an empty list if there are no buttons registered to the menu
-        """
-        return sorted(self._buttons, key=lambda btn: btn.total_clicks, reverse=True)
-    
-    @property
     def in_dms(self) -> bool:
         """
         Returns
         -------
         :class:`bool`: If the menu was started in a DM
         """
-        return self._ctx.guild is None
+        return self._method.guild is None
     
-    def _chunks(self, list_, n) -> None:
+    def _chunks(self, list_: List[str], n: int) -> Iterable:
         """Yield successive n-sized chunks from list. Core component of a dynamic menu"""
         for i in range(0, len(list_), n):
             yield list_[i:i + n]
     
-    async def _build_dynamic_pages(self, send_to) -> None:
+    async def _build_dynamic_pages(self, send_to, view: Optional[discord.ui.View]=None) -> None:
         for data_clump in self._chunks(self._dynamic_data_builder, self.rows_requested):
             joined_data = '\n'.join(data_clump)
             if len(joined_data) <= _DYNAMIC_EMBED_LIMIT:
                 possible_block = f"```{self.wrap_in_codeblock}\n{joined_data}```"
                 embed = discord.Embed() if self.custom_embed is None else self.custom_embed.copy()
                 embed.description = joined_data if not self.wrap_in_codeblock else possible_block
-                self._pages.append(embed)
+                self._pages.append(Page(embed=embed))
             else:
                 raise DescriptionOversized('With the amount of data that was received, the embed description is over discords size limit. Lower the amount of "rows_requested" to solve this problem')
         else:
             # set the main/last pages if any
             if any([self._main_page_contents, self._last_page_contents]):
                 
-                # convert to deque
-                self._pages = collections.deque(self._pages)
+                # convert to :class:`deque`
+                self._pages = collections.deque(self._pages) # type: ignore (only temporary to use extend methods of :class:`deque`)
                 
                 if self._main_page_contents:
                     self._main_page_contents.reverse()
@@ -819,16 +695,19 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 if self._last_page_contents:
                     self._pages.extend(self._last_page_contents)
             
+            # convert back to `list`
+            self._pages = list(self._pages)
+
             self._refresh_page_director_info(_BaseMenu.TypeEmbedDynamic, self._pages)
             cls = self.__class__
 
             # make sure data has been added to create at least 1 page
             if not self._pages: raise NoPages(f'You cannot start a {cls.__name__} when no data has been added')
             
-            if cls.__name__ == _VIEW_MENU_NAME:
-                self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0], view=self._view)
+            if view is None:
+                self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0].embed) # type: ignore ("embed=" can still be `None`)
             else:
-                self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0])
+                self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0].embed, view=view) # type: ignore ("embed=" can still be `None`)
     
     def _display_timeout_warning(self, error: Exception) -> None:
         warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}'
@@ -849,21 +728,26 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             # the most important thing here is to ensure the menu is gracefully stopped while displaying a formatted
             # error message to the user
             try:
-                if asyncio.iscoroutinefunction(func): await func(self)
+                if asyncio.iscoroutinefunction(func):
+                    await func(self) # type: ignore (`iscoroutinefunction` will still return `False` if func is `None` (i want that to happen))
                 else: func(self)
             except Exception as error:
                 self._display_timeout_warning(error)
     
-    def _determine_kwargs(self, content: Union[discord.Embed, str]) -> dict:
+    def _determine_kwargs(self, page: Page) -> dict:
         """Determine the `inter.response.edit_message()` and :meth:`_msg.edit()` kwargs for the pagination process. Used in :meth:`ViewMenu._paginate()` and :meth:`ReactionMenu._paginate()`"""
-        kwargs = {
-            'embed' if self._menu_type in (_BaseMenu.TypeEmbed, _BaseMenu.TypeEmbedDynamic) else 'content' : content
-            # Note to self: Take a look at the note below as to why the following item in this dict is commented out
-            #'view' : self._view
-        }
-        if self.__class__.__name__ != _VIEW_MENU_NAME and self._menu_type == _BaseMenu.TypeText:
-            kwargs['allowed_mentions'] = self.allowed_mentions
+        kwargs = {}
+        if self._menu_type in (_BaseMenu.TypeEmbed, _BaseMenu.TypeEmbedDynamic):
+            kwargs["embed"] = page.embed
+        else:
+            kwargs["content"] = page.content
+        
+        kwargs["allowed_mentions"] = self.allowed_mentions
         return kwargs
+        # FIXME:
+        #? MIGHT HAVE TO PUT THIS BACK IN
+        # if self.__class__.__name__ != _VIEW_MENU_NAME and self._menu_type == _BaseMenu.TypeText:
+        #     kwargs['allowed_mentions'] = self.allowed_mentions
         """
         Note ::
             I thought everytime a message was edited, the `view` had to be present but that's not the case. Each button stays on the message
@@ -874,33 +758,38 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             that I was having
         """
     
-    def _refresh_page_director_info(self, type_: int, pages: List[Union[discord.Embed, str]]) -> None:
+    def _refresh_page_director_info(self, type_: _MenuType, pages: List[Page]) -> None:
         """Sets the page count at the bottom of embeds/text if set
         
         Parameters
         ----------
-        type_: :class:`str`
-            Either :attr:`ViewMenu.TypeEmbed`, :attr:`ViewMenu.TypeEmbedDynamic` or :attr:`ViewMenu.TypeText`
+        type_: :class:`_MenuType`
+            Either :attr:`_BaseMenu.TypeEmbed`, :attr:`_BaseMenu.TypeEmbedDynamic` or :attr:`_BaseMenu.TypeText`
         
-        pages: List[Union[:class:`discord.Embed`, :class:`str`]]
+        pages: List[:class:`Page`]
             The pagination contents
         """
         if self.show_page_director:
-            if type_ not in (_BaseMenu.TypeEmbed, _BaseMenu.TypeEmbedDynamic, _BaseMenu.TypeText): raise Exception('Needs to be of type _BaseMenu.TypeEmbed, _BaseMenu.TypeEmbedDynamic or _BaseMenu.TypeText')
+            if type_ not in (_BaseMenu.TypeEmbed, _BaseMenu.TypeEmbedDynamic, _BaseMenu.TypeText):
+                raise Exception('Needs to be of type _BaseMenu.TypeEmbed, _BaseMenu.TypeEmbedDynamic or _BaseMenu.TypeText') 
             
-            if type_ == _BaseMenu.TypeEmbed or type_ == _BaseMenu.TypeEmbedDynamic:
-                page = 1
-                outof = len(pages)
-                for embed in pages:
-                    embed.set_footer(text=f'{self._maybe_new_style(page, outof)}{":" if embed.footer.text else ""} {embed.footer.text if embed.footer.text else ""}', icon_url=embed.footer.icon_url)
-                    page += 1
+            page_number = 1
+
+            if type_ in (_BaseMenu.TypeEmbed, _BaseMenu.TypeEmbedDynamic):
+                page_number = 1
+                OUTOF: Final[int] = len(pages)
+                all_embeds = [p.embed for p in pages]
+                for embed in all_embeds:
+                    embed.set_footer(text=f'{self._maybe_new_style(page_number, OUTOF)}{":" if embed.footer.text else ""} {embed.footer.text if embed.footer.text else ""}', icon_url=embed.footer.icon_url) # type: ignore
+                    page_number += 1
             else:
-                page_count = 1
+                # TypeText Only
+
                 CODEBLOCK = re.compile(r'(`{3})(.*?)(`{3})', flags=re.DOTALL)
                 CODEBLOCK_DATA_AFTER = re.compile(r'(`{3})(.*?)(`{3}).+', flags=re.DOTALL)
                 for idx in range(len(pages)):
-                    content = pages[idx]
-                    page_info = self._maybe_new_style(page_count, len(pages))
+                    page: Page = pages[idx]
+                    page_info = self._maybe_new_style(page_number, len(pages))
                     
                     # the main purpose of the re is to decide if only 1 or 2 '\n' should be used. with codeblocks, at the end of the block there is already a new line, so there's no need to add an extra one except in
                     # the case where there is more information after the codeblock
@@ -908,48 +797,52 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                     # Note: with codeblocks, i already tried the f doc string version of this and it doesnt work because there is a spacing issue with page_info. using a normal f string with \n works as intended
                     # f doc string version: https://github.com/Defxult/reactionmenu/blob/eb88af3a2a6dd468f7bcff38214eb77bc91b241e/reactionmenu/text.py#L288
                     
-                    if re.search(CODEBLOCK, content):
-                        if re.search(CODEBLOCK_DATA_AFTER, content):
-                            pages[idx] = f'{content}\n\n{page_info}'
+                    if re.search(CODEBLOCK, page.content): # type: ignore
+                        if re.search(CODEBLOCK_DATA_AFTER, page.content): # type: ignore
+                            page.content = f'{page.content}\n\n{page_info}'
                         else:
-                            pages[idx] = f'{content}\n{page_info}'
+                            page.content = f'{page.content}\n{page_info}'
                     else:
-                        pages[idx] = f'{content}\n\n{page_info}'
-                    page_count += 1
+                        page.content = f'{page.content}\n\n{page_info}'
+                    page_number += 1
     
     async def _handle_session_limits(self) -> bool:
-        """|coro| Determine if the menu session is currently limited, if so, send the error message and return `False` indicating that further code execution (starting the menu) should be cancelled"""
-        cls = self.__class__
-        details: 'NamedTuple' = cls._sessions_limit_details
-        can_proceed = True
+        """|coro| Determine if the menu session is currently limited, if so, send the error message and return `False` indicating that further code execution (starting the menu) should be cancelled
         
+            NOTE
+                This method is only called if `_LimitDetails.set_by_user` has been set externally (by the public method)
+        """
+        cls = self.__class__
+        details = cls._sessions_limit_details
+        can_proceed = True
+
         # if the menu is in a DM, handle it separately
         if self.in_dms:
             dm_sessions = cls.get_all_dm_sessions()
             if dm_sessions:
-                user_dm_sessions = [session for session in dm_sessions if session.owner.id == self._ctx.author.id]
+                user_dm_sessions = [session for session in dm_sessions if session.owner.id == self._extract_proper_user(self._method).id]
                 if len(user_dm_sessions) >= details.limit:
                     can_proceed = False
         else:
             if details.per == 'guild':
-                guild_sessions = [session for session in cls._active_sessions if session.message.guild is not None]
+                guild_sessions = [session for session in cls._active_sessions if session.message.guild is not None] # type: ignore
                 if len(guild_sessions) >= details.limit:
                     can_proceed = False
             
             elif details.per == 'member':
-                member_sessions = [session for session in cls._active_sessions if session.owner.id == self._ctx.author.id]
+                member_sessions = [session for session in cls._active_sessions if session.owner.id == self._extract_proper_user(self._method).id]
                 if len(member_sessions) >= details.limit:
                     can_proceed = False
             
             elif details.per == 'channel':
-                channel_sessions = [session for session in cls._active_sessions if session.message.channel.id == self._ctx.channel.id]
+                channel_sessions = [session for session in cls._active_sessions if session.message.channel.id == self._method.channel.id] # type: ignore
                 if len(channel_sessions) >= details.limit:
                     can_proceed = False
         
         if can_proceed:
             return True
         else:
-            await self._ctx.send(details.message)
+            await self._method.channel.send(details.message) # FIXME: double check access level for `.send()`
             return False
     
     def _maybe_new_style(self, counter: int, total_pages: int) -> str: 
@@ -965,11 +858,11 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         else:
             return f'Page {counter}/{total_pages}'
     
-    async def _contact_relay(self, member: discord.Member, button: _BaseButton) -> None:
+    async def _contact_relay(self, member: discord.Member, button: Type[GB]) -> None:
         """|coro| Dispatch the information to the relay function if a relay has been set"""
         if self._relay_info:
-            func: Callable = self._relay_info.func
-            only = self._relay_info.only
+            func: Callable = self._relay_info.func # type: ignore
+            only = self._relay_info.only # type: ignore
             RelayPayload = collections.namedtuple('RelayPayload', ['member', 'button'])
             payload = RelayPayload(member=member, button=button)
 
@@ -1009,26 +902,26 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     def _handle_reply_kwargs(self, send_to, reply: bool) -> dict:
         """Used to determine the mentions for the `reply` parameter in :meth:`.start()`"""
         # sometimes users do `.start(send_to=ctx.channel)`. its not needed but handle it just in case
-        if isinstance(send_to, discord.TextChannel) and send_to == self._ctx.channel:
+        if isinstance(send_to, discord.TextChannel) and send_to == self._method.channel:
             send_to = None
         return {
-            'reference' : self._ctx.message if all([send_to is None, reply is True]) else None,
+            'reference' : self._method.message if all([send_to is None, reply is True]) else None,
             'mention_author' : self.allowed_mentions.replied_user
         }
     
     def _handle_send_to(self, send_to: Union[str, int, discord.TextChannel, discord.Thread]) -> discord.abc.Messageable:
         """For the :param:`send_to` kwarg in :meth:`Menu.start()`. Determine what channel the menu should start in"""
         if self.in_dms:
-            return self._ctx
+            return self._method.channel # type: ignore
         else:
             if send_to is None:
-                return self._ctx
+                return self._method.channel # type: ignore
             else:
                 if not isinstance(send_to, (str, int, discord.TextChannel, discord.Thread)):
                     raise IncorrectType(f'Parameter "send_to" expected str, int, discord.TextChannel, or discord.Thread, got {send_to.__class__.__name__}')
                 else:
                     class_name = self.__class__.__name__
-                    all_messageable_channels: List[Union[discord.TextChannel, discord.Thread]] = self._ctx.guild.text_channels + self._ctx.guild.threads
+                    all_messageable_channels: List[discord.TextChannel] = self._method.guild.text_channels + self._method.guild.threads # type: ignore
                     
                     # before we continue, check if there are any duplicate named text channels or threads/no matching names found if a str was provided
                     if isinstance(send_to, str):
@@ -1105,6 +998,8 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             .. added:: v3.0.1
         """
         await self._on_close_event.wait()
+    
+    # TODO: RESUME POINT
     
     @ensure_not_primed
     async def add_from_messages(self, messages: Sequence[discord.Message]) -> None:
@@ -1287,29 +1182,50 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             self._last_page_contents.append(embed)
     
     @ensure_not_primed
-    def add_page(self, page: Union[discord.Embed, str]) -> None:
+    def add_page(self, embed: Optional[discord.Embed]=None, content: Optional[str]=None, files: Optional[Sequence[discord.File]]=None) -> None:
         """Add a page to the menu
         
+        TODO:
+
         Parameters
         ----------
-        page: Union[:class:`discord.Embed`, :class:`str`]
-            The page to add. Can only be used when the menus `menu_type` is :attr:`TypeEmbed` (adding a :class:`discord.Embed`)
-            or :attr:`TypeText` (adding a :class:`str`)
+        embed: Optional[:class:`discord.Embed`]
+            ...
+        
+        content: Optional[:class:`str`]
+            ...
+        
+        files: Optional[Sequence[:class:`discord.File`]]
+            ...
         
         Raises
         ------
+        - `MenuException`: Attempted to add a page with no parameters
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `MenuSettingsMismatch`: The page being added does not match the menus `menu_type` 
+        
+            .. changes::
+                v3.1.0
+                    Added parameter content
+                    Added parameter embed
+                    Added parameter files
+                    Removed parameter "page"
         """
+        if all([content is None, embed is None, files is None]):
+            raise MenuException("When adding a page, at lease one parameter must be set")
+        
         cls = self.__class__
         if self._menu_type == cls.TypeEmbed:
-            if isinstance(page, discord.Embed):
-                self._pages.append(page)
+            if isinstance(embed, discord.Embed):
+                self._pages.append(Page(content=content, embed=embed, files=files))
             else:
-                raise MenuSettingsMismatch(f'menu_type was set as TypeEmbed but got {page.__class__.__name__} when adding a page')
+                raise MenuSettingsMismatch(f'When adding a page with a menu_type of TypeEmbed, the "embed" parameter cannot be None')
         
         elif self._menu_type == cls.TypeText:
-            self._pages.append(str(page))
+            if content:
+                self._pages.append(Page(content=str(content), files=files))
+            else:
+                raise MenuSettingsMismatch(f'When adding a page with a menu_type of TypeText, the "content" parameter cannot be None')
         
         else:
             raise MenuSettingsMismatch('add_page method cannot be used with the current menu_type')
@@ -1330,7 +1246,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         - `MenuSettingsMismatch`: The page being added does not match the menus `menu_type` 
         """
         for page in pages:
-            self.add_page(page)
+            self.add_page(Page(content=page, embed=page)) # type: ignore
     
     @ensure_not_primed
     def remove_all_pages(self) -> None:
@@ -1383,7 +1299,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """Remove the timeout call to the function you have set when the menu times out"""
         self._on_timeout_details = None
     
-    def set_relay(self, func: Callable[[NamedTuple], None], *, only: Optional[List[Union[ReactionButton, ViewButton]]]=None) -> None:
+    def set_relay(self, func: Callable[[NamedTuple], None], *, only: Optional[List[Type[GB]]]=None) -> None:
         """Set a function to be called with a given set of information when a button is pressed on the menu. The information passed is `RelayPayload`, a named tuple.
         The named tuple contains the following attributes:
 
@@ -1395,9 +1311,9 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         func: Callable[[:class:`NamedTuple`], :class:`None`]
             The function should only contain a single positional argument. Command functions (`@bot.command()`) not supported
         
-        only: Optional[List[Union[:class:`ReactionButton`, :class:`ViewButton`]]]
-            A list of buttons associated with the current menu instance. If this is :class:`None`, all buttons on the menu will be relayed. If
-            set, only button presses from those specified buttons will be relayed
+        only: Optional[List[:generic:`GB`]]
+            A list of buttons (`GB`) associated with the current menu instance. If the menu instance is :class:`ReactionMenu`, this should be a list of :class:`ReactionButton`
+            and vice-versa for :class:`ViewMenu` instances. If this is :class:`None`, all buttons on the menu will be relayed. If set, only button presses from those specified buttons will be relayed
         
         Raises
         ------
