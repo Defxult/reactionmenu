@@ -1124,7 +1124,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                         content_to_paginate.append(msg.content)
                 if content_to_paginate:
                     for content in content_to_paginate:
-                        self.add_page(content)
+                        self.add_page(content=content)
                 else:
                     raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no text (discord.Message.content) was found in the messages provided')
         else:
@@ -1282,7 +1282,10 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         - `MenuSettingsMismatch`: The page being added does not match the menus `menu_type` 
         """
         for embed_or_str in pages:
-            self.add_page(embed_or_str) # type: ignore
+            if isinstance(embed_or_str, str):
+                self.add_page(content=embed_or_str)
+            else:
+                self.add_page(embed_or_str) # type: ignore
     
     @ensure_not_primed
     def remove_all_pages(self) -> None:
