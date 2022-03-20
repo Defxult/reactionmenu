@@ -28,13 +28,25 @@ import asyncio
 import inspect
 import random
 import re
-from typing import List, NoReturn, Optional, Sequence, Union
+from typing import TYPE_CHECKING, List, NoReturn, Optional, Sequence, Union
+
+from typing_extensions import Self
+
+if TYPE_CHECKING:
+    from .abc import MenuType
 
 import discord
 from discord.ext.commands import Context
 
 from . import ViewButton
-from .abc import _DEFAULT_STYLE, DEFAULT_BUTTONS, _BaseMenu, _PageController
+from .abc import (
+    _DEFAULT_STYLE,
+    DEFAULT_BUTTONS,
+    Page,
+    _BaseMenu,
+    _PageController
+)
+
 from .decorators import ensure_not_primed
 from .errors import *
 
@@ -95,8 +107,13 @@ class ViewMenu(_BaseMenu):
     wrap_in_codeblock: :class:`str`
         The discord codeblock language identifier to wrap your data in (:attr:`ViewMenu.TypeEmbedDynamic` only/defaults to :class:`None`). Example: `ViewMenu(ctx, ..., wrap_in_codeblock='py')`
     """
-    def __init__(self, ctx: Context, *, menu_type: int, **kwargs):
-        super().__init__(ctx, menu_type, **kwargs)
+    
+    _active_sessions: List[ViewMenu] = []
+    
+    def __init__(self, method: Union[Context, discord.Interaction], /, menu_type: MenuType, **kwargs):
+        super().__init__(method, menu_type, **kwargs)
+
+        self.__buttons: List[ViewButton] = []
 
         # kwargs
         self.disable_buttons_on_timeout: bool = kwargs.get('disable_buttons_on_timeout', True)
@@ -104,19 +121,19 @@ class ViewMenu(_BaseMenu):
         self.__timeout: Union[int, float, None] = kwargs.get('timeout', 60.0) # property get/set
 
         # view
-        self._view = discord.ui.View(timeout=self.__timeout)
-        self._view.on_timeout = self._on_dpy_view_timeout
-        self._view.on_error = self._on_dpy_view_error
+        self.__view = discord.ui.View(timeout=self.__timeout)
+        self.__view.on_timeout = self._on_dpy_view_timeout
+        self.__view.on_error = self._on_dpy_view_error
     
     def __repr__(self):
         cls = self.__class__
-        return f'<ViewMenu name={self.name!r} owner={str(self._ctx.author)!r} is_running={self._is_running} timeout={self.timeout} menu_type={cls._get_menu_type(self._menu_type)!r}>'
+        return f'<ViewMenu name={self.name!r} owner={str(self._extract_proper_user(self._method))!r} is_running={self._is_running} timeout={self.timeout} menu_type={cls._get_menu_type(self._menu_type)!r}>'
 
     async def _on_dpy_view_timeout(self) -> None:
         self._menu_timed_out = True
         await self.stop(delete_menu_message=self.delete_on_timeout, remove_buttons=self.remove_buttons_on_timeout, disable_buttons=self.disable_buttons_on_timeout)
     
-    async def _on_dpy_view_error(self, error: Exception, item: discord.ui.Item, inter: discord.Interaction) -> NoReturn:
+    async def _on_dpy_view_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> NoReturn:
         try:
             raise error
         finally:
@@ -137,13 +154,31 @@ class ViewMenu(_BaseMenu):
     def timeout(self, value) -> Union[int, float, None]:
         """A property getter/setter for kwarg `timeout`"""
         if isinstance(value, (int, float, type(None))):
-            self._view.timeout = value
+            self.__view.timeout = value
             self.__timeout = value
         else:
             raise IncorrectType(f'"timeout" expected int, float, or None, got {value.__class__.__name__}')
+        
+    @property
+    def buttons(self) -> List[ViewButton]:
+        """
+        Returns
+        -------
+        List[:class:`ViewButton`]: A list of all the buttons that have been added to the menu
+        """
+        return self.__buttons.copy()
+    
+    @property
+    def buttons_most_clicked(self) -> List[ViewButton]:
+        """
+        Returns
+        -------
+        List[:class:`ViewButton`]: The list of buttons on the menu ordered from highest (button with the most clicks) to lowest (button with the least clicks). Can be an empty list if there are no buttons registered to the menu
+        """
+        return self._sort_buttons(self.__buttons)
     
     @classmethod
-    async def quick_start(cls, ctx: Context, pages: Sequence[Union[discord.Embed, str]], buttons: Optional[Sequence[ViewButton]]=DEFAULT_BUTTONS) -> ViewMenu:
+    async def quick_start(cls, method: Union[Context, discord.Interaction], /, pages: Sequence[Union[discord.Embed, str]], buttons: Optional[Sequence[ViewButton]]=DEFAULT_BUTTONS) -> Self:
         """|coro class method|
         
         Start a menu with default settings either with a `menu_type` of `ViewMenu.TypeEmbed` (all values in `pages` are of type `discord.Embed`) or `ViewMenu.TypeText` (all values in `pages` are of type `str`)
@@ -170,21 +205,20 @@ class ViewMenu(_BaseMenu):
         - `NoButtons`: Attempted to start the menu when no Buttons have been registered
         - `IncorrectType`: All items in :param:`pages` were not of type :class:`discord.Embed` or :class:`str`
         
-            .. added v3.0.2
+            .. added v3.1.0
         """
-        menu = cls(ctx, menu_type=cls._quick_check(pages))
+        menu = cls(method, menu_type=cls._quick_check(pages))
         menu.add_pages(pages)
-        menu.add_buttons(ViewButton.all() if buttons == DEFAULT_BUTTONS else buttons)
+        menu.add_buttons(ViewButton.all() if buttons is DEFAULT_BUTTONS else buttons) # type: ignore
         await menu.start()
         return menu
     
     def _should_persist(self, button: ViewButton) -> bool:
         """Determine if a link button should stay enabled/remain on the menu when it times out or is stopped
 
-            .. added:: v3.0.2
+            .. added:: v3.1.0
         """
         return True if all([
-            #? Maybe add: button.style == discord.ButtonStyle.link
             button.custom_id is None,
             button.url,
             button.persist,
@@ -194,12 +228,12 @@ class ViewMenu(_BaseMenu):
     def _check(self, inter: discord.Interaction) -> bool:
         """Base menu button interaction check. Verifies who (user, everyone, or role) can interact with the button"""
         author_pass = False
-        if self._ctx.author.id == inter.user.id: author_pass = True
+        if self._extract_proper_user(inter).id == inter.user.id: author_pass = True
         if self.only_roles: self.all_can_click = False
 
         if self.only_roles:
             for role in self.only_roles:
-                if role in inter.user.roles:
+                if role in inter.user.roles: # type: ignore / will be :class:`Member`. Interactions cannot be used inside DMs
                     author_pass = True
                     break
         if self.all_can_click:
@@ -221,7 +255,7 @@ class ViewMenu(_BaseMenu):
                 
                 await self.refresh_menu_buttons()
     
-    def _remove_director(self, page: Union[discord.Embed, str]) -> Union[discord.Embed, str]:
+    def _remove_director(self, page: Page) -> Page:
         """Removes the page director contents from the page. This is used for :meth:`ViewMenu.update()`"""
         style = self.style
         if style is None:
@@ -232,22 +266,27 @@ class ViewMenu(_BaseMenu):
         STYLE_STR_PATTERN = escaped_style.replace(r'\$', r'\d{1,}').replace(r'\&', r'(\d{1,}.*)')
         
         if self.show_page_director:
-            if isinstance(page, discord.Embed):
-                if page.footer.text:
+            # TypeEmbed
+            if isinstance(page.embed, discord.Embed) and self._menu_type == ViewMenu.TypeEmbed:
+                embed = page.embed
+                if embed.footer.text:
                     DIRECTOR_PATTERN = STYLE_PATTERN + r':? '
-                    if re.search(DIRECTOR_PATTERN, page.footer.text):
-                        page.set_footer(text=re.sub(DIRECTOR_PATTERN, '', page.footer.text), icon_url=page.footer.icon_url)
-
-            elif isinstance(page, str):
-                if re.search(STYLE_STR_PATTERN, page):
-                    return re.sub(STYLE_STR_PATTERN, '', page).rstrip('\n')
-                else:
-                    return page
+                    if re.search(DIRECTOR_PATTERN, embed.footer.text):
+                        embed.set_footer(text=re.sub(DIRECTOR_PATTERN, '', embed.footer.text), icon_url=embed.footer.icon_url)
+                
+                return page
+            
+            # TypeText
+            elif isinstance(page.content, str) and self._menu_type == ViewMenu.TypeText:
+                if re.search(STYLE_STR_PATTERN, page.content):
+                    page.content = re.sub(STYLE_STR_PATTERN, '', page.content).rstrip('\n')
+                
+                return page
 
             else:
                 raise TypeError(f'_remove_director parameter "page" expected discord.Embed or str, got {page.__class__.__name__}')
         else:
-            return page
+            return page    
     
     async def update(self, *, new_pages: Union[List[Union[discord.Embed, str]], None], new_buttons: Union[List[ViewButton], None]) -> None:
         """|coro|
@@ -295,17 +334,20 @@ class ViewMenu(_BaseMenu):
             # ----------------------- END CHECKS -----------------------
 
             if new_pages is not None:
+                # TypeEmbed
                 if self._menu_type == ViewMenu.TypeEmbed:
                     for new_embed_page in new_pages:
-                        self._remove_director(new_embed_page)
+                        self._remove_director(Page(embed=new_embed_page)) # type: ignore / contains embed if TypeEmbed
                     
-                    self._pages = new_pages.copy()
-                    self._pc = _PageController(new_pages)
+                    self._pages = [Page(embed=e) for e in new_pages.copy()] # type: ignore
+                    self._pc = _PageController(self._pages)
                     self._refresh_page_director_info(ViewMenu.TypeEmbed, self._pages)
+                
+                # TypeText
                 else:
-                    removed_director_info = []
+                    removed_director_info: List[Page] = []
                     for new_str_page in new_pages.copy():
-                        removed_director_info.append(self._remove_director(new_str_page))
+                        removed_director_info.append(self._remove_director(Page(content=new_str_page))) # type: ignore
                     
                     self._pages = removed_director_info.copy()
                     self._pc = _PageController(self._pages)
@@ -318,16 +360,16 @@ class ViewMenu(_BaseMenu):
             
             kwargs_to_pass = {}
 
-            self._view.stop()
-            self._view = self._get_new_view()
+            self.__view.stop()
+            self.__view = self._get_new_view()
 
             # re-using current buttons
             if isinstance(new_buttons, type(None)):
-                original_buttons = self._buttons.copy()
+                original_buttons = self.__buttons.copy()
                 self.remove_all_buttons()
-                for current_btns in original_buttons:
+                for orig_button in original_buttons:
                     self._bypass_primed = True
-                    self.add_button(current_btns)
+                    self.add_button(orig_button)
             
             # using new buttons
             elif isinstance(new_buttons, list):
@@ -337,14 +379,14 @@ class ViewMenu(_BaseMenu):
                         self._bypass_primed = True
                         self.add_button(new_btn)
             
-            kwargs_to_pass['view'] = self._view
+            kwargs_to_pass['view'] = self.__view
             
             if self._menu_type == ViewMenu.TypeEmbed:
-                kwargs_to_pass['embed'] = self._pages[0]
+                kwargs_to_pass['embed'] = self._pages[0].embed
             else:
-                kwargs_to_pass['content'] = self._pages[0]
+                kwargs_to_pass['content'] = self._pages[0].content
             
-            await self._msg.edit(**kwargs_to_pass)
+            await self._msg.edit(**kwargs_to_pass) # type: ignore / `edit` will not be `None` because the menu has started
     
     def randomize_button_styles(self) -> None:
         """Set all buttons currently registered to the menu to a random :class:`discord.ButtonStyle` excluding link buttons"""
@@ -354,7 +396,7 @@ class ViewMenu(_BaseMenu):
             discord.ButtonStyle.gray,
             discord.ButtonStyle.red
         )
-        for btn in [button for button in self._buttons if button.style not in (discord.ButtonStyle.link, discord.ButtonStyle.url)]:
+        for btn in [button for button in self.__buttons if button.style not in (discord.ButtonStyle.link, discord.ButtonStyle.url)]:
             btn.style = random.choice(all_styles)
     
     def set_button_styles(self, style: discord.ButtonStyle) -> None:
@@ -365,7 +407,7 @@ class ViewMenu(_BaseMenu):
         style: :class:`discord.ButtonStyle`
             The button style to set
         """
-        for btn in [button for button in self._buttons if button.style not in (discord.ButtonStyle.link, discord.ButtonStyle.url)]:
+        for btn in [button for button in self.__buttons if button.style not in (discord.ButtonStyle.link, discord.ButtonStyle.url)]:
             btn.style = style
 
     async def refresh_menu_buttons(self) -> None:
@@ -374,14 +416,14 @@ class ViewMenu(_BaseMenu):
         When the menu is running, update the message to reflect the buttons that were removed, enabled, or disabled
         """
         if self._is_running:
-            current_buttons = self._buttons.copy()
+            current_buttons = self.__buttons.copy()
             self.remove_all_buttons()
-            self._view.stop()
-            self._view = self._get_new_view()
+            self.__view.stop()
+            self.__view = self._get_new_view()
             for btn in current_buttons:
                 self._bypass_primed = True
                 self.add_button(btn)
-            await self._msg.edit(view=self._view)
+            await self._msg.edit(view=self.__view) # type: ignore / `edit` will not be `None` because the menu has started
     
     def remove_button(self, button: ViewButton) -> None:
         """Remove a button from the menu
@@ -395,29 +437,29 @@ class ViewMenu(_BaseMenu):
         ------
         - `ButtonNotFound`: The provided button was not found in the list of buttons on the menu
         """
-        if button in self._buttons:
+        if button in self.__buttons:
             button._menu = None
-            self._buttons.remove(button)
-            self._view.remove_item(button)
+            self.__buttons.remove(button)
+            self.__view.remove_item(button)
         else:
             raise ButtonNotFound('Cannot remove a button that is not registered')
     
     def remove_all_buttons(self) -> None:
         """Remove all buttons from the menu"""
-        persistent_buttons = []
+        persistent_buttons: List[ViewButton] = [] # this only contains link buttons
         
-        for btn in self._buttons:
+        for btn in self.__buttons:
             if self._should_persist(btn):
                 persistent_buttons.append(btn)
                 continue
             btn._menu = None
         
-        self._buttons.clear()
-        self._buttons.extend(persistent_buttons)
+        self.__buttons.clear()
+        self.__buttons.extend(persistent_buttons)
         
-        self._view.clear_items()
+        self.__view.clear_items()
         for subclassed_item in persistent_buttons:
-            self._view.add_item(subclassed_item)
+            self.__view.add_item(subclassed_item)
     
     def disable_button(self, button: ViewButton) -> None:
         """Disable a button on the menu
@@ -431,15 +473,15 @@ class ViewMenu(_BaseMenu):
         ------
         - `ButtonNotFound`: The provided button was not found in the list of buttons on the menu
         """
-        if button in self._buttons:
-            idx = self._buttons.index(button)
-            self._buttons[idx].disabled = True
+        if button in self.__buttons:
+            idx = self.__buttons.index(button)
+            self.__buttons[idx].disabled = True
         else:
             raise ButtonNotFound('Cannot disable a button that is not registered')
     
     def disable_all_buttons(self) -> None:
         """Disable all buttons on the menu"""
-        for btn in self._buttons:
+        for btn in self.__buttons:
             if self._should_persist(btn): continue
             btn.disabled = True
     
@@ -455,15 +497,15 @@ class ViewMenu(_BaseMenu):
         ------
         - `ButtonNotFound`: The provided button was not found in the list of buttons on the menu
         """
-        if button in self._buttons:
-            idx = self._buttons.index(button)
-            self._buttons[idx].disabled = False
+        if button in self.__buttons:
+            idx = self.__buttons.index(button)
+            self.__buttons[idx].disabled = False
         else:
             raise ButtonNotFound('Cannot enable a button that is not registered')
     
     def enable_all_buttons(self) -> None:
         """Enable all buttons on the menu"""
-        for btn in self._buttons:
+        for btn in self.__buttons:
             btn.disabled = False
     
     def _button_add_check(self, button: ViewButton) -> None:
@@ -476,12 +518,12 @@ class ViewMenu(_BaseMenu):
                 pass
             else:
                 # Note: this needs to be an re search because of buttons with an ID of "[ID]_[unique ID]"
-                if not re.search(ViewButton._RE_IDs, button.custom_id):
+                if not re.search(ViewButton._RE_IDs, button.custom_id): # type: ignore
                     raise ViewMenuException(f'ViewButton custom_id {button.custom_id!r} was not recognized')
             
             # ensure there are no duplicate custom_ids for the base navigation buttons
             # Note: there's no need to have a check for buttons that are not navigation buttons because they have a unique ID and duplicates of those are allowed
-            active_button_ids: List[str] = [btn.custom_id for btn in self._buttons]
+            active_button_ids: List[str] = [btn.custom_id for btn in self.__buttons] # type: ignore
             if button.custom_id in active_button_ids:
                 if not all([button.custom_id is None, button.style == discord.ButtonStyle.link]):
                     name = ViewButton._get_id_name_from_id(button.custom_id)
@@ -498,7 +540,7 @@ class ViewMenu(_BaseMenu):
                 raise ViewMenuException('When attempting to add a button custom_id ViewButton.ID_SKIP, the "skip" kwarg was not set')
             
             # ensure there are no more than 25 buttons
-            if len(self._buttons) >= 25:
+            if len(self.__buttons) >= 25:
                 raise TooManyButtons('ViewMenu cannot have more than 25 buttons (discord limitation)')
         else:
             raise IncorrectType(f'When adding a button to the ViewMenu, the button type must be ViewButton, got {button.__class__.__name__}')
@@ -533,8 +575,8 @@ class ViewMenu(_BaseMenu):
         self._maybe_unique_id(button)
 
         button._menu = self
-        self._view.add_item(button)
-        self._buttons.append(button)
+        self.__view.add_item(button)
+        self.__buttons.append(button)
     
     @ensure_not_primed
     def add_buttons(self, buttons: Sequence[ViewButton]) -> None:
@@ -580,15 +622,15 @@ class ViewMenu(_BaseMenu):
         search_by = str(search_by).lower()
 
         if search_by == 'label':
-            matched_labels: List[ViewButton] = [btn for btn in self._buttons if btn.label and btn.label == identity]
+            matched_labels: List[ViewButton] = [btn for btn in self.__buttons if btn.label and btn.label == identity]
             return matched_labels
         
         elif search_by == 'id':
-            matched_ids: List[ViewButton] = [btn for btn in self._buttons if btn.custom_id and btn.custom_id.startswith(identity)]
+            matched_ids: List[ViewButton] = [btn for btn in self.__buttons if btn.custom_id and btn.custom_id.startswith(identity)]
             return matched_ids
         
         elif search_by == 'name':
-            matched_names: List[ViewButton] = [btn for btn in self._buttons if btn.name and btn.name == identity]
+            matched_names: List[ViewButton] = [btn for btn in self.__buttons if btn.name and btn.name == identity]
             return matched_names
         
         else:
@@ -617,16 +659,16 @@ class ViewMenu(_BaseMenu):
         
         elif button.custom_id == ViewButton.ID_GO_TO_PAGE:
             await inter.response.defer()
-            prompt: discord.Message = await self._msg.channel.send(f'{inter.user.display_name}, what page would you like to go to?')
+            prompt: discord.Message = await self._msg.channel.send(f'{inter.user.display_name}, what page would you like to go to?') # type: ignore / `.channel` is know at this point
             try:
-                selection_message: discord.Message = await self._ctx.bot.wait_for('message', check=lambda m: all([m.channel.id == self._msg.channel.id, m.author.id == inter.user.id]), timeout=self.timeout)
+                selection_message: discord.Message = await inter.client.wait_for('message', check=lambda m: all([m.channel.id == self._msg.channel.id, m.author.id == inter.user.id]), timeout=self.timeout) # type: ignore / `.channel` is know at this point
                 page = int(selection_message.content)
             except (asyncio.TimeoutError, ValueError):
                 return
             else:
                 if 1 <= page <= len(self._pages):
                     self._pc.index = page - 1
-                    await self._msg.edit(**self._determine_kwargs(self._pc.current_page))
+                    await self._msg.edit(**self._determine_kwargs(self._pc.current_page)) # type: ignore
                     if self.delete_interactions:
                         await prompt.delete()
                         await selection_message.delete()
@@ -635,7 +677,9 @@ class ViewMenu(_BaseMenu):
             await self.stop(delete_menu_message=True)
         
         else:
-            if button.custom_id.startswith(ViewButton.ID_CALLER):
+            #* NOTE: Link buttons, aka buttons with a `custom_id` of `None` do not send interactions, so there's no need for an if check
+
+            if button.custom_id.startswith(ViewButton.ID_CALLER): # type: ignore
                 if button.followup is None or button.followup.details is None:
                     error_msg = 'ViewButton custom_id was set as ViewButton.ID_CALLER but the "followup" kwarg for that ViewButton was not set ' \
                                 'or method ViewButton.Followup.set_caller_details(..) was not called to set the caller information'
@@ -680,7 +724,7 @@ class ViewMenu(_BaseMenu):
                             if button.followup.delete_after:
                                 await followup_message.delete(delay=button.followup.delete_after)
             
-            elif button.custom_id.startswith(ViewButton.ID_SEND_MESSAGE):
+            elif button.custom_id.startswith(ViewButton.ID_SEND_MESSAGE): # type: ignore
                 if button.followup is None:
                     raise ViewMenuException('ViewButton custom_id was set as ViewButton.ID_SEND_MESSAGE but the "followup" kwarg for that ViewButton was not set')
                 
@@ -707,7 +751,7 @@ class ViewMenu(_BaseMenu):
                 if button.followup.delete_after:
                     await sent_message.delete(delay=button.followup.delete_after)
             
-            elif button.custom_id.startswith(ViewButton.ID_CUSTOM_EMBED):
+            elif button.custom_id.startswith(ViewButton.ID_CUSTOM_EMBED): # type: ignore
                 if self._menu_type not in (ViewMenu.TypeEmbed, ViewMenu.TypeEmbedDynamic):
                     raise ViewMenuException('Buttons with custom_id ViewButton.ID_CUSTOM_EMBED can only be used when the menu_type is ViewMenu.TypeEmbed or ViewMenu.TypeEmbedDynamic')
                 else:
@@ -716,7 +760,7 @@ class ViewMenu(_BaseMenu):
                    
                     await inter.response.edit_message(embed=button.followup.embed)            
             
-            elif button.custom_id.startswith(ViewButton.ID_SKIP):
+            elif button.custom_id.startswith(ViewButton.ID_SKIP): # type: ignore
                 await inter.response.edit_message(**self._determine_kwargs(self._pc.skip(button.skip)))
             
             else:
@@ -755,25 +799,25 @@ class ViewMenu(_BaseMenu):
             self._stop_initiated = True
             try:
                 if delete_menu_message:
-                    await self._msg.delete()
+                    await self._msg.delete() # type: ignore
                 
                 elif disable_buttons:
-                    if not self._buttons:
+                    if not self.__buttons:
                         return # if there are no buttons (they've all been removed) to disable, skip this step
                     self.disable_all_buttons()
-                    await self._msg.edit(view=self._view)
+                    await self._msg.edit(view=self.__view) # type: ignore
 
                 elif remove_buttons:
-                    if not self._buttons:
+                    if not self.__buttons:
                         return # if there are no buttons (they've already been removed), skip this step
                     self.remove_all_buttons()
-                    await self._msg.edit(view=self._view)
+                    await self._msg.edit(view=self.__view) # type: ignore
             
             except discord.DiscordException as dpy_error:
                 raise dpy_error
             
             finally:
-                self._view.stop()
+                self.__view.stop()
                 self._is_running = False
 
                 if self in ViewMenu._active_sessions:
@@ -781,6 +825,15 @@ class ViewMenu(_BaseMenu):
                 
                 self._on_close_event.set()
                 await self._handle_on_timeout()
+    
+    def __generate_viewmenu_payload(self) -> dict:
+        return {
+            "content" : self._pages[0].content if self._pages else None,
+            "embed" : self._pages[0].embed if self._pages else discord.utils.MISSING,
+            "files" : self._pages[0].files if self._pages else discord.utils.MISSING,
+            "view" : self.__view,
+            "allowed_mentions" : self.allowed_mentions
+        }
     
     @ensure_not_primed
     async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel, discord.Thread]]=None, reply: bool=False) -> None:
@@ -795,6 +848,8 @@ class ViewMenu(_BaseMenu):
 			method :meth:`discord.Client.get_channel()` (or any other related methods), that channel should be in the same list as if you were to use `ctx.guild.text_channels`
 			or `ctx.guild.threads`. This only works on a context guild channel basis. That means a menu instance cannot be created in one guild and the menu itself (:param:`send_to`)
 			be sent to another. Whichever guild context the menu was instantiated in, the channels/threads of that guild are the only options for :param:`send_to`
+
+            Note: This parameter is not available if your `method` is a :class:`discord.Interaction`, aka a slash command
         
         reply: :class:`bool`
 			Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True`
@@ -809,7 +864,7 @@ class ViewMenu(_BaseMenu):
         - `IncorrectType`: Parameter :param:`send_to` was not :class:`str`, :class:`int`, or :class:`discord.TextChannel`
         - `MenuException`: The channel set in :param:`send_to` was not found
         """
-        if ViewMenu._sessions_limited:
+        if ViewMenu._sessions_limit_details.set_by_user:
             can_proceed = await self._handle_session_limits()
             if not can_proceed:
                 return
@@ -818,33 +873,37 @@ class ViewMenu(_BaseMenu):
         # Note 2: at least 1 page check for add_row is done in "(dynamic menu)"
         
         # ensure at least 1 button exists before starting the menu
-        if not self._buttons: raise NoButtons
+        if not self.__buttons: raise NoButtons
         if self._menu_type not in ViewMenu._all_menu_types(): raise ViewMenuException('ViewMenu menu_type not recognized')
 
         reply_kwargs = self._handle_reply_kwargs(send_to, reply)
+        menu_payload = self.__generate_viewmenu_payload()
+        
+        if isinstance(self._method, Context):
+            menu_payload.update(reply_kwargs)
 
         # add page (normal menu)
         if self._menu_type == ViewMenu.TypeEmbed:
             self._refresh_page_director_info(ViewMenu.TypeEmbed, self._pages)
 
-            navigation_btns = [btn for btn in self._buttons if btn.custom_id in ViewButton._base_nav_buttons()]
+            navigation_btns = [btn for btn in self.__buttons if btn.custom_id in ViewButton._base_nav_buttons()]
 
             # an re search is required here because buttons with ID_CUSTOM_EMBED dont have a normal ID, the ID is "8_[unique ID]"
-            custom_embed_btns = [btn for btn in self._buttons if btn.style != discord.ButtonStyle.link and re.search(r'8_\d+', btn.custom_id)]
+            custom_embed_btns = [btn for btn in self.__buttons if btn.style != discord.ButtonStyle.link and re.search(r'8_\d+', btn.custom_id)] # type: ignore / raw string is compatible
 
             if all([not self._pages, not custom_embed_btns]):
                 raise NoPages
 
             # normal pages, no custom embeds
             if self._pages and not custom_embed_btns:
-                self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0], view=self._view, **reply_kwargs) # allowed_mentions not needed in embeds
+                await self._handle_send_to(send_to, menu_payload)
             
             # only custom embeds
             elif not self._pages and custom_embed_btns:
                 # since there are only custom embeds, there is no need for base navigation buttons, so remove them if any
                 for nav_btn in navigation_btns:
-                    if nav_btn in self._buttons:
-                        self._buttons.remove(nav_btn)
+                    if nav_btn in self.__buttons:
+                        self.__buttons.remove(nav_btn)
                 
                 # ensure all custom embed buttons have the proper values set
                 for custom_btn in custom_embed_btns:
@@ -852,7 +911,8 @@ class ViewMenu(_BaseMenu):
                         raise ViewMenuException('ViewButton custom_id was set as ViewButton.ID_CUSTOM_EMBED but the "followup" kwargs for that ViewButton was not set or the "embed" kwarg for the followup was not set')
                 
                 # since there are only custom embeds, self._pages is still set to :class:`None`, so set the embed in `.send()` to the first custom embed in the list
-                self._msg = await self._handle_send_to(send_to).send(embed=custom_embed_btns[0].followup.embed, view=self._view, **reply_kwargs)
+                menu_payload['embed'] = custom_embed_btns[0].followup.embed # type: ignore
+                await self._handle_send_to(send_to, menu_payload)
             
             # normal pages and custom embeds
             else:
@@ -871,11 +931,11 @@ class ViewMenu(_BaseMenu):
                     )
                     raise ViewMenuException(error_msg)
                 else:
-                    self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0], view=self._view, **reply_kwargs) # allowed_mentions not needed in embeds
+                    await self._handle_send_to(send_to, menu_payload)
 
         # add row (dynamic menu)
         elif self._menu_type == ViewMenu.TypeEmbedDynamic:
-            await self._build_dynamic_pages(send_to)
+            await self._build_dynamic_pages(send_to, view=self.__view, payload=menu_payload)
         
         # add page (text menu)
         else:
@@ -883,7 +943,8 @@ class ViewMenu(_BaseMenu):
                 raise NoPages
             
             self._refresh_page_director_info(ViewMenu.TypeText, self._pages)
-            self._msg = await self._handle_send_to(send_to).send(content=self._pages[0], view=self._view, allowed_mentions=self.allowed_mentions, **reply_kwargs)
+            menu_payload['content'] = self._pages[0].content # reassign the first page to show to director information
+            await self._handle_send_to(send_to, menu_payload)
         
         self._pc = _PageController(self._pages)
         self._is_running = True
