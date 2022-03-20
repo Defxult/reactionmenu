@@ -280,7 +280,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- custom_id: :attr:`ViewButton.ID_SKIP`
 		- skip: `ViewButton.Skip(<action>, <amount>)`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label=label, custom_id=ViewButton.ID_SKIP, skip=_BaseButton.Skip(action, amount))
+		return cls(style=discord.ButtonStyle.gray, label=label, custom_id=cls.ID_SKIP, skip=cls.Skip(action, amount))
 	
 	@classmethod
 	def link(cls, label: str, url: str) -> ViewButton:
@@ -304,7 +304,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "Back"
 		- custom_id: :attr:`ViewButton.ID_PREVIOUS_PAGE`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='Back', custom_id=ViewButton.ID_PREVIOUS_PAGE)
+		return cls(style=discord.ButtonStyle.gray, label='Back', custom_id=cls.ID_PREVIOUS_PAGE)
 	
 	@classmethod
 	def next(cls) -> ViewButton:
@@ -316,7 +316,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "Next"
 		- custom_id: :attr:`ViewButton.ID_NEXT_PAGE`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='Next', custom_id=ViewButton.ID_NEXT_PAGE)
+		return cls(style=discord.ButtonStyle.gray, label='Next', custom_id=cls.ID_NEXT_PAGE)
 	
 	@classmethod
 	def go_to_first_page(cls) -> ViewButton:
@@ -328,7 +328,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "First Page"
 		- custom_id: :attr:`ViewButton.ID_GO_TO_FIRST_PAGE`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='First Page', custom_id=ViewButton.ID_GO_TO_FIRST_PAGE)
+		return cls(style=discord.ButtonStyle.gray, label='First Page', custom_id=cls.ID_GO_TO_FIRST_PAGE)
 	
 	@classmethod
 	def go_to_last_page(cls) -> ViewButton:
@@ -340,7 +340,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "Last Page"
 		- custom_id: :attr:`ViewButton.ID_GO_TO_LAST_PAGE`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='Last Page', custom_id=ViewButton.ID_GO_TO_LAST_PAGE)
+		return cls(style=discord.ButtonStyle.gray, label='Last Page', custom_id=cls.ID_GO_TO_LAST_PAGE)
 	
 	@classmethod
 	def go_to_page(cls) -> ViewButton:
@@ -352,7 +352,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "Page Selection"
 		- custom_id: :attr:`ViewButton.ID_GO_TO_PAGE`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='Page Selection', custom_id=ViewButton.ID_GO_TO_PAGE)
+		return cls(style=discord.ButtonStyle.gray, label='Page Selection', custom_id=cls.ID_GO_TO_PAGE)
 	
 	@classmethod
 	def end_session(cls) -> ViewButton:
@@ -364,7 +364,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "Close"
 		- custom_id: :attr:`ViewButton.ID_END_SESSION`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='Close', custom_id=ViewButton.ID_END_SESSION)
+		return cls(style=discord.ButtonStyle.gray, label='Close', custom_id=cls.ID_END_SESSION)
 	
 	@classmethod
 	def all(cls) -> List[ViewButton]:
