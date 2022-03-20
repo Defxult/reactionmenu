@@ -239,7 +239,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 
 	@classmethod
 	def _base_nav_buttons(cls) -> Tuple[str, str, str, str, str]:
-		return (ViewButton.ID_PREVIOUS_PAGE, ViewButton.ID_NEXT_PAGE, ViewButton.ID_GO_TO_FIRST_PAGE, ViewButton.ID_GO_TO_LAST_PAGE, ViewButton.ID_GO_TO_PAGE)
+		return (cls.ID_PREVIOUS_PAGE, cls.ID_NEXT_PAGE, cls.ID_GO_TO_FIRST_PAGE, cls.ID_GO_TO_LAST_PAGE, cls.ID_GO_TO_PAGE)
 	
 	@classmethod
 	def _get_id_name_from_id(cls, id_: str, **kwargs) -> str:
