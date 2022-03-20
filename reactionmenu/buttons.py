@@ -270,7 +270,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		return self._menu
 	
 	@classmethod
-	def skip(cls, label: str, action: str, amount: int) -> ViewButton:
+	def generate_skip(cls, label: str, action: str, amount: int) -> ViewButton:
 		"""|class method|
 		
 		A factory method that returns a :class:`ViewButton` with the following parameters set:
