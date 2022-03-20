@@ -82,6 +82,10 @@ class Page:
     
     def __repr__(self) -> str:
         return f"<Page {' '.join([f'{attr_name}={getattr(self, attr_name)!r}' for attr_name in self.__class__.__slots__ if type(getattr(self, attr_name)) not in (type(None), type(MISSING))])}>"
+    
+    def _shallow(self) -> Self:
+        from copy import copy
+        return copy(self)
 
 class PaginationEmojis:
     """A set of basic emojis for your convenience to use for your buttons emoji
@@ -629,7 +633,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         -------
         Optional[:class:`Page`]: The last page that was viewed in the pagination process. Can be :class:`None` if the menu has not been started
         """
-        return self._pc.current_page if self._pc is not None else None
+        return self._pc.current_page._shallow() if self._pc is not None else None
     
     @property
     def owner(self) -> Union[discord.Member, discord.User]:
