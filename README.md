@@ -596,7 +596,7 @@ The following are the rules set by Discord for Buttons:
   * `ViewButton.ID_END_SESSION`
   * `ViewButton.ID_CALLER`
   * `ViewButton.ID_SEND_MESSAGE`
-  * `ViewButton.ID_CUSTOM_EMBED` (only valid with menu type `ViewMenu.TypeEmbedDynamic`)
+  * `ViewButton.ID_CUSTOM_EMBED`
   * `ViewButton.ID_SKIP`
 * `emoji` (`Union[str, discord.PartialEmoji]`) Emoji used for the button
   * `ViewButton(..., emoji='😄')` 
