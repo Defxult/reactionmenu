@@ -286,7 +286,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         self._method = method
         self._menu_type = menu_type
 
-        self._msg: Optional[discord.Message] = None
+        self._msg: discord.Message # initialized in child classes NOTICE: Might be an issue for all base types
         self._pc:_PageController # initialized in child classes
         self._is_running = False
         self._stop_initiated = False
@@ -295,9 +295,9 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         self._main_page_contents = collections.deque()
         self._last_page_contents = collections.deque()
         self._dynamic_data_builder: List[str] = []
-        self.wrap_in_codeblock: Union[str, None] = kwargs.get('wrap_in_codeblock')
+        self.wrap_in_codeblock: Optional[str] = kwargs.get('wrap_in_codeblock')
         self.rows_requested: int = kwargs.get('rows_requested', 0)
-        self.custom_embed: Union[discord.Embed, None] = kwargs.get('custom_embed')
+        self.custom_embed: Optional[discord.Embed] = kwargs.get('custom_embed')
 
         self._relay_info: Optional[NamedTuple] = None
         self._on_timeout_details: Optional[Callable[[_BaseMenu], None]] = None
@@ -308,10 +308,10 @@ class _BaseMenu(metaclass=abc.ABCMeta):
 
         # kwargs
         self.delete_on_timeout: bool = kwargs.get('delete_on_timeout', False)
-        self.only_roles: Union[List[discord.Role], None] = kwargs.get('only_roles')
+        self.only_roles: Optional[List[discord.Role]] = kwargs.get('only_roles')
         self.show_page_director: bool = kwargs.get('show_page_director', True)
-        self.name: Union[str, None] = kwargs.get('name')
-        self.style: Union[str, None] = kwargs.get('style', _DEFAULT_STYLE)
+        self.name: Optional[str] = kwargs.get('name')
+        self.style: Optional[str] = kwargs.get('style', _DEFAULT_STYLE)
         self.all_can_click: bool = kwargs.get('all_can_click', False)
         self.delete_interactions: bool = kwargs.get('delete_interactions', True)
 
@@ -363,7 +363,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        values: Sequence[:class:`Any`]
+        values: Sequence[`Any`]
             The values to separate
         
         Returns
@@ -386,7 +386,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         
         Parameters
         ----------
-        values: Sequence[:class:`Any`]
+        values: Sequence[`Any`]
             The values to test
         
         Returns
@@ -407,7 +407,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         
         Parameters
         ----------
-        values: Sequence[:class:`Any`]
+        values: Sequence[`Any`]
             The values to test
         
         Returns
@@ -770,7 +770,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     def _determine_kwargs(self, page: Page) -> dict:
         """Determine the `inter.response.edit_message()` and :meth:`_msg.edit()` kwargs for the pagination process. Used in :meth:`ViewMenu._paginate()` and :meth:`ReactionMenu._paginate()`"""
         
-        # create a copy of this files if they are set because once paginated, they are only visible once
+        # create a copy of the files if they are set because once paginated, they are only visible once
         maybe_new_files = [discord.File(f.filename) for f in page.files] if page.files else [] # type: ignore
         
         kwargs = {
@@ -1057,7 +1057,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """
         if all([isinstance(msg, discord.Message) for msg in messages]):
             if self._menu_type == _BaseMenu.TypeEmbed:
-                embeds = []
+                embeds: List[discord.Embed] = []
                 for m in messages:
                     if m.embeds:
                         embeds.extend(m.embeds)
@@ -1067,7 +1067,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                     raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no embeds were found in the messages provided')
             
             elif self._menu_type == _BaseMenu.TypeText:
-                content = []
+                content: List[str] = []
                 for m in messages:
                     if m.content:
                         content.append(m.content)
@@ -1082,12 +1082,12 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     async def add_from_ids(self, messageable: discord.abc.Messageable, message_ids: Sequence[int]) -> None:
         """|coro|
         
-        Add pages to the menu using the IDs of messages
+        Add pages to the menu using the IDs of messages. This only grabs embeds (if the `menu_type` is :attr:`TypeEmbed`) or the content (if the `menu_type` is :attr:`TypeText`) from the message
         
         Parameters
         ----------
         messageable: :class:`discord.abc.Messageable`
-            A discord `Messageable` object (`discord.TextChannel`, `commands.Context`, etc.)
+            A discord :class:`Messageable` object (:class:`discord.TextChannel`, :class:`commands.Context`, etc.)
         
         message_ids: Sequence[:class:`int`]
             The messages to fetch
@@ -1101,13 +1101,13 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             to_paginate: List[discord.Message] = []            
             for msg_id in message_ids:
                 try:
-                    result = await messageable.fetch_message(msg_id)
-                    to_paginate.append(result)
+                    fetched_message = await messageable.fetch_message(msg_id)
+                    to_paginate.append(fetched_message)
                 except (discord.NotFound, discord.Forbidden, discord.HTTPException) as error:
                     raise MenuException(f'An error occurred when attempting to retreive message with the ID {msg_id}: {error}')
             
             if self._menu_type == _BaseMenu.TypeEmbed:
-                embeds_to_paginate = []
+                embeds_to_paginate: List[discord.Embed] = []
                 for msg in to_paginate:
                     if msg.embeds:
                         embeds_to_paginate.extend(msg.embeds)
@@ -1118,7 +1118,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                     raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no embeds were found in the messages provided')
             
             elif self._menu_type == _BaseMenu.TypeText:
-                content_to_paginate = []
+                content_to_paginate: List[str] = []
                 for msg in to_paginate:
                     if msg.content:
                         content_to_paginate.append(msg.content)
@@ -1222,19 +1222,17 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     @ensure_not_primed
     def add_page(self, embed: Optional[discord.Embed]=MISSING, content: Optional[str]=None, files: Optional[List[discord.File]]=MISSING) -> None:
         """Add a page to the menu
-        
-        TODO:
 
         Parameters
         ----------
         embed: Optional[:class:`discord.Embed`]
-            ...
+            The embed of the page
         
         content: Optional[:class:`str`]
-            ...
+            The text that appears above an embed in a message
         
         files: Optional[Sequence[:class:`discord.File`]]
-            ...
+            Files you'd like to attach to the page
         
         Raises
         ------
