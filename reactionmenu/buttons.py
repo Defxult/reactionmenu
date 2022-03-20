@@ -87,7 +87,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	persist: :class:`bool`
 		Available only when using link buttons. This prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
 	
-		.. added v3.0.2
+		.. added v3.1.0
 			:param:`persist`
 	"""
 	ID_NEXT_PAGE: Final[str] = '0'
@@ -123,7 +123,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		self.persist: bool = kwargs.get('persist', False)
 		
 		# abc
-		self._menu: ViewMenu = None
+		self._menu: Optional[ViewMenu] = None
 	
 	def __repr__(self):
 		total_clicks = '' if self.style == discord.ButtonStyle.link else f' total_clicks={self.total_clicks}'
@@ -132,7 +132,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 
 	async def callback(self, interaction: discord.Interaction) -> None:
 		"""*INTERNAL USE ONLY* - The callback function from the button interaction. This should not be manually called"""
-		await self._menu._paginate(self, interaction)
+		await self._menu._paginate(self, interaction) # type: ignore
 	
 	class Followup:
 		"""A class that represents the message sent using a :class:`ViewButton`. Contains parameters similar to method `discord.abc.Messageable.send`. Only to be used with :class:`ViewButton` kwarg "followup".
@@ -217,10 +217,10 @@ class ViewButton(discord.ui.Button, _BaseButton):
 			func: Callable[..., :class:`None`]
 				The function object that will be called when the associated button is pressed
 			
-			*args: :class:`Any`
+			*args: `Any`
 				An argument list that represents the parameters of that function
 			
-			**kwargs: :class:`Any`
+			**kwargs: `Any`
 				An argument list that represents the kwarg parameters of that function
 			
 			Returns
@@ -257,13 +257,15 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		for key, val in cls.__dict__.items():
 			if id_ == val:
 				return f'ViewButton.{key}'
+		
+		assert False, "id name could not be found"
 	
 	@property
-	def menu(self) -> ViewMenu:
+	def menu(self) -> Optional[ViewMenu]:
 		"""
 		Returns
 		-------
-		:class:`ViewMenu`: The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
+		Optional[:class:`ViewMenu`]: The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
 		"""
 		return self._menu
 	
