@@ -13,10 +13,12 @@
   * `.stop_all_sessions()`
   * `.stop_session(name: str, include_all=False)`
   * `.get_sessions_count()`
+* `ViewMenu.skip()` has been renamed to `ViewMenu.generate_skip()` because of an attribute conflict
 
 With this change, methods `.split_sessions()` & `.stop_only()` have been removed
 #### New Features
 ##### ReactionMenu & ViewMenu
+* Pagination is no longer limited to just embeds or text. The normal embed menu can now paginate with text, embeds, as well as files
 * Added class method `quick_start()`. Start a menu with it's default settings only adding the pages
 * Added property `menu_type`. Displays the menu type that was set in the constructor
 ##### ViewMenu Only
