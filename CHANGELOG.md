@@ -13,7 +13,7 @@
   * `.stop_all_sessions()`
   * `.stop_session(name: str, include_all=False)`
   * `.get_sessions_count()`
-* `ViewMenu.skip()` has been renamed to `ViewMenu.generate_skip()` because of an attribute conflict
+* `ViewMenu.skip()` & `ReactionMenu.skip()` has been renamed to `.generate_skip()`
 
 With this change, methods `.split_sessions()` & `.stop_only()` have been removed
 #### New Features
