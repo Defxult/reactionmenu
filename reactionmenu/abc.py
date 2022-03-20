@@ -35,14 +35,12 @@ from typing import (
     Optional,
     Set,
     Tuple,
-    Type,
     TypeVar,
     Union
 )
 
 if TYPE_CHECKING:
     from datetime import datetime
-    from typing import NamedTuple
 
 import abc
 import asyncio
@@ -51,11 +49,13 @@ import inspect
 import re
 import warnings
 from collections.abc import Sequence
-from enum import auto, Enum
-from typing_extensions import Self
+from enum import Enum, auto
+from typing import NamedTuple
 
 import discord
 from discord.ext.commands import Context
+from discord.utils import MISSING
+from typing_extensions import Self
 
 from .decorators import ensure_not_primed
 from .errors import *
@@ -63,20 +63,25 @@ from .errors import *
 # Constants
 _DYNAMIC_EMBED_LIMIT = 4096
 _DEFAULT_STYLE = 'Page $/&'
-_VIEW_MENU_NAME = 'ViewMenu'
-_REACTION_MENU_NAME = 'ReactionMenu'
-DEFAULT_BUTTONS = 0 # used for quick_start()
+DEFAULT_BUTTONS = None
 
 GB = TypeVar('GB', bound="_BaseButton")
+M = TypeVar('M', bound='_BaseMenu')
 
 class Page:
-
+    """Represents a "page" (a single :class:`discord.Message`) in the pagination process
+    
+        .. added:: v3.1.0
+    """
     __slots__ = ("content", "embed", "files")
     
-    def __init__(self, *, content: Optional[str]=None, embed: Optional[discord.Embed]=None, files: Optional[Sequence[discord.File]]=None) -> None:
+    def __init__(self, *, content: Optional[str]=None, embed: Optional[discord.Embed]=MISSING, files: Optional[List[discord.File]]=MISSING) -> None:
         self.content = content
         self.embed = embed
         self.files = files
+    
+    def __repr__(self) -> str:
+        return f"<Page {' '.join([f'{attr_name}={getattr(self, attr_name)!r}' for attr_name in self.__class__.__slots__ if type(getattr(self, attr_name)) not in (type(None), type(MISSING))])}>"
 
 class PaginationEmojis:
     """A set of basic emojis for your convenience to use for your buttons emoji
@@ -180,9 +185,9 @@ class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
 
     Emojis = PaginationEmojis
 
-    def __init__(self, name: str, event: _BaseButton.Event, skip: _BaseButton.Skip):
+    def __init__(self, name: str, event: Optional[_BaseButton.Event], skip: _BaseButton.Skip):
         self.name: str = name
-        self.event: _BaseButton.Event = event
+        self.event: Optional[_BaseButton.Event] = event
         self.skip: _BaseButton.Skip = skip
         self.__clicked_by = set()
         self.__total_clicks = 0
@@ -275,14 +280,14 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     TypeText: Final[_MenuType] = _MenuType.TypeText
 
     _sessions_limit_details = _LimitDetails.default()
-    _active_sessions: List[Self] # actually defined in child classes
+    _active_sessions: List[Self] # initialized in child classes
 
     def __init__(self, method: Union[Context, discord.Interaction], /, menu_type: _MenuType, **kwargs):
         self._method = method
         self._menu_type = menu_type
 
         self._msg: Optional[discord.Message] = None
-        self._pc: Optional[_PageController] = None
+        self._pc:_PageController # initialized in child classes
         self._is_running = False
         self._stop_initiated = False
 
@@ -310,7 +315,6 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         self.all_can_click: bool = kwargs.get('all_can_click', False)
         self.delete_interactions: bool = kwargs.get('delete_interactions', True)
 
-        #+ NOTE - I might have to remove this because d.py 2.0 for whatever reason doesn't have a `allowed_mentions` kwarg for :meth:`inter.response.edit_message()`
         self.allowed_mentions: discord.AllowedMentions = kwargs.get('allowed_mentions', discord.AllowedMentions(everyone=False, users=True, roles=False, replied_user=True))
     
     @abc.abstractmethod
@@ -349,10 +353,6 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     
     @abc.abstractclassmethod
     async def quick_start(cls):
-        raise NotImplementedError
-    
-    @abc.abstractclassmethod
-    def get_menu_from_message(cls):
         raise NotImplementedError
     
     @staticmethod
@@ -418,13 +418,17 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     
     @staticmethod
     def _extract_proper_user(method: Union[Context, discord.Interaction]) -> Union[discord.Member, discord.User]:
+        """Get the proper :class:`discord.User` / :class:`discord.Member` from the attribute depending on the instance
+
+            .. added v3.1.0
+        """
         return method.author if isinstance(method, Context) else method.user
     
     @classmethod
     def _quick_check(cls, pages: Sequence[Union[discord.Embed, str]]) -> _MenuType:
         """Verification for :meth:`quick_start()`
         
-            .. added v3.0.2
+            .. added v3.1.0
         """
         if cls.all_embeds(pages):  return cls.TypeEmbed
         if cls.all_strings(pages): return cls.TypeText
@@ -584,6 +588,26 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             session = cls._active_sessions[0]
             await session.stop()
     
+    @classmethod
+    def get_menu_from_message(cls, message_id: int, /) -> Optional[Self]:
+        """|class method|
+
+        Return the menu object associated with the message with the given ID
+
+        Parameters
+        ----------
+        message_id: :class:`int`
+        The `discord.Message.id` from the menu message
+
+        Returns
+        -------
+        The menu object. Can be :class:`None` if the menu was not found in the list of active menu sessions
+        """
+        for menu in cls._active_sessions:
+            if menu._msg.id == message_id: # type: ignore
+                return menu
+        return None
+    
     @property
     def menu_type(self) -> str:
         """
@@ -591,7 +615,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         -------
         :class:`str`: The `menu_type` you set via the constructor. This will either be `TypeEmbed`, `TypeEmbedDynamic`, or `TypeText`
 
-            .. added:: v3.0.2
+            .. added:: v3.1.0
         """
         if self._menu_type == _BaseMenu.TypeEmbed: return self._menu_type.TypeEmbed.name
         elif self._menu_type == _BaseMenu.TypeEmbedDynamic: return self._menu_type.TypeEmbedDynamic.name
@@ -614,7 +638,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         -------
         Union[:class:`discord.Member`, :class:`discord.User`]: The owner of the menu (the person that started the menu). If the menu was started in a DM, this will return :class:`discord.User`
         """
-        return self._method.author if isinstance(self._method, Context) else self._method.user # (discord.Interaction)
+        return self._extract_proper_user(self._method)
     
     @property
     def total_pages(self) -> int:
@@ -671,7 +695,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         for i in range(0, len(list_), n):
             yield list_[i:i + n]
     
-    async def _build_dynamic_pages(self, send_to, view: Optional[discord.ui.View]=None) -> None:
+    async def _build_dynamic_pages(self, send_to, view: Optional[discord.ui.View]=None, payload: Optional[dict]=None) -> None:
         for data_clump in self._chunks(self._dynamic_data_builder, self.rows_requested):
             joined_data = '\n'.join(data_clump)
             if len(joined_data) <= _DYNAMIC_EMBED_LIMIT:
@@ -682,6 +706,13 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             else:
                 raise DescriptionOversized('With the amount of data that was received, the embed description is over discords size limit. Lower the amount of "rows_requested" to solve this problem')
         else:
+            def convert_to_page(main_last: Iterable[discord.Embed]) -> List[Page]:
+                """Initializing the :class:`deque` only supports :class:`discord.Embed`. This converts those embed objects to the supported :class:`Page` type for proper pagination
+                
+                    .. added:: 3.1.0
+                """
+                return [Page(embed=item) for item in main_last]
+            
             # set the main/last pages if any
             if any([self._main_page_contents, self._last_page_contents]):
                 
@@ -690,10 +721,10 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 
                 if self._main_page_contents:
                     self._main_page_contents.reverse()
-                    self._pages.extendleft(self._main_page_contents)
+                    self._pages.extendleft(convert_to_page(self._main_page_contents))
                 
                 if self._last_page_contents:
-                    self._pages.extend(self._last_page_contents)
+                    self._pages.extend(convert_to_page(self._last_page_contents))
             
             # convert back to `list`
             self._pages = list(self._pages)
@@ -704,10 +735,12 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             # make sure data has been added to create at least 1 page
             if not self._pages: raise NoPages(f'You cannot start a {cls.__name__} when no data has been added')
             
+            payload['embed'] = self._pages[0].embed # type: ignore / - / reassign the first page to show to director information
+            
             if view is None:
-                self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0].embed) # type: ignore ("embed=" can still be `None`)
+                await self._handle_send_to(send_to, payload) # type: ignore
             else:
-                self._msg = await self._handle_send_to(send_to).send(embed=self._pages[0].embed, view=view) # type: ignore ("embed=" can still be `None`)
+                await self._handle_send_to(send_to, payload) # type: ignore ("embed=" can still be `None`)
     
     def _display_timeout_warning(self, error: Exception) -> None:
         warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}'
@@ -736,27 +769,21 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     
     def _determine_kwargs(self, page: Page) -> dict:
         """Determine the `inter.response.edit_message()` and :meth:`_msg.edit()` kwargs for the pagination process. Used in :meth:`ViewMenu._paginate()` and :meth:`ReactionMenu._paginate()`"""
-        kwargs = {}
+        
+        # create a copy of this files if they are set because once paginated, they are only visible once
+        maybe_new_files = [discord.File(f.filename) for f in page.files] if page.files else [] # type: ignore
+        
+        kwargs = {
+            "content" : page.content, # `content` will always be present because even with TypeEmbed menu's, pagination with the addition of text is possible
+            "allowed_mentions" : self.allowed_mentions,
+            "attachments" : maybe_new_files, # the `edit_message` method for this has an "attachment" kwarg instead of a "files" parameter
+            "allowed_mentions" : self.allowed_mentions
+        }
+
+        # only add the "embed" key if its an embed type menu
         if self._menu_type in (_BaseMenu.TypeEmbed, _BaseMenu.TypeEmbedDynamic):
             kwargs["embed"] = page.embed
-        else:
-            kwargs["content"] = page.content
-        
-        kwargs["allowed_mentions"] = self.allowed_mentions
         return kwargs
-        # FIXME:
-        #? MIGHT HAVE TO PUT THIS BACK IN
-        # if self.__class__.__name__ != _VIEW_MENU_NAME and self._menu_type == _BaseMenu.TypeText:
-        #     kwargs['allowed_mentions'] = self.allowed_mentions
-        """
-        Note ::
-            I thought everytime a message was edited, the `view` had to be present but that's not the case. Each button stays on the message
-            even if the message is edited. The view shouldn't be passed in again because it already exists on the message. This seems to have fixed
-            the error:
-                    discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
-                    In components.0.components.5: The specified component exceeds the maximum width
-            that I was having
-        """
     
     def _refresh_page_director_info(self, type_: _MenuType, pages: List[Page]) -> None:
         """Sets the page count at the bottom of embeds/text if set
@@ -842,7 +869,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         if can_proceed:
             return True
         else:
-            await self._method.channel.send(details.message) # FIXME: double check access level for `.send()`
+            await self._method.channel.send(details.message) # type: ignore
             return False
     
     def _maybe_new_style(self, counter: int, total_pages: int) -> str: 
@@ -858,7 +885,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         else:
             return f'Page {counter}/{total_pages}'
     
-    async def _contact_relay(self, member: discord.Member, button: Type[GB]) -> None:
+    async def _contact_relay(self, member: Union[discord.Member, discord.User], button: GB) -> None: # type: ignore
         """|coro| Dispatch the information to the relay function if a relay has been set"""
         if self._relay_info:
             func: Callable = self._relay_info.func # type: ignore
@@ -909,48 +936,61 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             'mention_author' : self.allowed_mentions.replied_user
         }
     
-    def _handle_send_to(self, send_to: Union[str, int, discord.TextChannel, discord.Thread]) -> discord.abc.Messageable:
-        """For the :param:`send_to` kwarg in :meth:`Menu.start()`. Determine what channel the menu should start in"""
-        if self.in_dms:
-            return self._method.channel # type: ignore
-        else:
-            if send_to is None:
-                return self._method.channel # type: ignore
+    async def _handle_send_to(self, send_to: Union[str, int, discord.TextChannel, discord.Thread, None], menu_payload: dict) -> None:
+        """|coro| For the :param:`send_to` kwarg in :meth:`Menu.start()`. Determine what channel the menu should start in"""
+        if isinstance(self._method, Context):
+
+            async def register_message(channel: discord.abc.Messageable):
+                self._msg = await channel.send(**menu_payload) # type: ignore
+            
+            if self.in_dms:
+                await register_message(self._method.channel)
             else:
-                if not isinstance(send_to, (str, int, discord.TextChannel, discord.Thread)):
-                    raise IncorrectType(f'Parameter "send_to" expected str, int, discord.TextChannel, or discord.Thread, got {send_to.__class__.__name__}')
+                if send_to is None:
+                    await register_message(self._method.channel)
                 else:
-                    class_name = self.__class__.__name__
-                    all_messageable_channels: List[discord.TextChannel] = self._method.guild.text_channels + self._method.guild.threads # type: ignore
-                    
-                    # before we continue, check if there are any duplicate named text channels or threads/no matching names found if a str was provided
-                    if isinstance(send_to, str):
-                        matched_channels = [ch for ch in all_messageable_channels if ch.name == send_to]
-                        if len(matched_channels) == 0:
-                            raise MenuException(f'When using parameter "send_to" in {class_name}.start(), there were no channels/threads with the name {send_to!r}')
-                        
-                        elif len(matched_channels) >= 2:
-                            raise MenuException(f'When using parameter "send_to" in {class_name}.start(), there were {len(matched_channels)} channels/threads with the name {send_to!r}. With multiple channels/threads having the same name, the intended channel is unknown')
-                    
-                    for channel in all_messageable_channels:
-                        if isinstance(send_to, str):
-                            if channel.name == send_to:
-                                return channel
-                        
-                        elif isinstance(send_to, int):
-                            if channel.id == send_to:
-                                return channel
-
-                        elif isinstance(send_to, discord.TextChannel):
-                            if channel == send_to:
-                                return channel
-                        
-                        elif isinstance(send_to, discord.Thread):
-                            if channel == send_to:
-                                return channel
-
+                    if not isinstance(send_to, (str, int, discord.TextChannel, discord.Thread)):
+                        raise IncorrectType(f'Parameter "send_to" expected str, int, discord.TextChannel, or discord.Thread, got {send_to.__class__.__name__}')
                     else:
-                        raise MenuException(f'When using parameter "send_to" in {class_name}.start(), the channel {send_to} was not found')
+                        class_name = self.__class__.__name__
+                        all_messageable_channels: List[discord.TextChannel] = self._method.guild.text_channels + self._method.guild.threads # type: ignore
+                        
+                        # before we continue, check if there are any duplicate named text channels or threads/no matching names found if a str was provided
+                        if isinstance(send_to, str):
+                            matched_channels = [ch for ch in all_messageable_channels if ch.name == send_to]
+                            if len(matched_channels) == 0:
+                                raise MenuException(f'When using parameter "send_to" in {class_name}.start(), there were no channels/threads with the name {send_to!r}')
+                            
+                            elif len(matched_channels) >= 2:
+                                raise MenuException(f'When using parameter "send_to" in {class_name}.start(), there were {len(matched_channels)} channels/threads with the name {send_to!r}. With multiple channels/threads having the same name, the intended channel is unknown')
+                        
+                        for channel in all_messageable_channels:
+                            if isinstance(send_to, str):
+                                if channel.name == send_to:
+                                    await register_message(channel)
+                                    break
+                            
+                            elif isinstance(send_to, int):
+                                if channel.id == send_to:
+                                    await register_message(channel)
+                                    break
+
+                            elif isinstance(send_to, discord.TextChannel):
+                                if channel == send_to:
+                                    await register_message(channel)
+                                    break
+                            
+                            elif isinstance(send_to, discord.Thread):
+                                if channel == send_to:
+                                    await register_message(channel)
+                                    break
+
+                        else:
+                            raise MenuException(f'When using parameter "send_to" in {class_name}.start(), the channel {send_to} was not found')
+        
+        elif isinstance(self._method, discord.Interaction):
+            await self._method.response.send_message(**menu_payload)
+            self._msg = await self._method.original_message()
 
     def set_page_director_style(self, style_id: int) -> None:
         """Set how the page numbers dictating what page you are on (in the footer of an embed/regular message) are displayed
@@ -998,8 +1038,6 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             .. added:: v3.0.1
         """
         await self._on_close_event.wait()
-    
-    # TODO: RESUME POINT
     
     @ensure_not_primed
     async def add_from_messages(self, messages: Sequence[discord.Message]) -> None:
@@ -1182,7 +1220,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             self._last_page_contents.append(embed)
     
     @ensure_not_primed
-    def add_page(self, embed: Optional[discord.Embed]=None, content: Optional[str]=None, files: Optional[Sequence[discord.File]]=None) -> None:
+    def add_page(self, embed: Optional[discord.Embed]=MISSING, content: Optional[str]=None, files: Optional[List[discord.File]]=MISSING) -> None:
         """Add a page to the menu
         
         TODO:
@@ -1245,8 +1283,8 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `MenuSettingsMismatch`: The page being added does not match the menus `menu_type` 
         """
-        for page in pages:
-            self.add_page(Page(content=page, embed=page)) # type: ignore
+        for embed_or_str in pages:
+            self.add_page(embed_or_str) # type: ignore
     
     @ensure_not_primed
     def remove_all_pages(self) -> None:
@@ -1279,12 +1317,12 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             else:
                 raise InvalidPage(f'Page number invalid. Must be from 1 - {len(self._pages)}')
     
-    def set_on_timeout(self, func: Callable[[Any], None]) -> None:
+    def set_on_timeout(self, func: Callable[[M], None]) -> None:
         """Set the function to be called when the menu times out
 
         Parameters
         ----------
-        func: Callable[[Any], :class:`None`]
+        func: Callable[[:type:`M`]], :class:`None`]
             The function object that will be called when the menu times out. The function should contain a single positional argument
             and should not return anything. The argument passed to that function is an instance of the menu.
         
@@ -1299,7 +1337,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """Remove the timeout call to the function you have set when the menu times out"""
         self._on_timeout_details = None
     
-    def set_relay(self, func: Callable[[NamedTuple], None], *, only: Optional[List[Type[GB]]]=None) -> None:
+    def set_relay(self, func: Callable[[NamedTuple], None], *, only: Optional[List[GB]]=None) -> None:
         """Set a function to be called with a given set of information when a button is pressed on the menu. The information passed is `RelayPayload`, a named tuple.
         The named tuple contains the following attributes:
 
