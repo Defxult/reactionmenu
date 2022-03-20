@@ -8,10 +8,6 @@
 ![python_version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue)
 </div>
 
-
-## Discord.py 2.0 Update
-As a lot of you may know [discord.py](https://github.com/Rapptz/discord.py) has [continued development](https://gist.github.com/Rapptz/c4324f17a80c94776832430007ad40e6). Right now this library operates on a fork of it, but will it change back to discord.py? The answer to that question is...I'm not 100% sure yet but it more than likely will. With the drastic split in the Discord Python bot development community, it would be nice to go back to a library that a majority of people were using in the first place. I'll see how things pan out until the official release of discord.py 2.0. How difficult would it be to migrate to, would it be worth my time possibly doing a partial/full rewrite if needed, etc. Only time will tell but I'm looking forward to the future.
-
 ## GitHub Updates vs PyPI Updates
 The GitHub version of this library will always have the latest changes, fixes, and additions before the [PyPI](https://pypi.org/project/reactionmenu/) version. You can install the GitHub version by doing:
 ```
