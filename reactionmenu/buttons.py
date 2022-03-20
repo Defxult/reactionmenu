@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Final, List, NamedTuple, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Final, Iterable, List, NamedTuple, Optional, Tuple, Union
 
 if TYPE_CHECKING:
 	from . import ViewMenu, ReactionButton, ReactionMenu
@@ -38,6 +38,14 @@ from discord.ext.commands import Command
 from .abc import _BaseButton, PaginationEmojis
 from .errors import IncorrectType
 
+
+class _Details(NamedTuple):
+	"""Used for buttons with a `custom_id` of `ID_CALLER`"""
+	func: Callable[..., None]
+	args: Iterable[Any]
+	kwargs: Dict[str, Any]
+
+Details = _Details
 
 class ViewButton(discord.ui.Button, _BaseButton):
 	"""A helper class for :class:`ViewMenu`. Represents a UI button.
@@ -189,8 +197,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 			self.allowed_mentions = allowed_mentions
 			self.delete_after = delete_after
 			self.ephemeral = ephemeral
-			
-			self.details: NamedTuple = kwargs.get('details')
+			self.details: Optional[Details] = kwargs.get('details')
 		
 		def _to_dict(self) -> dict:
 			"""This is a :class:`ViewButton.Followup` method"""
@@ -199,9 +206,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 				new[i] = getattr(self, i)
 			return new
 		
-		@classmethod
-		def set_caller_details(cls, func: Callable[..., None], *args, **kwargs) -> NamedTuple:
-			"""|class method|
+		@staticmethod
+		def set_caller_details(func: Callable[..., None], *args, **kwargs) -> Details:
+			"""|static method|
 			
 			Set the parameters for the function you set for a :class:`ViewButton` with the custom_id :attr:`ViewButton.ID_CALLER`
 			
@@ -218,14 +225,13 @@ class ViewButton(discord.ui.Button, _BaseButton):
 			
 			Returns
 			-------
-			:class:`NamedTuple`: The values needed to internally call the function you have set
+			:class:`Details`: The :class:`NamedTuple` containing the values needed to internally call the function you have set
 			
 			Raises
 			------
 			- `IncorrectType`: Parameter "func" was not a callable object
 			"""
 			if callable(func):
-				Details = namedtuple('Details', ['func', 'args', 'kwargs'])
 				func = func.callback if isinstance(func, Command) else func
 				return Details(func=func, args=args, kwargs=kwargs)
 			else:
