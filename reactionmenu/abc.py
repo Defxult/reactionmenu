@@ -239,10 +239,10 @@ class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
             Whether to go forward in the pagination process ("+") or backwards ("-")
         
         amount: :class:`int`
-            The amount of pages to skip. Must be >= 1. If value is <= 0, it is implicitly set to 1
+            The amount of pages to skip. Must be >= 1. If value is <= 0, it is implicitly set to 2
         """
         def __init__(self, action: str, amount: int):
-            if amount <= 0: amount = 1
+            if amount <= 0: amount = 2
             if action in ('+', '-'):
                 self.action = action
                 self.amount = amount
