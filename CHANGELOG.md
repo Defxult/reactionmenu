@@ -4,8 +4,9 @@
 * **This library is no longer dependent on Pycord. It has changed back to discord.py**
 * `ctx` has been changed to `method` in the parameters for `ReactionMenu` & `ViewMenu` (positional only)
 * The auto-paginate feature for `ReactionMenu` has been removed
-* The `Page` class has been added
+* The `Page` class has been added. Represents each "page" added via `.add_page()`/`.add_pages()`
 * Using `.last_viewed` now returns a `Page`. `.pages` now returns a `List[Page]`
+* `ViewButton.skip()` & `ReactionButton.skip()` has been renamed to `.generate_skip()`
 * The default behavior for the below methods have changed. Previously, using the below methods would return/stop menu's for both `ReactionMenu` & `ViewMenu`. With this update, each method by default now returns or stops menu's according to whichever class the method was invoked from. For example, `ViewMenu.stop_all_sessions()` only stops all `ViewMenu` sessions instead of all `ReactionMenu` sessions as well as `ViewMenu` sessions. 
   * `.get_all_dm_sessions()`
   * `.get_all_sessions()`
@@ -13,7 +14,6 @@
   * `.stop_all_sessions()`
   * `.stop_session(name: str, include_all=False)`
   * `.get_sessions_count()`
-* `ViewMenu.skip()` & `ReactionMenu.skip()` has been renamed to `.generate_skip()`
 
 With this change, methods `.split_sessions()` & `.stop_only()` have been removed
 #### New Features
