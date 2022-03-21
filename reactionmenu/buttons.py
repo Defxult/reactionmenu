@@ -42,6 +42,7 @@ if TYPE_CHECKING:
 	from . import ViewMenu, ReactionButton, ReactionMenu
 
 import re
+from enum import auto, Enum
 
 import discord
 from discord.ext.commands import Command
@@ -394,34 +395,22 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		"""
 		return [cls.go_to_first_page(), cls.back(), cls.next(), cls.go_to_last_page(), cls.go_to_page(), cls.end_session()]
 
-class ButtonType:
+class ButtonType(Enum):
 	"""A helper class for :class:`ReactionMenu`. Determines the generic action a button can perform."""
-	NEXT_PAGE: Final[int] = 0
-	PREVIOUS_PAGE: Final[int] = 1
-	GO_TO_FIRST_PAGE: Final[int] = 2
-	GO_TO_LAST_PAGE: Final[int] = 3
-	GO_TO_PAGE: Final[int] = 4
-	END_SESSION: Final[int] = 5
-	CUSTOM_EMBED: Final[int] = 6
-	CALLER: Final[int] = 7
-	SKIP: Final[int] = 8
+	NEXT_PAGE = auto()
+	PREVIOUS_PAGE = auto()
+	GO_TO_FIRST_PAGE = auto()
+	GO_TO_LAST_PAGE = auto()
+	GO_TO_PAGE = auto()
+	END_SESSION = auto()
+	CUSTOM_EMBED = auto()
+	CALLER = auto()
+	SKIP = auto()
 
-	@classmethod
-	def _get_buttontype_name_from_type(cls, type_: int) -> str:
-		"""|class method| Used to determine the `linked_to` type. Returns the :class:`str` representation of that type"""
-		BASE = 'ButtonType.'
-		dict_ = {
-			cls.NEXT_PAGE : BASE + 'NEXT_PAGE',
-			cls.PREVIOUS_PAGE : BASE + 'PREVIOUS_PAGE',
-			cls.GO_TO_FIRST_PAGE : BASE + 'GO_TO_FIRST_PAGE',
-			cls.GO_TO_LAST_PAGE : BASE + 'GO_TO_LAST_PAGE',
-			cls.GO_TO_PAGE : BASE + 'GO_TO_PAGE',
-			cls.END_SESSION : BASE + 'END_SESSION',
-			cls.CUSTOM_EMBED : BASE + 'CUSTOM_EMBED',
-			cls.CALLER : BASE + 'CALLER',
-			cls.SKIP : BASE + 'SKIP'
-		}
-		return dict_[type_]
+	@staticmethod
+	def _get_buttontype_name_from_type(type_: ButtonType) -> str:
+		"""|class method| Used to determine the `linked_to` type. Returns the full :class:`str` representation of that type"""
+		return f'{type_.__class__.__name__}.{type_.name}'
 
 class ReactionButton(_BaseButton):
 	"""A helper class for :class:`ReactionMenu`. Represents a reaction.
