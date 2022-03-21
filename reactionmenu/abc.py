@@ -291,7 +291,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         self._method = method
         self._menu_type = menu_type
 
-        self._msg: discord.Message # initialized in child classes NOTICE: Might be an issue for all base types
+        self._msg: discord.Message # initialized in child classes
         self._pc:_PageController # initialized in child classes
         self._is_running = False
         self._stop_initiated = False
