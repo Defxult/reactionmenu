@@ -56,10 +56,10 @@ class ViewMenu(_BaseMenu):
     
     Parameters
     ----------
-    ctx: :class:`discord.ext.commands.Context`
-        The Context object. You can get this using a command or if you're in a `discord.on_message` event
+    method: Union[:class:`discord.ext.commands.Context`, :class:`discord.Interaction`]
+        The Context object. You can get this using a command or if you're in a `discord.on_message` event. Also accepts interactions, typically received when using slash commands
     
-    menu_type: :class:`int`
+    menu_type: :class:`MenuType`
         The configuration of the menu. Class variables :attr:`ViewMenu.TypeEmbed`, :attr:`ViewMenu.TypeEmbedDynamic`, or :attr:`ViewMenu.TypeText`
     
     Kwargs
@@ -185,8 +185,8 @@ class ViewMenu(_BaseMenu):
 
         Parameters
         ----------
-        ctx: :class:`discord.ext.commands.Context`
-            The Context object. You can get this using a command or if you're in a `discord.on_message` event
+        method: Union[:class:`discord.ext.commands.Context`, :class:`discord.Interaction`]
+            The Context object. You can get this using a command or if you're in a `discord.on_message` event. Also accepts interactions, typically received when using slash commands
 
         pages: Sequence[Union[:class:`discord.Embed`, :class:`str`]]
             The pages to add

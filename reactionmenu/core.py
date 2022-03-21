@@ -41,13 +41,13 @@ from .errors import *
 
 class ReactionMenu(_BaseMenu):
 	"""A class to create a discord pagination menu using reactions
-
+	
 	Parameters
 	----------
-	ctx: :class:`discord.ext.commands.Context`
-		The Context object. You can get this using a command or if you're in a `discord.on_message` event
+	method: Union[:class:`discord.ext.commands.Context`, :class:`discord.Interaction`]
+		The Context object. You can get this using a command or if you're in a `discord.on_message` event. Also accepts interactions, typically received when using slash commands
 
-	menu_type: :class:`int`
+	menu_type: :class:`MenuType`
 		The configuration of the menu. Class variables :attr:`ReactionMenu.TypeEmbed`, :attr:`ReactionMenu.TypeEmbedDynamic`, or :attr:`ReactionMenu.TypeText`
 
 	Kwargs
@@ -92,7 +92,7 @@ class ReactionMenu(_BaseMenu):
 	style: :class:`str`
 		A custom page director style you can select. "$" represents the current page, "&" represents the total amount of pages (defaults to "Page $/&") Example: `ReactionMenu(ctx, ..., style='On $ out of &')`
 
-	timeout: Union[:class:`float`, :class:`None`]
+	timeout: Union[:class:`float`, :class:`int`, :class:`None`]
 		Timer for when the menu should end. Can be :class:`None` for no timeout (defaults to 60.0)
 
 	wrap_in_codeblock: :class:`str`
@@ -151,15 +151,15 @@ class ReactionMenu(_BaseMenu):
 		return self._auto_turn_every
 	
 	@classmethod
-	async def quick_start(cls, ctx: Context, pages: Sequence[Union[discord.Embed, str]], buttons: Optional[Sequence[ReactionButton]]=DEFAULT_BUTTONS) -> ReactionMenu:
+	async def quick_start(cls, method: Union[Context, discord.Interaction], /, pages: Sequence[Union[discord.Embed, str]], buttons: Optional[Sequence[ReactionButton]]=DEFAULT_BUTTONS) -> ReactionMenu:
 		"""|coro class method|
 		
 		Start a menu with default settings either with a `menu_type` of `ReactionMenu.TypeEmbed` (all values in `pages` are of type `discord.Embed`) or `ReactionMenu.TypeText` (all values in `pages` are of type `str`)
 
 		Parameters
 		----------
-		ctx: :class:`discord.ext.commands.Context`
-			The Context object. You can get this using a command or if you're in a `discord.on_message` event
+		method: Union[:class:`discord.ext.commands.Context`, :class:`discord.Interaction`]
+			The Context object. You can get this using a command or if you're in a `discord.on_message` event. Also accepts interactions, typically received when using slash commands
 
 		pages: Sequence[Union[:class:`discord.Embed`, :class:`str`]]
 			The pages to add
@@ -178,11 +178,11 @@ class ReactionMenu(_BaseMenu):
 		- `NoButtons`: Attempted to start the menu when no Buttons have been registered
 		- `IncorrectType`: All items in :param:`pages` were not of type :class:`discord.Embed` or :class:`str`
 
-			.. added v3.0.2
+			.. added v3.1.0
 		"""
-		menu = cls(ctx, menu_type=cls._quick_check(pages))
+		menu = cls(method, menu_type=cls._quick_check(pages))
 		menu.add_pages(pages)
-		menu.add_buttons(ReactionButton.all() if buttons == DEFAULT_BUTTONS else buttons)
+		menu.add_buttons(ReactionButton.all() if not buttons else buttons)
 		await menu.start()
 		return menu
 	
