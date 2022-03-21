@@ -18,7 +18,9 @@
 With this change, methods `.split_sessions()` & `.stop_only()` have been removed
 #### New Features
 ##### ReactionMenu & ViewMenu
-* Pagination is no longer limited to just embeds or text. The normal embed menu can now paginate with text, embeds, as well as files
+* Pagination is no longer limited to just embeds or text. The normal embed menu can now paginate with embeds, text, as well as files. With this, method `.add_page()` has two new parameters
+  * Old: `.add_page(embed)`
+  * New: `.add_page(embed=MISSING, content=None, files=MISSING)`
 * Added class method `quick_start()`. Start a menu with it's default settings only adding the pages
 * Added property `menu_type`. Displays the menu type that was set in the constructor
 ##### ViewMenu Only
