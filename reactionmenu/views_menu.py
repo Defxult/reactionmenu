@@ -693,7 +693,7 @@ class ViewMenu(_BaseMenu):
                 await inter.response.defer()
 
                 try:
-                    if asyncio.iscoroutinefunction(func): await func(*args, **kwargs)
+                    if asyncio.iscoroutinefunction(func): await func(*args, **kwargs) # type: ignore / `func` is already confirmed to be a coroutine
                     else: func(*args, **kwargs)
                 except Exception as err:
                     call_failed_error_msg = inspect.cleandoc(
