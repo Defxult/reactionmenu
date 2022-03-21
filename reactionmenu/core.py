@@ -602,8 +602,8 @@ class ReactionMenu(_BaseMenu):
 					reaction, user = await client.wait_for('reaction_add', check=self.__wait_check, timeout=self.timeout)
 				elif self.__navigation_speed == ReactionMenu.FAST:
 					wait_for_aws = (
-						self._ctx.bot.wait_for('reaction_add', check=self._wait_check, timeout=self.timeout),
-						self._ctx.bot.wait_for('reaction_remove', check=self._wait_check, timeout=proper_timeout()) 
+						client.wait_for('reaction_add', check=self.__wait_check, timeout=self.timeout),
+						client.wait_for('reaction_remove', check=self.__wait_check, timeout=proper_timeout()) 
 					)
 					done, pending = await asyncio.wait(wait_for_aws, return_when=asyncio.FIRST_COMPLETED)
 					
@@ -655,7 +655,7 @@ class ReactionMenu(_BaseMenu):
 					elif emoji == btn.emoji and btn.linked_to == ReactionButton.Type.GO_TO_PAGE:
 						prompt: discord.Message = await self._msg.channel.send(f'{menu_owner.display_name}, what page would you like to go to?')
 						try:
-							selection_message: discord.Message = await self._ctx.bot.wait_for('message', check=lambda m: all([m.channel.id == self._msg.channel.id, m.author.id == self._ctx.author.id]), timeout=self.timeout)
+							selection_message: discord.Message = await client.wait_for('message', check=lambda m: all([m.channel.id == self._msg.channel.id, m.author.id == menu_owner.id]), timeout=self.timeout)
 							page = int(selection_message.content)
 						except (asyncio.TimeoutError, ValueError):
 							# dont call :meth:`.stop()` here because I want the timeout factor to only be applicable after the
