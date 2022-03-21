@@ -112,6 +112,9 @@ class ReactionMenu(_BaseMenu):
 		self._auto_paginator_timer: Timer = None
 		self._auto_turn_every: Union[int, float] = None
 		self._auto_data: Union[str, discord.Embed] = None
+		self.__buttons: List[ReactionButton] = []
+		
+		self.__main_session_task: Optional[asyncio.Task] = None
 		
 		# kwargs
 		self.timeout: Union[float, int, None] = kwargs.get('timeout', 60.0)
@@ -222,10 +225,10 @@ class ReactionMenu(_BaseMenu):
 		auto_sessions = [session for session in cls._active_sessions if session.auto_paginator]
 		for session in auto_sessions:
 			await session.stop()
-	
-	def _extract_all_emojis(self) -> List[str]:
+
+	def __extract_all_emojis(self) -> List[str]:
 		"""Return a list of all the emojis registered to each button. Can return an empty list if there are no buttons"""
-		return [button.emoji for button in self._buttons]
+		return [button.emoji for button in self.__buttons]
 	
 	async def _handle_event(self, button: ReactionButton) -> None:
 		"""|coro| If an event is set, remove the buttons from the menu when the click requirement has been met"""
@@ -240,7 +243,7 @@ class ReactionMenu(_BaseMenu):
 	
 	def _button_add_check(self, button: ReactionButton) -> None:
 		if isinstance(button, ReactionButton):
-			if button.emoji not in self._extract_all_emojis():
+			if button.emoji not in self.__extract_all_emojis():
 				if button.linked_to == ReactionButton.Type.CUSTOM_EMBED and not button.custom_embed:
 					raise MissingSetting('When adding a button with the type "ReactionButton.Type.CUSTOM_EMBED", the kwarg "embed" is needed')
 				
@@ -258,7 +261,7 @@ class ReactionMenu(_BaseMenu):
 				if button.linked_to == ReactionButton.Type.SKIP and button.skip is None:
 					raise ReactionMenuException('When attempting to add a button with the type ReactionButton.Type.SKIP, the "skip" kwarg was not set')
 				
-				if len(self._buttons) > 20:
+				if len(self.__buttons) > 20:
 					raise TooManyButtons
 			else:
 				raise DuplicateButton(f'The emoji "{button.emoji}" has already been registered as a button')
@@ -300,17 +303,17 @@ class ReactionMenu(_BaseMenu):
 			identity = str(identity)
 
 		if search_by == 'name':
-			matched_names: List[ReactionButton] = [btn for btn in self._buttons if btn.name == identity]
+			matched_names: List[ReactionButton] = [btn for btn in self.__buttons if btn.name == identity]
 			return matched_names
 
 		elif search_by == 'emoji':
-			for btn in self._buttons:
+			for btn in self.__buttons:
 				if btn.emoji == identity:
 					return [btn]
 			return []
 		
 		elif search_by == 'type':
-			matched_types: List[ReactionButton] = [btn for btn in self._buttons if btn.linked_to == identity]
+			matched_types: List[ReactionButton] = [btn for btn in self.__buttons if btn.linked_to == identity]
 			return matched_types
 		
 		else:
@@ -337,7 +340,7 @@ class ReactionMenu(_BaseMenu):
 		"""
 		self._button_add_check(button)
 		button._menu = self
-		self._buttons.append(button)
+		self.__buttons.append(button)
 	
 	@ensure_not_primed
 	def add_buttons(self, buttons: Sequence[ReactionButton]) -> None:
@@ -375,9 +378,9 @@ class ReactionMenu(_BaseMenu):
 		- `MenuAlreadyRunning`: Attempted to call this method after the menu has started
 		- `ButtonNotFound`: The provided button was not found in the list of buttons on the menu
 		"""
-		if button in self._buttons:
+		if button in self.__buttons:
 			button._menu = None
-			self._buttons.remove(button)
+			self.__buttons.remove(button)
 		else:
 			raise ButtonNotFound('Cannot remove a button that is not registered')
 	
@@ -389,9 +392,9 @@ class ReactionMenu(_BaseMenu):
 		------
 		- `MenuAlreadyRunning`: Attempted to call this method after the menu has started
 		"""
-		for btn in self._buttons:
+		for btn in self.__buttons:
 			btn._menu = None
-		self._buttons.clear()
+		self.__buttons.clear()
 	
 	def refresh_auto_pagination_data(self, *data: Union[str, discord.Embed]) -> None:
 		"""Update the data displayed in the auto-pagination menu. When refreshed, the new data doesn't go into effect until the last round of waiting (what you set for `turn_every`) completes
@@ -473,7 +476,7 @@ class ReactionMenu(_BaseMenu):
 		else:
 			raise MissingSetting('ReactionMenu is not set as auto-paginator')
 	
-	def _wait_check(self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]) -> bool:
+	def __wait_check(self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]) -> bool:
 		"""Predicate for :meth:`discord.Client.wait_for()`. This also handles :attr:`all_can_click`"""
 		not_bot = False
 		correct_msg = False
@@ -504,17 +507,17 @@ class ReactionMenu(_BaseMenu):
 
 		return all([not_bot, correct_msg, correct_user])
 	
-	def _get_custom_embed_buttons(self) -> List[ReactionButton]:
-		return [btn for btn in self._buttons if btn.linked_to == ReactionButton.Type.CUSTOM_EMBED]
+	def __get_custom_embed_buttons(self) -> List[ReactionButton]:
 	
-	def _get_navigation_buttons(self) -> List[ReactionButton]:
-		return [btn for btn in self._buttons if btn.linked_to in (
-			ReactionButton.Type.PREVIOUS_PAGE,
-			ReactionButton.Type.NEXT_PAGE,
-			ReactionButton.Type.GO_TO_FIRST_PAGE,
-			ReactionButton.Type.GO_TO_LAST_PAGE,
-			ReactionButton.Type.GO_TO_PAGE
-		)]
+	# Not in use
+	# def _get_navigation_buttons(self) -> List[ReactionButton]:
+	# 	return [btn for btn in self.__buttons if btn.linked_to in (
+	# 		ReactionButton.Type.PREVIOUS_PAGE,
+	# 		ReactionButton.Type.NEXT_PAGE,
+	# 		ReactionButton.Type.GO_TO_FIRST_PAGE,
+	# 		ReactionButton.Type.GO_TO_LAST_PAGE,
+	# 		ReactionButton.Type.GO_TO_PAGE
+	# 	)]
 	
 	async def _auto_paginate(self, send_to) -> None:
 		"""|coro| Handles the pagination process for auto-paginator menu's"""
@@ -553,8 +556,11 @@ class ReactionMenu(_BaseMenu):
 					raise dpy_error # done_callback called
 		else:
 			raise MenuSettingsMismatch('The menu_type for auto-pagination menus must be TypeEmbed or TypeText')
+	def __extract_proper_client(self) -> Union[Bot, discord.Client]:
+		if isinstance(self._method, Context): return self._method.bot
+		else: return self._method.client
 
-	async def _paginate(self, ready_event: asyncio.Event) -> None:
+	async def __paginate(self, ready_event: asyncio.Event) -> None:
 		"""|coro| Handles the pagination process for all menu types"""
 		
 		async def determine_removal(emoji: str, user: Union[discord.Member, discord.User]):
@@ -580,13 +586,13 @@ class ReactionMenu(_BaseMenu):
 				return None
 
 		# apply the reactions (buttons) to the menu message
-		for btn in self._buttons:
+		for btn in self.__buttons:
 			await self._msg.add_reaction(btn.emoji)
 		
 		ready_event.set()
 		self._is_running = True
 		ReactionMenu._active_sessions.append(self)
-		registered_emojis = self._extract_all_emojis()
+		registered_emojis = self.__extract_all_emojis()
 		
 		while self._is_running:
 			try:
@@ -617,7 +623,7 @@ class ReactionMenu(_BaseMenu):
 						await self._msg.clear_reaction(emoji)
 						continue
 
-				for btn in self._buttons:
+				for btn in self.__buttons:
 					# previous
 					if emoji == btn.emoji and btn.linked_to == ReactionButton.Type.PREVIOUS_PAGE:
 						await self._msg.edit(**self._determine_kwargs(self._pc.prev()))
@@ -729,8 +735,8 @@ class ReactionMenu(_BaseMenu):
 				self._on_close_event.set()
 				self._main_session_task.cancel()
 	
-	def _override_dm_settings(self) -> None:
-		"""If a menu session is in a direct message and the menu is set as an auto-paginator, the following settings are disabled/changed because of discord limitations and resource/safety reasons"""
+	def __override_dm_settings(self) -> None:
+		"""If a menu session is in a direct message the following settings are disabled/changed because of discord limitations and resource/safety reasons"""
 		if self.in_dms:
 			if self.clear_reactions_after:
 				self.clear_reactions_after = False
@@ -783,7 +789,7 @@ class ReactionMenu(_BaseMenu):
 			if not can_proceed:
 				return
 		
-		self._override_dm_settings()
+		self.__override_dm_settings()
 		
 		if self._auto_paginator:
 			self._main_session_task = self._ctx.bot.loop.create_task(self._auto_paginate(send_to))
@@ -827,3 +833,5 @@ class ReactionMenu(_BaseMenu):
 			self._main_session_task = self._ctx.bot.loop.create_task(self._paginate(ready_event))
 			self._main_session_task.add_done_callback(self._session_done_callback)
 			await ready_event.wait()
+		self.__main_session_task = self.__extract_proper_client().loop.create_task(self.__paginate(ready_event))
+		self.__main_session_task.add_done_callback(self._session_done_callback)
