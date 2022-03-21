@@ -28,6 +28,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    ClassVar,
     Final,
     Generic,
     Iterable,
@@ -61,11 +62,11 @@ from .decorators import ensure_not_primed
 from .errors import *
 
 # Constants
-_DYNAMIC_EMBED_LIMIT = 4096
-_DEFAULT_STYLE = 'Page $/&'
+_DYNAMIC_EMBED_LIMIT: Final[int] = 4096
+_DEFAULT_STYLE: Final[str] = 'Page $/&'
 DEFAULT_BUTTONS = None
 
-GB = TypeVar('GB', bound="_BaseButton")
+GB = TypeVar('GB', bound='_BaseButton')
 M = TypeVar('M', bound='_BaseMenu')
 
 class Page:
@@ -96,12 +97,12 @@ class PaginationEmojis:
     - 🔢 as `GO_TO_PAGE`
     - ⏹️ as `END_SESSION`
     """
-    BACK_BUTTON: Final[str] = '◀️'
-    NEXT_BUTTON: Final[str] = '▶️'
-    FIRST_PAGE: Final[str]  = '⏪'
-    LAST_PAGE: Final[str]   = '⏩'
-    GO_TO_PAGE: Final[str]  = '🔢'
-    END_SESSION: Final[str] = '⏹️'
+    BACK_BUTTON: ClassVar[str] = '◀️'
+    NEXT_BUTTON: ClassVar[str] = '▶️'
+    FIRST_PAGE: ClassVar[str]  = '⏪'
+    LAST_PAGE: ClassVar[str]   = '⏩'
+    GO_TO_PAGE: ClassVar[str]  = '🔢'
+    END_SESSION: ClassVar[str] = '⏹️'
 
 class _PageController:
     def __init__(self, pages: List[Page]) -> None:
@@ -187,7 +188,7 @@ class _LimitDetails(NamedTuple):
 
 class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
 
-    Emojis = PaginationEmojis
+    Emojis: ClassVar[PaginationEmojis] = PaginationEmojis()
 
     def __init__(self, name: str, event: Optional[_BaseButton.Event], skip: _BaseButton.Skip):
         self.name: str = name
@@ -420,7 +421,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """
         return all([isinstance(item, str) for item in values]) if values else False
     
-    @staticmethod
+    @staticmethod #* Don't make this an instance method. It would be better as one, but it's main intended use is for :meth:`_check` in "views_menu.py"
     def _extract_proper_user(method: Union[Context, discord.Interaction]) -> Union[discord.Member, discord.User]:
         """Get the proper :class:`discord.User` / :class:`discord.Member` from the attribute depending on the instance
 
