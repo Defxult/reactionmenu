@@ -24,13 +24,24 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, Final, Iterable, List, NamedTuple, Optional, Tuple, Union
+from typing import (
+	TYPE_CHECKING,
+	Any,
+	Callable,
+	Dict,
+	Final,
+	Iterable,
+	List,
+	NamedTuple,
+	Optional,
+	Tuple,
+	Union
+)
 
 if TYPE_CHECKING:
 	from . import ViewMenu, ReactionButton, ReactionMenu
 
 import re
-from collections import namedtuple
 
 import discord
 from discord.ext.commands import Command
@@ -441,18 +452,18 @@ class ReactionButton(_BaseButton):
 		Set the action and the amount of pages to skip when using a `linked_to` of `ReactionButton.Type.SKIP`
 	"""
 
-	Type: Final[ButtonType] = ButtonType
+	Type = ButtonType
 
 	def __init__(self, *, emoji: str, linked_to: ReactionButton.Type, **kwargs):
 		super().__init__(name=kwargs.get('name'), event=kwargs.get('event'), skip=kwargs.get('skip'))
 		self.emoji = str(emoji)
 		self.linked_to = linked_to
 		
-		self.custom_embed: discord.Embed = kwargs.get('embed')
-		self.details: NamedTuple = kwargs.get('details')
+		self.custom_embed: Optional[discord.Embed] = kwargs.get('embed')
+		self.details: Optional[Details] = kwargs.get('details')
 		
 		# abc
-		self._menu: ReactionMenu = None
+		self._menu: Optional[ReactionMenu] = None
 	
 	def __str__(self):
 		return self.emoji
@@ -461,17 +472,17 @@ class ReactionButton(_BaseButton):
 		return f'<ReactionButton emoji={self.emoji!r} linked_to={ButtonType._get_buttontype_name_from_type(self.linked_to)} total_clicks={self.total_clicks} name={self.name!r}>'
 	
 	@property
-	def menu(self) -> ReactionMenu:
+	def menu(self) -> Optional[ReactionMenu]:
 		"""
 		Returns
 		-------
-		:class:`ReactionMenu`: The menu the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
+		Optional[:class:`ReactionMenu`]: The menu the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
 		"""
 		return self._menu
 	
-	@classmethod
-	def set_caller_details(cls, func: Callable[..., None], *args, **kwargs) -> NamedTuple:
-		"""|class method|
+	@staticmethod
+	def set_caller_details(func: Callable[..., None], *args, **kwargs) -> Details:
+		"""|static method|
 		
 		Set the parameters for the function you set for a :class:`ReactionButton` with a `linked_to` of :attr:`ReactionButton.Type.CALLER`
 
@@ -480,29 +491,28 @@ class ReactionButton(_BaseButton):
 		func: Callable[..., :class:`None`]
 			The function object that will be called when the associated button is pressed
 		
-		*args: :class:`Any`
+		*args: `Any`
 			An argument list that represents the parameters of that function
 		
-		**kwargs: :class:`Any`
+		**kwargs: `Any`
 			An argument list that represents the kwarg parameters of that function
 		
 		Returns
 		-------
-		:class:`NamedTuple`: The values needed to internally call the function you have set
+		:class:`Details`: The :class:`NamedTuple` containing the values needed to internally call the function you have set
 		
 		Raises
 		------
 		- `IncorrectType`: Parameter "func" was not a callable object
 		"""
 		if callable(func):
-			Details = namedtuple('Details', ['func', 'args', 'kwargs'])
 			func = func.callback if isinstance(func, Command) else func
 			return Details(func=func, args=args, kwargs=kwargs)
 		else:
 			raise IncorrectType('Parameter "func" must be callable')
 	
 	@classmethod
-	def skip(cls, emoji: str, action: str, amount: int) -> ReactionButton:
+	def generate_skip(cls, emoji: str, action: str, amount: int) -> ReactionButton:
 		"""|class method|
 		
 		A factory method that returns a :class:`ReactionButton` with the following parameters set:
@@ -511,7 +521,7 @@ class ReactionButton(_BaseButton):
 		- linked_to: :attr:`ReactionButton.Type.SKIP`
 		- skip: `ReactionButton.Skip(<action>, <amount>)`
 		"""
-		return cls(emoji=emoji, linked_to=cls.Type.SKIP, skip=_BaseButton.Skip(action, amount))
+		return cls(emoji=emoji, linked_to=cls.Type.SKIP, skip=cls.Skip(action, amount))
 	
 	@classmethod
 	def back(cls) -> ReactionButton:
