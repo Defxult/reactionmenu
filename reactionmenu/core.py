@@ -109,11 +109,6 @@ class ReactionMenu(_BaseMenu):
 	def __init__(self, method: Union[Context, discord.Interaction], /, *, menu_type: MenuType, **kwargs):
 		super().__init__(method, menu_type, **kwargs)
 
-		# auto-pagination
-		self._auto_paginator = False
-		self._auto_paginator_timer: Timer = None
-		self._auto_turn_every: Union[int, float] = None
-		self._auto_data: Union[str, discord.Embed] = None
 		self.__buttons: List[ReactionButton] = []
 		
 		self.__main_session_task: Optional[asyncio.Task] = None
@@ -190,43 +185,6 @@ class ReactionMenu(_BaseMenu):
 		menu.add_buttons(ReactionButton.all() if not buttons else buttons)
 		await menu.start()
 		return menu
-	
-	@classmethod
-	def update_all_turn_every(cls, *, turn_every: Union[int, float]) -> None:
-		"""|class method|
-		
-		Update the amount of seconds to wait before going to the next page for all active auto-paginated sessions. When updated, the new value doesn't go into effect until the last
-		round of waiting (:param:`turn_every`) completes for each menu
-		
-		Warning
-		-------
-		Setting :param:`turn_every` to a number that's too low exposes you to API abuse because an edit of a message will be occurring too quickly.
-		It is your responsibility to make sure an appropriate/safe value is set, *especially* if the menu has a timeout of :class:`None`
-		
-		Parameters
-		----------
-		turn_every: Union[:class:`int`, :class:`float`]
-			The amount of seconds to wait before going to the next page
-		
-		Raises
-		------
-		- `ReactionMenuException`: Parameter :param:`turn_every` was not greater than or equal to one
-		"""
-		if turn_every >= 1:
-			auto_sessions = [session for session in cls._active_sessions if session.auto_paginator]
-			for session in auto_sessions:
-				session.update_turn_every(turn_every=turn_every)
-		else:
-			raise ReactionMenuException('Parameter "turn_every" must be greater than or equal to one')
-	
-	@classmethod
-	async def stop_all_auto_sessions(cls) -> None:
-		"""|coro class method|
-		
-		Stops all auto-paginated sessions that are currently running"""
-		auto_sessions = [session for session in cls._active_sessions if session.auto_paginator]
-		for session in auto_sessions:
-			await session.stop()
 
 	def __extract_all_emojis(self) -> List[str]:
 		"""Return a list of all the emojis registered to each button. Can return an empty list if there are no buttons"""
@@ -398,86 +356,6 @@ class ReactionMenu(_BaseMenu):
 			btn._menu = None
 		self.__buttons.clear()
 	
-	def refresh_auto_pagination_data(self, *data: Union[str, discord.Embed]) -> None:
-		"""Update the data displayed in the auto-pagination menu. When refreshed, the new data doesn't go into effect until the last round of waiting (what you set for `turn_every`) completes
-		
-		Parameters
-		----------
-		*data: Union[:class:`str`, :class:`discord.Embed`]
-			An argument list of :class:`discord.Embed` objects (`menu_type` is :attr:`TypeEmbed`) or :class:`str` (`menu_type` is :attr:`TypeText`) 
-		
-		Raises
-		------
-		- `ReactionMenuException`: The menu was not set as an auto-paginator menu or no data was given to refresh
-		- `IncorrectType`: All values in the argument list were not of type :class:`discord.Embed` or :class:`str`
-		"""
-		if self._auto_paginator and self._is_running:
-			if not data:
-				raise ReactionMenuException('Cannot refresh pagination data when no data has been given')
-			if self._menu_type == ReactionMenu.TypeEmbed:
-				if ReactionMenu.all_embeds(data):
-					self._auto_data = itertools.cycle(data)
-				else:
-					raise IncorrectType('Parameter "data" expected only discord.Embed values because the current menu_type is TypeEmbed. One or more values were not of type discord.Embed')
-			else:
-				if ReactionMenu.all_strings(data):
-					self._auto_data = itertools.cycle(data)
-				else:
-					raise IncorrectType('Parameter "data" expected only str values because the current menu_type is TypeText. One or more values were not of type str')
-		else:
-			raise ReactionMenuException('ReactionMenu is not set as auto-paginator')
-	
-	@ensure_not_primed
-	def set_as_auto_paginator(self, *, turn_every: Union[int, float]) -> None:
-		"""Set the menu to turn pages on it's own every x seconds. If this is set, reactions will not be applied to the menu
-		
-		Warning
-		-------
-		Setting :param:`turn_every` to a number that's too low exposes you to API abuse because an edit of a message will be occurring too quickly.
-		It is your responsibility to make sure an appropriate/safe value is set, *especially* if the menu has a timeout of :class:`None`
-		
-		Parameters
-		----------
-		turn_every: Union[:class:`int`, :class:`float`]
-			The amount of seconds to wait before going to the next page
-		
-		Raises
-		------
-		- `MenuAlreadyRunning`: Attempted to call this method after the menu has started
-		- `ReactionMenuException`: Parameter :param:`turn_every` was not greater than or equal to one
-		"""
-		if turn_every >= 1:
-			self._auto_paginator = True
-			self._auto_turn_every = turn_every
-		else:
-			raise ReactionMenuException('Parameter "turn_every" must be greater than or equal to one')
-			
-	def update_turn_every(self, *, turn_every: Union[int, float]) -> None:
-		"""Change the amount of seconds to wait before going to the next page. When updated, the new value doesn't go into effect until the last round of waiting (:param:`turn_every`) completes
-		
-		Warning
-		-------
-		Setting :param:`turn_every` to a number that's too low exposes you to API abuse because an edit of a message will be occurring too quickly.
-		It is your responsibility to make sure an appropriate/safe value is set, *especially* if the menu has a timeout of :class:`None`
-		
-		Parameters
-		----------
-		turn_every: Union[:class:`int`, :class:`float`]
-			The amount of seconds to wait before going to the next page
-		
-		Raises
-		------
-		- `ReactionMenuException`: Parameter :param:`turn_every` was not greater than or equal to one
-		- `MissingSetting`: This method was called from a menu that was not set as an auto-pagination menu
-		"""
-		if self._auto_paginator:
-			if turn_every >= 1:
-				self._auto_turn_every = turn_every
-			else:
-				raise ReactionMenuException('Parameter "turn_every" must be greater than or equal to one')
-		else:
-			raise MissingSetting('ReactionMenu is not set as auto-paginator')
-	
 	def __wait_check(self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]) -> bool:
 		"""Predicate for :meth:`discord.Client.wait_for()`. This also handles :attr:`all_can_click`"""
 		not_bot = False
@@ -519,43 +397,6 @@ class ReactionMenu(_BaseMenu):
 	# 		ReactionButton.Type.GO_TO_PAGE
 	# 	)]
 	
-	async def _auto_paginate(self, send_to) -> None:
-		"""|coro| Handles the pagination process for auto-paginator menu's"""
-		if self._menu_type in (ReactionMenu.TypeEmbed, ReactionMenu.TypeText):
-			
-			def stop_auto_pagination():
-				"""Called when the :class:`threading.Timer` counter is finished for the auto-session"""
-				self._main_session_task.cancel()
-
-			self.remove_all_buttons()
-			cycled_pages = itertools.cycle(self._pages)
-			send_kwargs = {'embed' if self._menu_type == ReactionMenu.TypeEmbed else 'content' : self._pages[0]}
-			
-			# when the initial message is sent, the user already sees the first page. doing a single next()
-			# before the auto-pagination process begins allows the menu to display the second page after waiting on 
-			# :attr:`ReactionMenu._auto_turn_every`
-			next(cycled_pages)
-
-			self._msg = await self._handle_send_to(send_to).send(**send_kwargs)
-			self._is_running = True
-			ReactionMenu._active_sessions.append(self)
-			
-			if self.timeout:
-				timeout = self.timeout
-				self._auto_paginator_timer = Timer(timeout, stop_auto_pagination)
-				self._auto_paginator_timer.start()
-			
-			while self._is_running:
-				await asyncio.sleep(self._auto_turn_every)
-				edit_kwargs = {'embed' if self._menu_type == ReactionMenu.TypeEmbed else 'content' :  next(cycled_pages)}
-				try:
-					await self._msg.edit(**edit_kwargs)
-				except discord.DiscordException as dpy_error:
-					if self._auto_paginator_timer is not None and self._auto_paginator_timer.is_alive():
-						self._auto_paginator_timer.cancel()
-					raise dpy_error # done_callback called
-		else:
-			raise MenuSettingsMismatch('The menu_type for auto-pagination menus must be TypeEmbed or TypeText')
 	def __extract_proper_client(self) -> Union[Bot, discord.Client]:
 		if isinstance(self._method, Context): return self._method.bot
 		else: return self._method.client
@@ -729,13 +570,9 @@ class ReactionMenu(_BaseMenu):
 			except discord.DiscordException as discord_error:
 				raise discord_error
 			finally:
-				if self._auto_paginator:
-					if self._auto_paginator_timer is not None and self._auto_paginator_timer.is_alive():
-						self._auto_paginator_timer.cancel()
-				
 				self._is_running = False
 				self._on_close_event.set()
-				self._main_session_task.cancel()
+				self.__main_session_task.cancel() # type: ignore / task object would have been set by the time this is executed
 	
 	def __override_dm_settings(self) -> None:
 		"""If a menu session is in a direct message the following settings are disabled/changed because of discord limitations and resource/safety reasons"""
@@ -750,14 +587,10 @@ class ReactionMenu(_BaseMenu):
 				self.delete_interactions = False
 			
 			if self.only_roles:
-				# this is only type hinted because the type hint gets overridden from `abc` because of the initialization
-				self.only_roles: Union[List[discord.Role], None] = None
+				self.only_roles = None
 			
 			if self.timeout is None:
 				self.timeout = 60.0
-			
-			if self._auto_paginator:
-				self._auto_paginator = False
 		
 	def __generate_reactionmenu_payload(self) -> dict:
 		return {
@@ -801,14 +634,6 @@ class ReactionMenu(_BaseMenu):
 		
 		self.__override_dm_settings()
 		
-		if self._auto_paginator:
-			self._main_session_task = self._ctx.bot.loop.create_task(self._auto_paginate(send_to))
-			self._main_session_task.add_done_callback(self._session_done_callback)
-		else:
-			if self._menu_type not in ReactionMenu._all_menu_types():
-				raise ReactionMenuException('ReactionMenu menu_type not recognized')
-			if not self._buttons:
-				raise NoButtons
 		if self._menu_type not in ReactionMenu._all_menu_types():
 			raise ReactionMenuException('ReactionMenu menu_type not recognized')
 		if not self.__buttons:
