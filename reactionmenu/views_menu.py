@@ -110,7 +110,7 @@ class ViewMenu(_BaseMenu):
     
     _active_sessions: List[ViewMenu] = []
     
-    def __init__(self, method: Union[Context, discord.Interaction], /, menu_type: MenuType, **kwargs):
+    def __init__(self, method: Union[Context, discord.Interaction], /, *, menu_type: MenuType, **kwargs):
         super().__init__(method, menu_type, **kwargs)
 
         self.__buttons: List[ViewButton] = []

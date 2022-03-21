@@ -102,10 +102,10 @@ class ReactionMenu(_BaseMenu):
 	NORMAL: Final[str] = 'NORMAL'
 	FAST: Final[str] = 'FAST'
 
-	def __init__(self, ctx: Context, *, menu_type: int, **kwargs):
-		super().__init__(ctx, menu_type, **kwargs)
 
 		self._main_session_task: asyncio.Task = None
+	def __init__(self, method: Union[Context, discord.Interaction], /, *, menu_type: MenuType, **kwargs):
+		super().__init__(method, menu_type, **kwargs)
 
 		# auto-pagination
 		self._auto_paginator = False
