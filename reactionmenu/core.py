@@ -759,6 +759,14 @@ class ReactionMenu(_BaseMenu):
 			if self._auto_paginator:
 				self._auto_paginator = False
 		
+	def __generate_reactionmenu_payload(self) -> dict:
+		return {
+			"content" : self._pages[0].content if self._pages else None,
+            "embed" : self._pages[0].embed if self._pages else discord.utils.MISSING,
+            "files" : self._pages[0].files if self._pages else discord.utils.MISSING,
+            "allowed_mentions" : self.allowed_mentions
+		}
+	
 	@ensure_not_primed
 	async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel, discord.Thread]]=None, reply: bool=False) -> None:
 		"""|coro|
