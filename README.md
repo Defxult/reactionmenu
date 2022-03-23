@@ -8,39 +8,14 @@
 ![python_version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue)
 </div>
 
+## reactionmenu v3.1.0
+This branch is in development to support the release of discord.py 2.0 and is now available for testing. If you discover any issues/bugs, please feel free to comment/report it in any of the [reactionmenu discussions](https://github.com/Defxult/reactionmenu/discussions/categories/reactionmenu-v3-1-0-testing) that are available.
 
-# BRANCH NOT READY FOR USE
-discord.py 2.0 has continued development so I have decided this library will switch back to the original library. This `discord.py-2.0-support` branch is **NOT** ready for testing at this time due to breaking changes from the lib change and is only here to have somewhere to save my work as a backup
-
-## GitHub Updates vs PyPI Updates
-The GitHub version of this library will always have the latest changes, fixes, and additions before the [PyPI](https://pypi.org/project/reactionmenu/) version. You can install the GitHub version by doing:
-```
-$ pip install git+https://github.com/Defxult/reactionmenu
-```
-
-You must have [Git](https://git-scm.com/) installed in order to do this. With that said, the current README.md documentation represents the GitHub version of this library. If you are using the PyPI version of this library, it is suggested to read the README.md that matches your PyPI version [here](https://github.com/Defxult/reactionmenu/releases) because documentation may have changed.
-
-* `GitHub: v3.0.2`
-* `PyPI: v3.0.1`
-
----
-
+Thank you!
 ## How to install
 ```
-$ pip install reactionmenu
+$ pip install git+https://github.com/Defxult/reactionmenu@discord.py-2.0-support
 ```
-
-## Notice
-With the discontinuation of discord.py, this library is now dependent on [Pycord](https://github.com/Pycord-Development/pycord). Pycord has been released and is currently in beta. Until it is out of beta, pip installing this library will not automatically install Pycord. When it comes to installing Pycord, you have a few options:
-
-* Option 1 - Install their most recent PyPI 2.0 version [here](https://pypi.org/project/py-cord/#history)
-* Option 2 - Install their development version of the library following their [instructions](https://github.com/Pycord-Development/pycord#installing)
-
----
-## Documentation
-* Jump to [ReactionMenu](#reactionmenu)
-* Jump to [ViewMenu](#viewmenu)
-
 ---
 ## Intents
 Minimum intents needed
@@ -51,22 +26,26 @@ bot = commands.Bot(..., intents=discord.Intents(messages=True, guilds=True, reac
 ## ReactionMenu
 
 ```
-class reactionmenu.ReactionMenu(ctx: Context, *, menu_type: int, **kwargs)
+class reactionmenu.ReactionMenu(method: Union[Context, discord.Interactions], /, *, menu_type: MenuType, **kwargs)
 ```
 ![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
+
+<details>
+  <summary><b>Click to show ReactionMenu documentation</b></summary>
+
 ### How to import
 ```py
 from reactionmenu import ReactionMenu, ReactionButton
 ```
 This library comes with several methods and options in order to make a discord reaction menu simple. Once you have imported the proper classes, you will initialize the constructor like so:
 ```py
-menu = ReactionMenu(ctx, menu_type=ReactionMenu.TypeEmbed)
+menu = ReactionMenu(method, menu_type=ReactionMenu.TypeEmbed)
 ```
 
 
 ### Parameters of the ReactionMenu constructor
-* `ctx` (`discord.ext.commands.Context`) A context object
-* `menu_type` (`int`) The configuration of the menu
+* `method` (`Union[discord.ext.commands.Context, discord.Interactions]`) A context or interaction object
+* `menu_type` (`MenuType`) The configuration of the menu
   * `ReactionMenu.TypeEmbed`, a normal embed pagination menu
   * `ReactionMenu.TypeEmbedDynamic`, an embed pagination menu with dynamic data
   * `ReactionMenu.TypeText`, a text only pagination menu
@@ -92,11 +71,11 @@ menu = ReactionMenu(ctx, menu_type=ReactionMenu.TypeEmbed)
 ---
 
 ### Pages for ReactionMenu
-Depending on the `menu_type`, pages can either be a `str` or `discord.Embed`
-* If the `menu_type` is `ReactionMenu.TypeEmbed`, use embeds (embed only menu)
+Depending on the `menu_type`, pages can either be a `str`, `discord.Embed`, or a combination of `content` and `files` ([example below](#stacked-pages))
+* If the `menu_type` is `ReactionMenu.TypeEmbed`, use embeds
 * If the `menu_type` is `ReactionMenu.TypeText` (text only menu) or `ReactionMenu.TypeEmbedDynamic` (embed only menu), use strings.
 * Associated methods
-  * `ReactionMenu.add_page(Union[discord.Embed, str])`
+  * `ReactionMenu.add_page(embed: discord.Embed=MISSING, content: Optional[str]=None, files: Optional[Sequence[discord.File]]=None)`
   * `ReactionMenu.add_pages(pages: Sequence[Union[discord.Embed, str]])`
   * `ReactionMenu.add_row(data: str)`
   * `ReactionMenu.remove_all_pages()`
@@ -109,20 +88,42 @@ Depending on the `menu_type`, pages can either be a `str` or `discord.Embed`
 #### Adding Pages
 ```py
 # ReactionMenu.TypeEmbed
-menu = ReactionMenu(ctx, menu_type=ReactionMenu.TypeEmbed)
+menu = ReactionMenu(method, menu_type=ReactionMenu.TypeEmbed)
 menu.add_page(summer_embed)
 menu.add_page(winter_embed)
 
 # ReactionMenu.TypeText
-menu = ReactionMenu(ctx, menu_type=ReactionMenu.TypeText)
-menu.add_page('Its so hot!')
-menu.add_page('Its so cold!')
+menu = ReactionMenu(method, menu_type=ReactionMenu.TypeText)
+menu.add_page(content='Its so hot!')
+menu.add_page(content='Its so cold!')
 ```
 
 #### ReactionMenu.TypeText
 A `TypeText` menu is a text based pagination menu. No embeds are involved in the pagination process, only plain text is used.
 
 ![showcase-text](https://cdn.discordapp.com/attachments/655186216060321816/929172629947027466/text_showcase.gif)
+
+#### Stacked Pages
+With `v3.0.1+`, you can paginate with more than just an embed or text. You can combine text, embeds, as well as files. But depending on the `menu_type` the combination can be restricted. Here is an example of a menu with a `menu_type` of `TypeEmbed` that is stacked.
+
+```py
+# You can use regular commands as well
+@bot.tree.command(description="These are stacked pages", guild=discord.Object(id=...))
+async def stacked(interaction: discord.Interaction):
+    menu = ReactionMenu(interaction, menu_type=ReactionMenu.TypeEmbed)
+
+    menu.add_page(discord.Embed(title="My Embed"), content="This content is stacked on top of a file", files=[discord.File("stacked.py")])
+    menu.add_page(discord.Embed(title="Hey Wumpos, can you say hi to the person reading this? 😃"))
+    menu.add_page(discord.Embed(title="Hi, I'm Wumpos!"), files=[discord.File("wumpos.gif")])
+    
+    menu.add_button(ReactionButton.back())
+    menu.add_button(ReactionButton.next())
+    
+    await menu.start()
+```
+![stacked](https://cdn.discordapp.com/attachments/655186216060321816/955966821268332554/stacked.gif)
+
+Since the `menu_type` is `TypeEmbed`, there always has to be an embed on each page. If the `menu_type` was `TypeText`, embeds aren't allowed and you will be restricted to only using the `files` parameter.
 
 #### ReactionMenu.TypeEmbedDynamic
 A dynamic menu is used when you do not know how much information will be applied to the menu. For example, if you were to request information from a database, that information can always change. You query something and you might get 1,500 results back, and the next maybe only 800. A dynamic menu pieces all this information together for you and adds it to an embed page by rows of data. `ReactionMenu.add_row()` is best used in some sort of `Iterable` where everything can be looped through, but only add the amount of data you want to the menu page.
@@ -134,11 +135,11 @@ A dynamic menu is used when you do not know how much information will be applied
     * `ReactionMenu.set_last_pages(*embeds: Embed)`
 * The kwargs specifically made for a dynamic menu are:
     * `rows_requested` - The amount of rows you would like on each embed page before making a new page
-        * `ReactionMenu(ctx, ..., rows_requested=5)`
+        * `ReactionMenu(..., rows_requested=5)`
     * `custom_embed` - An embed you have created to use as the embed pages. Used for your menu aesthetic
-        * `ReactionMenu(ctx, ..., custom_embed=red_embed)`
+        * `ReactionMenu(..., custom_embed=red_embed)`
     * `wrap_in_codeblock` - The language identifier when wrapping your data in a discord codeblock. 
-        * `ReactionMenu(ctx, ..., wrap_in_codeblock='py')`
+        * `ReactionMenu(..., wrap_in_codeblock='py')`
 
 ##### Adding Rows/data
 ```py
@@ -178,15 +179,15 @@ class reactionmenu.ReactionButton(*, emoji: str, linked_to: ButtonType, **kwargs
 | `name` | `str` | `None` | The name of the button
 | `details` | [info below](#reactionbuttons-with-reactionbuttontypecaller) | `None` | Assigns the function and it's arguments to call when a `ReactionButton` with `ReactionButton.Type.CALLER` is pressed
 | `event` | `ReactionButton.Event` | `None` | Determine when a button should be removed depending on how many times it has been pressed
-| `skip` | `ReactionButton.Skip` | `None` | Set the action and the amount of pages to skip when using a `linked_to` of `ReactionButton.Type.SKIP`
+| `skip` | `ReactionButton.Skip` | `None` | Set the action and the amount of pages to skip when using a `linked_to` of `ReactionButton.Type.SKIP`. For example using this button type, setting the action to "+" and the amount 3. If you are on "Page 1/20", pressing that button will bring you to "Page 4/20"
 
 ### Attributes for ReactionButton
 | Property | Return Type | Info
 |----------|-------------|------
 | `clicked_by` | `Set[discord.Member]` | The members who clicked the button
 | `total_clicks` | `int` | Amount of clicks from the button
-| `last_clicked` | `datetime.datetime` | The time in UTC for when the button was last clicked
-| `menu` | `ReactionMenu` | The menu the button is attached to
+| `last_clicked` | `Optional[datetime.datetime]` | The time in UTC for when the button was last clicked
+| `menu` | `Optional[ReactionMenu]` | The menu the button is attached to
 
 * Associated methods
     * `ReactionMenu.add_button(button: ReactionButton)`
@@ -234,11 +235,7 @@ ceb = ReactionButton(emoji='😎', linked_to=ReactionButton.Type.CUSTOM_EMBED, e
 sb = ReactionButton(emoji='5️⃣', linked_to=ReactionButton.Type.SKIP, skip=ReactionButton.Skip(action='+', amount=5))
 
 menu.add_button(fpb)
-menu.add_button(lpb)
-menu.add_button(gtpb)
-menu.add_button(esb)
-menu.add_button(ceb)
-menu.add_button(sb)
+...
 ```
 ### Deleting Buttons
 Remove all buttons with `menu.remove_all_buttons()`. You can also remove an individual button using its name if you have it set, or the button object itself with `menu.remove_button()`
@@ -288,44 +285,17 @@ The `ReactionButton` class comes with a set factory methods (class methods) that
 * `ReactionButton.all()`
   * Returns a `list` of `ReactionButton` in the following order
   * `.go_to_first_page()` `.back()` `.next()` `.go_to_last_page()` `.go_to_page()` `.end_session()`
-* `ReactionButton.skip(emoji: str, action: str, amount: int)`
+* `ReactionButton.generate_skip(emoji: str, action: str, amount: int)`
   * `emoji`: `<emoji>`
   * `linked_to`: `ReactionButton.Type.SKIP`
+  * `skip`: `ReactionButton.Skip(<action>, <amount>)`
 
-### Auto-pagination
-
-An auto-pagination menu is a menu that doesn't need a reaction press to go to the next page. It turns pages on it's own every x amount of seconds. This can be useful if you'd like to have a continuous display of information to your server. That information might be server stats, upcoming events, etc. Below is an example of an auto-pagination menu.
-
-![auto-pagin-showcase](https://cdn.discordapp.com/attachments/655186216060321816/842352164713791508/auto-pagin-reduced.gif)
-
-* Associated methods
-  * `ReactionMenu.set_as_auto_paginator(*, turn_every: Union[int, float])`
-  * `ReactionMenu.update_turn_every(*, turn_every: Union[int, float])`
-  * `ReactionMenu.refresh_auto_pagination_data(*data: Union[str, discord.Embed])`
-  * `ReactionMenu.update_all_turn_every(*, turn_every: Union[int, float])` (class method)
-  * `await ReactionMenu.stop_all_auto_sessions()` (class method)
-  * `ReactionMenu.auto_turn_every` (property)
-  * `ReactionMenu.auto_paginator` (property)
-
-Example:
-```py
-menu = ReactionMenu(ctx, menu_type=ReactionMenu.TypeEmbed)
-
-menu.add_page(server_info_embed)
-menu.add_page(social_media_embed)
-menu.add_page(games_embed)
-
-menu.set_as_auto_paginator(turn_every=120)
-await menu.start()
-```
 ---
 ### Setting Limits
 If you'd like, you can limit the amount of reaction menus that can be active at the same time *per* "guild", "member", or "channel" 
 * Associated CLASS Methods
     * `ReactionMenu.set_sessions_limit(limit: int, per='guild', message='Too many active menus. Wait for other menus to be finished.')` 
     * `ReactionMenu.remove_limit()`
-    * `ReactionMenu.get_sessions_count()`
-    * `await ReactionMenu.stop_all_sessions()`
 
 Example:
 ```py
@@ -360,7 +330,7 @@ menu.add_button(button)
 ### ReactionMenu Relays
 Menu relays are functions that are called anytime a button that is apart of a menu is pressed. It is considered as an extension of a `ReactionButton` with a `linked_to` of `ReactionButton.Type.CALLER`. Unlike caller buttons which provides no details about the interactions on the menu, relays do.
 * Associated methods
-  * `ReactionMenu.set_relay(func: Callable[[NamedTuple], None], *, only: List[ReactionButton]=None)`
+  * `ReactionMenu.set_relay(func: Callable[[NamedTuple], None], *, only: Optional[List[ReactionButton]]=None)`
   * `ReactionMenu.remove_relay()`
 
 When creating a function for your relay, that function must contain a single positional argument. When a button is pressed, a `RelayPayload` object (a named tuple) is passed to that function. The attributes of `RelayPayload` are:
@@ -396,7 +366,7 @@ menu.set_relay(example, only=[back_button])
   * `await ReactionMenu.start(*, send_to=None, reply=False)`
   * `await ReactionMenu.stop(*, delete_menu_message=False, clear_reactions=False)`
 
-When starting the menu, you have the option to send the menu to a certain channel. Parameter `send_to` is the channel you'd like to send the menu to. You can set `send_to` as the channel name (`str`), channel ID (`int`), or channel object (`discord.TextChannel`). Example:
+When starting the menu, you have the option to send the menu to a certain channel. Parameter `send_to` is the channel you'd like to send the menu to. You can set `send_to` as the channel name (`str`), channel ID (`int`), or channel object (`discord.TextChannel` / `discord.Thread`). Example:
 ```py
 menu = ReactionMenu(...)
 # channel name
@@ -438,19 +408,40 @@ async def example(ctx):
 
 bot.run(...)
 ```
+</details>
+
+
+
+
+
+
+
+
+
 
 ---
----
+
+
+
+
+
+
+
+
 
 
 ## ViewMenu
 ```
-class reactionmenu.ViewMenu(ctx: Context, *, menu_type: int, **kwargs)
+class reactionmenu.ViewMenu(method: Union[Context, discord.Interaction], /, *, menu_type: int, **kwargs)
 ```
 
 A `ViewMenu` is a menu that uses discords Buttons feature. With buttons, you can enable and disable them, set a certain color for them with emojis, have buttons that send hidden messages, and add hyperlinks. This library offers a broader range of functionalities such as who pressed the button, how many times it was pressed and more. It uses views (`discord.ui.View`) to implement the Buttons functionality, but uses some of its own methods in order to make a Button pagination menu simple.
 
 ![image](https://cdn.discordapp.com/attachments/655186216060321816/855818139450081280/buttons_showcase_reduced.gif)
+
+<details>
+  <summary><b>Click to show ViewMenu documentation</b></summary>
+
 
 ### How to import
 ```py
@@ -459,8 +450,8 @@ from reactionmenu import ViewMenu, ViewButton
 ---
 
 ### Parameters of the ViewMenu constructor
-* `ctx` (`discord.ext.commands.Context`) A context object
-* `menu_type` (`int`) The configuration of the menu
+* `method` (`Union[discord.ext.commands.Context, discord.Interactions]`) A context or interaction object
+* `menu_type` (`MenuType`) The configuration of the menu
   * `ViewMenu.TypeEmbed`, a normal embed pagination menu
   * `ViewMenu.TypeEmbedDynamic`, an embed pagination menu with dynamic data
   * `ViewMenu.TypeText`, a text only pagination menu
@@ -485,11 +476,11 @@ from reactionmenu import ViewMenu, ViewButton
 ---
 
 ### Pages for ViewMenu
-Depending on the `menu_type`, pages can either be a `str` or `discord.Embed`
-* If the `menu_type` is `ViewMenu.TypeEmbed`, use embeds (embed only menu)
+Depending on the `menu_type`, pages can either be a `str`, `discord.Embed`, or a combination of `content` or `files` ([example below](#stacked-pages-1))
+* If the `menu_type` is `ViewMenu.TypeEmbed`, use embeds
 * If the `menu_type` is `ViewMenu.TypeText` (text only menu) or `ViewMenu.TypeEmbedDynamic` (embed only menu), use strings.
 * Associated methods
-  * `ViewMenu.add_page(Union[discord.Embed, str])`
+  * `ViewMenu.add_page(embed: discord.Embed=MISSING, content: Optional[str]=None, files: Optional[Sequence[discord.File]]=None)`
   * `ViewMenu.add_pages(pages: Sequence[Union[discord.Embed, str]])`
   * `ViewMenu.add_row(data: str)`
   * `ViewMenu.remove_all_pages()`
@@ -501,12 +492,12 @@ Depending on the `menu_type`, pages can either be a `str` or `discord.Embed`
 #### Adding Pages
 ```py
 # ViewMenu.TypeEmbed
-menu = ViewMenu(ctx, menu_type=ViewMenu.TypeEmbed)
+menu = ViewMenu(method, menu_type=ViewMenu.TypeEmbed)
 menu.add_page(summer_embed)
 menu.add_page(winter_embed)
 
 # ViewMenu.TypeText
-menu = ViewMenu(ctx, menu_type=ViewMenu.TypeText)
+menu = ViewMenu(method, menu_type=ViewMenu.TypeText)
 menu.add_page('Its so hot!')
 menu.add_page('Its so cold!')
 ```
@@ -515,6 +506,28 @@ menu.add_page('Its so cold!')
 A `TypeText` menu is a text based pagination menu. No embeds are involved in the pagination process, only plain text is used.
 
 ![text_view_showcase](https://cdn.discordapp.com/attachments/655186216060321816/929744985656549386/text_view_showcase.gif)
+
+#### Stacked Pages
+With `v3.0.1+`, you can paginate with more than just an embed or text. You can combine text, embeds, as well as files. But depending on the `menu_type` the combination can be restricted. Here is an example of a menu with a `menu_type` of `TypeEmbed` that is stacked.
+
+```py
+# You can use regular commands as well
+@bot.tree.command(description="These are stacked pages", guild=discord.Object(id=...))
+async def stacked(interaction: discord.Interaction):
+    menu = ViewMenu(interaction, menu_type=ViewMenu.TypeEmbed)
+
+    menu.add_page(discord.Embed(title="My Embed"), content="This content is stacked on top of a file", files=[discord.File("stacked.py")])
+    menu.add_page(discord.Embed(title="Hey Wumpos, can you say hi to the person reading this? 😃"))
+    menu.add_page(discord.Embed(title="Hi, I'm Wumpos!"), files=[discord.File("wumpos.gif")])
+    
+    menu.add_button(ViewButton.back())
+    menu.add_button(ViewButton.next())
+    
+    await menu.start()
+```
+![stacked_view](https://cdn.discordapp.com/attachments/655186216060321816/955983620038860910/stacked_view.gif)
+
+Since the `menu_type` is `TypeEmbed`, there always has to be an embed on each page. If the `menu_type` was `TypeText`, embeds aren't allowed and you will be restricted to only using the `files` parameter.
 
 #### ViewMenu.TypeEmbedDynamic
 A dynamic menu is used when you do not know how much information will be applied to the menu. For example, if you were to request information from a database, that information can always change. You query something and you might get 1,500 results back, and the next maybe only 800. A dynamic menu pieces all this information together for you and adds it to an embed page by rows of data. `ViewMenu.add_row()` is best used in some sort of `Iterable` where everything can be looped through, but only add the amount of data you want to the menu page.
@@ -526,11 +539,11 @@ A dynamic menu is used when you do not know how much information will be applied
     * `ViewMenu.set_last_pages(*embeds: Embed)`
 * The kwargs specifically made for a dynamic menu are:
     * `rows_requested` - The amount of rows you would like on each embed page before making a new page
-        * `ViewMenu(ctx, ..., rows_requested=5)`
+        * `ViewMenu(..., rows_requested=5)`
     * `custom_embed` - An embed you have created to use as the embed pages. Used for your menu aesthetic
-        * `ViewMenu(ctx, ..., custom_embed=red_embed)`
+        * `ViewMenu(..., custom_embed=red_embed)`
     * `wrap_in_codeblock` - The language identifier when wrapping your data in a discord codeblock. 
-        * `ViewMenu(ctx, ..., wrap_in_codeblock='py')`
+        * `ViewMenu(..., wrap_in_codeblock='py')`
 
 ##### Adding Rows/data
 ```py
@@ -605,14 +618,14 @@ The following are the rules set by Discord for Buttons:
   * `ViewButton(..., emoji='\N{winking face}')`
 * `url` (`str`) URL for a button with style `discord.ButtonStyle.link`
 * `disabled` (`bool`) If the button should be disabled
-* `followup` (`ViewButton.Followup`) The message sent after the button is pressed. Only available for buttons that have a `custom_id` of `ViewButton.ID_CALLER` or `ViewButton.ID_SEND_MESSAGE`. `ViewButton.Followup` is a class that has parameters similar to `discord.abc.Messageable.send()`, and is used to control if a message is ephemeral (hidden), contains a file, embed, tts, etc...
+* `followup` (`ViewButton.Followup`) The message sent after the button is pressed. Only available for buttons that have a `custom_id` of `ViewButton.ID_CALLER` or `ViewButton.ID_SEND_MESSAGE`. `ViewButton.Followup` is a class that has parameters similar to `discord.abc.Messageable.send()`, and is used to control if a message is ephemeral, contains a file, embed, tts, etc...
 * `event` (`ViewButton.Event`) Set a button to be disabled or removed when it has been pressed a certain amount of times
 
 #### Kwargs of the ViewButton constructor
 | Name | Type | Default Value | Used for
 |------|------|---------------|----------
 | `name` | `str` | `None` | The name of the button
-| `skip` | `ViewButton.Skip` | `None` | Set the action and the amount of pages to skip when using a `custom_id` of `ViewButton.ID_SKIP`
+| `skip` | `ViewButton.Skip` | `None` | Set the action and the amount of pages to skip when using a `custom_id` of `ViewButton.ID_SKIP`. For example, setting the action to "+" and the amount 3. If you are on "Page 1/20", pressing that button will bring you to "Page 4/20"
 | `persist` | `bool` | `False` | Prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
 
 #### Attributes for ViewButton
@@ -620,8 +633,8 @@ The following are the rules set by Discord for Buttons:
 |----------|-------------|------
 | `clicked_by` | `Set[discord.Member]` | The members who clicked the button
 | `total_clicks` | `int` | Amount of clicks from the button
-| `last_clicked` | `datetime.datetime` | The time in UTC for when the button was last clicked
-| `menu` | `ViewMenu` | The menu the button is attached to
+| `last_clicked` | `Optional[datetime.datetime]` | The time in UTC for when the button was last clicked
+| `menu` | `Optional[ViewMenu]` | The menu the button is attached to
 
 #### Adding a ViewButton
 ```py
@@ -744,10 +757,11 @@ The `ViewButton` class comes with a set factory methods (class methods) that ret
 * `ViewButton.all()`
   * Returns a `list` of `ViewButton` in the following order
   * `.go_to_first_page()` `.back()` `.next()` `.go_to_last_page()` `.go_to_page()` `.end_session()`
-* `ViewButton.skip(label: str, action: str, amount: int)`
+* `ViewButton.generate_skip(label: str, action: str, amount: int)`
   * `style`: `discord.ButtonStyle.gray`
   * `label`: `<label>`
   * `custom_id`: `ViewButton.ID_SKIP`
+  * `skip`: `ViewButton.Skip(<action>, <amount>)`
 
 ```py
 menu = ViewMenu(ctx, ...)
@@ -788,7 +802,7 @@ menu.add_button(button_2)
 ### ViewMenu Relays
 Menu relays are functions that are called anytime a button that is apart of a menu is pressed. It is considered as an extension of a `ViewButton` with an ID of `ViewButton.ID_CALLER`. Unlike caller buttons which provides no details about the interactions on the menu, relays do.
 * Associated methods
-  * `ViewMenu.set_relay(func: Callable[[NamedTuple], None], *, only: List[ViewButton]=None)`
+  * `ViewMenu.set_relay(func: Callable[[NamedTuple], None], *, only: Optional[List[ViewButton]]=None)`
   * `ViewMenu.remove_relay()`
 
 When creating a function for your relay, that function must contain a single positional argument. When a button is pressed, a `RelayPayload` object (a named tuple) is passed to that function. The attributes of `RelayPayload` are:
@@ -824,7 +838,7 @@ menu.set_relay(example, only=[back_button])
   * `await ViewMenu.start(*, send_to=None, reply=False)`
   * `await ViewMenu.stop(*, delete_menu_message=False, remove_buttons=False, disable_buttons=False)`
 
-When starting the menu, you have the option to send the menu to a certain channel. Parameter `send_to` is the channel you'd like to send the menu to. You can set `send_to` as the channel name (`str`), channel ID (`int`), or channel object (`discord.TextChannel`). Example:
+When starting the menu, you have the option to send the menu to a certain channel. Parameter `send_to` is the channel you'd like to send the menu to. You can set `send_to` as the channel name (`str`), channel ID (`int`), or channel object (`discord.TextChannel` / `discord.Thread`). Example:
 ```py
 menu = ViewMenu(...)
 # channel name
@@ -871,3 +885,4 @@ async def example(ctx):
 
 bot.run(...)
 ```
+</details>
