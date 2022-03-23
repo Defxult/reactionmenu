@@ -997,6 +997,22 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             await self._method.response.send_message(**menu_payload)
             self._msg = await self._method.original_message()
 
+    def randomize_embed_colors(self) -> None:
+        """Randomize the color of all the embeds that have been added to the menu
+        
+        Raises
+        ------
+        - `MenuException`: The `menu_type` was not of `TypeEmbed`
+        
+            .. added:: v3.0.1
+        """
+        if self._menu_type == _BaseMenu.TypeEmbed:
+            for page in self._pages:
+                if page.embed:
+                    page.embed.color = discord.Color.random()
+        else:
+            raise MenuException("Randomizing embed colors can only be used when the menu_type is TypeEmbed")
+    
     def set_page_director_style(self, style_id: int) -> None:
         """Set how the page numbers dictating what page you are on (in the footer of an embed/regular message) are displayed
 

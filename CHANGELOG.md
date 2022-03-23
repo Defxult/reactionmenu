@@ -24,6 +24,7 @@ With this change, methods `.split_sessions()` & `.stop_only()` have been removed
   * New: `.add_page(embed=MISSING, content=None, files=MISSING)`
 * Added class method `quick_start()`. Start a menu with it's default settings only adding the pages
 * Added property `menu_type`. Displays the menu type that was set in the constructor
+* Added method `.randomize_embed_colors()`. Selects a random color for all embeds added to the menu
 ##### ViewMenu Only
 * Added the `persist` kwarg to `ViewButton`. This prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
 
