@@ -8,6 +8,9 @@
 ![python_version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue)
 </div>
 
+## reactionmenu v3.1.0 - discord.py 2.0 update
+The next version of reactionmenu that will be supporting discord.py 2.0 is [available](https://github.com/Defxult/reactionmenu/tree/discord.py-2.0-support) for testing 
+
 ## GitHub Updates vs PyPI Updates
 The GitHub version of this library will always have the latest changes, fixes, and additions before the [PyPI](https://pypi.org/project/reactionmenu/) version. You can install the GitHub version by doing:
 ```
