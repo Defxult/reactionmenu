@@ -2,8 +2,8 @@
 
 #### Breaking Changes
 * **This library is no longer dependent on Pycord. It has changed back to discord.py**
-* Parameter `ctx` has been changed to `method` for `ReactionMenu` & `ViewMenu` and is now positional only
-* Parameter `menu_type` for `ReactionMenu` & `ViewMenu` is now keyword only
+* Parameter `ctx` has been changed to `method` for `ReactionMenu` & `ViewMenu` constructor and is now positional only
+* Parameter `menu_type` for `ReactionMenu` & `ViewMenu` constructor is now keyword only
 * The auto-paginate feature for `ReactionMenu` has been removed
 * The `Page` class has been added. Represents each "page" added via `.add_page()`/`.add_pages()`
 * Using `.last_viewed` now returns a `Page`. `.pages` now returns a `List[Page]`
