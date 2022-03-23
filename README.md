@@ -498,8 +498,8 @@ menu.add_page(winter_embed)
 
 # ViewMenu.TypeText
 menu = ViewMenu(method, menu_type=ViewMenu.TypeText)
-menu.add_page('Its so hot!')
-menu.add_page('Its so cold!')
+menu.add_page(content='Its so hot!')
+menu.add_page(content='Its so cold!')
 ```
 
 #### ViewMenu.TypeText
