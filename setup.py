@@ -20,6 +20,8 @@ tags = [
     'buttons menu',
     'discord',
     'discord.py',
+    'discord.py 2.0',
+    'd.py',
     'components',
     'components paginator',
     'components menu',
@@ -40,11 +42,11 @@ tags = [
     'embed paginator',
     'interactions',
     'interactions menu',
+    'interactions paginator',
+    'menus',
     'paginator',
     'pagination',
     'pagination menu',
-    'pycord',
-    'py-cord',
     'reaction menu'
 ]
 
