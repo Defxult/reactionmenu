@@ -1004,7 +1004,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         ------
         - `MenuException`: The `menu_type` was not of `TypeEmbed`
         
-            .. added:: v3.0.1
+            .. added:: v3.1.0
         """
         if self._menu_type == _BaseMenu.TypeEmbed:
             for page in self._pages:

@@ -104,7 +104,7 @@ A `TypeText` menu is a text based pagination menu. No embeds are involved in the
 ![showcase-text](https://cdn.discordapp.com/attachments/655186216060321816/929172629947027466/text_showcase.gif)
 
 #### Stacked Pages
-With `v3.0.1+`, you can paginate with more than just an embed or text. You can combine text, embeds, as well as files. But depending on the `menu_type` the combination can be restricted. Here is an example of a menu with a `menu_type` of `TypeEmbed` that is stacked.
+With `v3.1.0+`, you can paginate with more than just an embed or text. You can combine text, embeds, as well as files. But depending on the `menu_type` the combination can be restricted. Here is an example of a menu with a `menu_type` of `TypeEmbed` that is stacked.
 
 ```py
 # You can use regular commands as well
@@ -508,7 +508,7 @@ A `TypeText` menu is a text based pagination menu. No embeds are involved in the
 ![text_view_showcase](https://cdn.discordapp.com/attachments/655186216060321816/929744985656549386/text_view_showcase.gif)
 
 #### Stacked Pages
-With `v3.0.1+`, you can paginate with more than just an embed or text. You can combine text, embeds, as well as files. But depending on the `menu_type` the combination can be restricted. Here is an example of a menu with a `menu_type` of `TypeEmbed` that is stacked.
+With `v3.1.0+`, you can paginate with more than just an embed or text. You can combine text, embeds, as well as files. But depending on the `menu_type` the combination can be restricted. Here is an example of a menu with a `menu_type` of `TypeEmbed` that is stacked.
 
 ```py
 # You can use regular commands as well
