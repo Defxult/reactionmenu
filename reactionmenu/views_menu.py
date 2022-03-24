@@ -126,8 +126,7 @@ class ViewMenu(_BaseMenu):
         self.__view.on_error = self._on_dpy_view_error
     
     def __repr__(self):
-        cls = self.__class__
-        return f'<ViewMenu name={self.name!r} owner={str(self._extract_proper_user(self._method))!r} is_running={self._is_running} timeout={self.timeout} menu_type={cls._get_menu_type(self._menu_type)!r}>'
+        return f'<ViewMenu name={self.name!r} owner={str(self._extract_proper_user(self._method))!r} is_running={self._is_running} timeout={self.timeout} menu_type={self._menu_type.name}>'
 
     async def _on_dpy_view_timeout(self) -> None:
         self._menu_timed_out = True

@@ -319,7 +319,6 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         self.style: Optional[str] = kwargs.get('style', _DEFAULT_STYLE)
         self.all_can_click: bool = kwargs.get('all_can_click', False)
         self.delete_interactions: bool = kwargs.get('delete_interactions', True)
-
         self.allowed_mentions: discord.AllowedMentions = kwargs.get('allowed_mentions', discord.AllowedMentions(everyone=False, users=True, roles=False, replied_user=True))
     
     @abc.abstractmethod
@@ -442,16 +441,6 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     @classmethod
     def _all_menu_types(cls) -> Tuple[_MenuType, _MenuType, _MenuType]:
         return (cls.TypeEmbed, cls.TypeEmbedDynamic, cls.TypeText)
-    
-    @classmethod
-    def _get_menu_type(cls, menu_type: _MenuType) -> str:
-        """Returns the :class:`str` representation of the classes `menu_type`"""
-        types = {
-            cls.TypeEmbed : cls.TypeEmbed.name,
-            cls.TypeEmbedDynamic : cls.TypeEmbedDynamic.name,
-            cls.TypeText : cls.TypeText.name
-        }
-        return types[menu_type]
     
     @classmethod
     def remove_limit(cls) -> None:
@@ -1083,7 +1072,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 if embeds:
                     self.add_pages(embeds)
                 else:
-                    raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no embeds were found in the messages provided')
+                    raise MenuSettingsMismatch(f'The menu is set to {self._menu_type.name} but no embeds were found in the messages provided')
             
             elif self._menu_type == _BaseMenu.TypeText:
                 content: List[str] = []
@@ -1093,7 +1082,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 if content:
                     self.add_pages(content)
                 else:
-                    raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no text (discord.Message.content) was found in the messages provided')
+                    raise MenuSettingsMismatch(f'The menu is set to {self._menu_type.name} but no text (discord.Message.content) was found in the messages provided')
         else:
             raise IncorrectType('All messages were not of type discord.Message')
     
@@ -1134,7 +1123,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                     for embed in embeds_to_paginate:
                         self.add_page(embed)
                 else:
-                    raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no embeds were found in the messages provided')
+                    raise MenuSettingsMismatch(f'The menu is set to {self._menu_type.name} but no embeds were found in the messages provided')
             
             elif self._menu_type == _BaseMenu.TypeText:
                 content_to_paginate: List[str] = []
@@ -1145,7 +1134,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                     for content in content_to_paginate:
                         self.add_page(content=content)
                 else:
-                    raise MenuSettingsMismatch(f'The menu is set to {self._get_menu_type(self._menu_type)} but no text (discord.Message.content) was found in the messages provided')
+                    raise MenuSettingsMismatch(f'The menu is set to {self._menu_type.name} but no text (discord.Message.content) was found in the messages provided')
         else:
             raise MenuException('Not all message IDs were of type int')
     

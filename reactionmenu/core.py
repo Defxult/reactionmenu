@@ -120,8 +120,7 @@ class ReactionMenu(_BaseMenu):
 		self.__navigation_speed: str = kwargs.get('navigation_speed', ReactionMenu.NORMAL)
 	
 	def __repr__(self):
-		cls = self.__class__
-		return f'<ReactionMenu name={self.name!r} owner={str(self._extract_proper_user(self._method))!r} is_running={self._is_running} timeout={self.timeout} menu_type={cls._get_menu_type(self._menu_type)}>'
+		return f'<ReactionMenu name={self.name!r} owner={str(self._extract_proper_user(self._method))!r} is_running={self._is_running} timeout={self.timeout} menu_type={self._menu_type.name}>'
 	
 	@property
 	def navigation_speed(self) -> str:
