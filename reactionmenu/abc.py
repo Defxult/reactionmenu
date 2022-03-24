@@ -602,7 +602,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         Parameters
         ----------
         message_id: :class:`int`
-        The `discord.Message.id` from the menu message
+            The `discord.Message.id` from the menu message
 
         Returns
         -------
@@ -622,10 +622,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
 
             .. added:: v3.1.0
         """
-        if self._menu_type == _BaseMenu.TypeEmbed: return self._menu_type.TypeEmbed.name
-        elif self._menu_type == _BaseMenu.TypeEmbedDynamic: return self._menu_type.TypeEmbedDynamic.name
-        elif self._menu_type == _BaseMenu.TypeText: return self._menu_type.TypeText.name
-        else: raise MenuException('The menu_type you have set was not recognized')
+        return self._menu_type.name
     
     @property
     def last_viewed(self) -> Optional[Page]:
