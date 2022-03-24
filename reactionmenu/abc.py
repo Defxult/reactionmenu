@@ -647,10 +647,11 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """
         Returns
         -------
-        :class:`int`: The amount of pages that have been added to the menu. If the `menu_type` is :attr:`TypeEmbedDynamic`, the amount of pages is not known until after the menu has started and will return a value of 0
+        :class:`int`: The amount of pages that have been added to the menu. If the `menu_type` is :attr:`TypeEmbedDynamic`, the amount of pages is not known until AFTER the menu has started. 
+        If attempted to retreive the value before a dynamic menu has started, this will return a value of -1
         """
         if self._menu_type == _BaseMenu.TypeEmbedDynamic:
-            return len(self._pages) if self._is_running else 0
+            return len(self._pages) if self._is_running else -1
         else:
             return len(self._pages)
     
