@@ -139,7 +139,7 @@ class ReactionMenu(_BaseMenu):
 		-------
 		List[:class:`ReactionButton`]: A list of all the buttons that have been added to the menu
 		"""
-		return self.__buttons.copy()
+		return self.__buttons
 	
 	@property
 	def buttons_most_clicked(self) -> List[ReactionButton]:

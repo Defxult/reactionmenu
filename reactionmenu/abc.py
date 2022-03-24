@@ -483,7 +483,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         -------
         A :class:`list` of menu sessions that are currently running. Can be an empty list if there are no active sessions
         """
-        return cls._active_sessions.copy() # Return a copy so the core list of sessions cannot be manipulated
+        return cls._active_sessions
     
     @classmethod
     def get_session(cls, name: str) -> List[Self]:
