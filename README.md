@@ -26,7 +26,7 @@ bot = commands.Bot(..., intents=discord.Intents(messages=True, guilds=True, reac
 ## ReactionMenu
 
 ```
-class reactionmenu.ReactionMenu(method: Union[Context, discord.Interactions], /, *, menu_type: MenuType, **kwargs)
+class reactionmenu.ReactionMenu(method: Union[Context, discord.Interaction], /, *, menu_type: MenuType, **kwargs)
 ```
 ![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
 
@@ -44,7 +44,7 @@ menu = ReactionMenu(method, menu_type=ReactionMenu.TypeEmbed)
 
 
 ### Parameters of the ReactionMenu constructor
-* `method` (`Union[discord.ext.commands.Context, discord.Interactions]`) A context or interaction object
+* `method` (`Union[discord.ext.commands.Context, discord.Interaction]`) A context or interaction object
 * `menu_type` (`MenuType`) The configuration of the menu
   * `ReactionMenu.TypeEmbed`, a normal embed pagination menu
   * `ReactionMenu.TypeEmbedDynamic`, an embed pagination menu with dynamic data
@@ -450,7 +450,7 @@ from reactionmenu import ViewMenu, ViewButton
 ---
 
 ### Parameters of the ViewMenu constructor
-* `method` (`Union[discord.ext.commands.Context, discord.Interactions]`) A context or interaction object
+* `method` (`Union[discord.ext.commands.Context, discord.Interaction]`) A context or interaction object
 * `menu_type` (`MenuType`) The configuration of the menu
   * `ViewMenu.TypeEmbed`, a normal embed pagination menu
   * `ViewMenu.TypeEmbedDynamic`, an embed pagination menu with dynamic data
