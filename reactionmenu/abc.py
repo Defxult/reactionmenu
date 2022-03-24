@@ -70,7 +70,7 @@ GB = TypeVar('GB', bound='_BaseButton')
 M = TypeVar('M', bound='_BaseMenu')
 
 class Page:
-    """Represents a "page" (a single :class:`discord.Message`) in the pagination process
+    """Represents a single :class:`discord.Message` in the pagination process
     
         .. added:: v3.1.0
     """
