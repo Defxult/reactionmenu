@@ -28,6 +28,9 @@ bot = commands.Bot(..., intents=discord.Intents(messages=True, guilds=True, reac
 ```
 class reactionmenu.ReactionMenu(method: Union[Context, discord.Interaction], /, *, menu_type: MenuType, **kwargs)
 ```
+
+A `ReactionMenu` is a menu that uses emojis which are either custom guild emojis or a normal emoji to control the pagination process. If you're not looking for any of the fancy features and just want something simple, this is the one to use.
+
 ![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
 
 <details>
