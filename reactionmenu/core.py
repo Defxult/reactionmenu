@@ -573,21 +573,26 @@ class ReactionMenu(_BaseMenu):
 				self._on_close_event.set()
 				self.__main_session_task.cancel() # type: ignore / task object would have been set by the time this is executed
 	
-	def __override_dm_settings(self) -> None:
+	def _override_dm_settings(self) -> None:
 		"""If a menu session is in a direct message the following settings are disabled/changed because of discord limitations and resource/safety reasons"""
 		if self.in_dms:
+			# Not allowed to remove reactions in DMs
 			if self.clear_reactions_after:
 				self.clear_reactions_after = False
 			
+			# Has to be set to `FAST` because bots are not allowed to remove reactions in DMs
 			if self.__navigation_speed == ReactionMenu.NORMAL:
 				self.__navigation_speed = ReactionMenu.FAST
 			
+			# Can't delete someone else's message in DMs
 			if self.delete_interactions:
 				self.delete_interactions = False
 			
+			# There are no roles in DMs
 			if self.only_roles:
 				self.only_roles = None
 			
+			# No point in having an *indefinite* menu in DMs
 			if self.timeout is None:
 				self.timeout = 60.0
 		
@@ -631,7 +636,7 @@ class ReactionMenu(_BaseMenu):
 			if not can_proceed:
 				return
 		
-		self.__override_dm_settings()
+		self._override_dm_settings()
 		
 		if self._menu_type not in ReactionMenu._all_menu_types():
 			raise ReactionMenuException('ReactionMenu menu_type not recognized')

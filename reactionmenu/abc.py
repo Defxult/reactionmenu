@@ -70,7 +70,7 @@ GB = TypeVar('GB', bound='_BaseButton')
 M = TypeVar('M', bound='_BaseMenu')
 
 class Page:
-    """Represents a single :class:`discord.Message` in the pagination process
+    """Represents a single "page" in the pagination process
     
         .. added:: v3.1.0
     """
@@ -701,7 +701,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             def convert_to_page(main_last: Iterable[discord.Embed]) -> List[Page]:
                 """Initializing the :class:`deque` only supports :class:`discord.Embed`. This converts those embed objects to the supported :class:`Page` type for proper pagination
                 
-                    .. added:: 3.1.0
+                    .. added:: v3.1.0
                 """
                 return [Page(embed=item) for item in main_last]
             
