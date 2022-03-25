@@ -825,6 +825,24 @@ class ViewMenu(_BaseMenu):
                 self._on_close_event.set()
                 await self._handle_on_timeout()
     
+    def _override_dm_settings(self) -> None:
+        """If a menu session is in a direct message the following settings are disabled/changed because of discord limitations and resource/safety reasons
+        
+            .. added:: v3.1.0
+        """
+        if self.in_dms:
+            # Can't delete someone else's message in DMs
+            if self.delete_interactions:
+                self.delete_interactions = False
+            
+            # There are no roles in DMs
+            if self.only_roles:
+                self.only_roles = None
+            
+            # No point in having an *indefinite* menu in DMs
+            if self.timeout is None:
+                self.timeout = 60.0
+    
     def __generate_viewmenu_payload(self) -> dict:
         return {
             "content" : self._pages[0].content if self._pages else None,
@@ -867,6 +885,9 @@ class ViewMenu(_BaseMenu):
             can_proceed = await self._handle_session_limits()
             if not can_proceed:
                 return
+        
+        self._override_dm_settings()
+        
         # checks
         # Note 1: each at least 1 page check is done in it's own if statement to avoid clashing between pages and custom embeds
         # Note 2: at least 1 page check for add_row is done in "(dynamic menu)"

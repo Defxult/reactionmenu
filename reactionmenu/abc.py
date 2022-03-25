@@ -346,6 +346,10 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         raise NotImplementedError
     
     @abc.abstractmethod
+    def _override_dm_settings(self):
+        raise NotImplementedError
+    
+    @abc.abstractmethod
     def stop(self):
         raise NotImplementedError
     
