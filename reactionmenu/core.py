@@ -403,19 +403,19 @@ class ReactionMenu(_BaseMenu):
 	async def __paginate(self, ready_event: asyncio.Event) -> None:
 		"""|coro| Handles the pagination process for all menu types"""
 		
-		async def determine_removal(emoji: str, user: Union[discord.Member, discord.User]):
+		async def determine_removal(emoji: str, user: Union[discord.Member, discord.User]) -> None:
 			"""|coro| Determines if the reaction should be removed or not depending on the menus :attr:`navigation_speed`"""
 			if self.__navigation_speed != ReactionMenu.FAST and self._method.guild is not None:
 				await self._msg.remove_reaction(emoji, user)
 		
-		async def update_and_dispatch(emoji: str, user: Union[discord.Member, discord.User], button: ReactionButton):
+		async def update_and_dispatch(emoji: str, user: Union[discord.Member, discord.User], button: ReactionButton) -> None:
 			"""|coro| Handle reaction removal for :attr:`navigation_speed`. Update the buttons statistics. Contact the relay if one was set and handle any events if set"""
 			btn._update_statistics(user)
 			await determine_removal(emoji, user)
 			await self._handle_event(button)
 			await self._contact_relay(user, button)
 		
-		def proper_timeout():
+		def proper_timeout() -> Optional[float]:
 			"""In :var:`wait_for_aws`, if the menu does not have a timeout (`Menu.timeout = None`), :class:`None` + :class:`float`, the float being "`self._timeout + 0.1`" from v1.0.5, will fail for obvious reasons. This checks if there is no timeout, 
 			and instead of adding those two together, simply return :class:`None` to avoid :exc:`TypeError`. This would happen if the menu's :attr:`Menu.navigation_speed` was set to :attr:`Menu.FAST` and
 			the :attr:`Menu.timeout` was set to :class:`None`

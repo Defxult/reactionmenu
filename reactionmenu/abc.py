@@ -900,7 +900,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 not spec.kwonlydefaults
             ]):
                 async def call() -> None:
-                    """Dispatch the information to the relay function. If any errors occur during the call, report it to the user"""
+                    """|coro| Dispatch the information to the relay function. If any errors occur during the call, report it to the user"""
                     try:
                         if asyncio.iscoroutinefunction(func):
                             await func(payload)
@@ -936,7 +936,8 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """|coro| For the :param:`send_to` kwarg in :meth:`Menu.start()`. Determine what channel the menu should start in"""
         if isinstance(self._method, Context):
 
-            async def register_message(channel: discord.abc.Messageable):
+            async def register_message(channel: discord.abc.Messageable) -> None:
+                """|coro| Set :attr:`_msg` to the :class:`discord.Message` that the menu is operating from"""
                 self._msg = await channel.send(**menu_payload) # type: ignore
             
             if self.in_dms:
