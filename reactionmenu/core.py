@@ -201,6 +201,7 @@ class ReactionMenu(_BaseMenu):
 					await self._msg.clear_reaction(button.emoji)
 	
 	def _button_add_check(self, button: ReactionButton) -> None:
+		"""A set of checks to ensure the button can properly be added to the menu"""
 		if isinstance(button, ReactionButton):
 			if button.emoji not in self.__extract_all_emojis():
 				if button.linked_to == ReactionButton.Type.CUSTOM_EMBED and not button.custom_embed:
@@ -228,6 +229,7 @@ class ReactionMenu(_BaseMenu):
 			raise IncorrectType(f'Parameter "button" expected ReactionButton, got {button.__class__.__name__}')
 	
 	def _session_done_callback(self, task: asyncio.Task) -> None:
+		"""Handles the final cleanup after the menu session correctly/incorrectly ends"""
 		try:
 			task.result() # this is needed to raise ANY exception that occurred during the pagination process
 		except asyncio.CancelledError:
@@ -384,6 +386,7 @@ class ReactionMenu(_BaseMenu):
 		return all([not_bot, correct_msg, correct_user])
 	
 	def __get_custom_embed_buttons(self) -> List[ReactionButton]:
+		"""Gets all custom embed buttons that have been set"""
 		return [btn for btn in self.__buttons if btn.linked_to == ReactionButton.Type.CUSTOM_EMBED]
 	
 	# Not in use
@@ -397,6 +400,7 @@ class ReactionMenu(_BaseMenu):
 	# 	)]
 	
 	def __extract_proper_client(self) -> Union[Bot, discord.Client]:
+		"""Depending on the :attr:`_method`, this retrieves the proper client depending on if it's :class:`discord.Client` or :class:`commands.Bot`"""
 		if isinstance(self._method, Context): return self._method.bot
 		else: return self._method.client
 
@@ -597,11 +601,15 @@ class ReactionMenu(_BaseMenu):
 				self.timeout = 60.0
 		
 	def __generate_reactionmenu_payload(self) -> dict:
+		"""Creates the parameters needed for :meth:`discord.Messageable.send()`
+
+			.. added:: v3.1.0
+		"""
 		return {
 			"content" : self._pages[0].content if self._pages else None,
-            "embed" : self._pages[0].embed if self._pages else discord.utils.MISSING,
-            "files" : self._pages[0].files if self._pages else discord.utils.MISSING,
-            "allowed_mentions" : self.allowed_mentions
+			"embed" : self._pages[0].embed if self._pages else discord.utils.MISSING,
+			"files" : self._pages[0].files if self._pages else discord.utils.MISSING,
+			"allowed_mentions" : self.allowed_mentions
 		}
 	
 	@ensure_not_primed

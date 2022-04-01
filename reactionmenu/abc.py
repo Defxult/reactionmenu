@@ -574,6 +574,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         name = str(name)
 
         async def determine_include_all(sessions_to_stop: List[Self]) -> None:
+            """|coro| Ensures if :param:`include_all` is `True`, all sessions with the specified name will be stopped"""
             if sessions_to_stop:
                 if include_all:
                     for session in sessions_to_stop:
@@ -703,6 +704,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             yield list_[i:i + n]
     
     async def _build_dynamic_pages(self, send_to, view: Optional[discord.ui.View]=None, payload: Optional[dict]=None) -> None:
+        """|coro| Compile all the information that was given via :meth:`add_row`"""
         for data_clump in self._chunks(self._dynamic_data_builder, self.rows_requested):
             joined_data = '\n'.join(data_clump)
             if len(joined_data) <= _DYNAMIC_EMBED_LIMIT:
@@ -750,6 +752,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 await self._handle_send_to(send_to, payload) # type: ignore ("embed=" can still be `None`)
     
     def _display_timeout_warning(self, error: Exception) -> None:
+        """Simply displays a warning message to the user notifying them an error has occurred in the function they have set for when the menu times out"""
         warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}'
         warnings.warn(inspect.cleandoc(
             f"""
@@ -761,6 +764,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         ))
     
     async def _handle_on_timeout(self) -> None:
+        """|coro| Call the function the user has set for when the menu times out"""
         if self._on_timeout_details and self._menu_timed_out:
             func = self._on_timeout_details
             
@@ -843,7 +847,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     async def _handle_session_limits(self) -> bool:
         """|coro| Determine if the menu session is currently limited, if so, send the error message and return `False` indicating that further code execution (starting the menu) should be cancelled
         
-            NOTE
+            .. note::
                 This method is only called if `_LimitDetails.set_by_user` has been set externally (by the public method)
         """
         cls = self.__class__

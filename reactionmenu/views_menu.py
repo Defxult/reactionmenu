@@ -844,6 +844,10 @@ class ViewMenu(_BaseMenu):
                 self.timeout = 60.0
     
     def __generate_viewmenu_payload(self) -> dict:
+        """Creates the parameters needed for :meth:`discord.Messageable.send()`
+        
+            .. added:: v3.1.0
+        """
         return {
             "content" : self._pages[0].content if self._pages else None,
             "embed" : self._pages[0].embed if self._pages else discord.utils.MISSING,
