@@ -382,18 +382,88 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	def all(cls) -> List[ViewButton]:
 		"""|class method|
 		
-		A factory method that returns a `list` of all base navigation buttons. Base navigation buttons are :class:`ViewButton` with the `custom_id`:
+		A factory method that returns a list of all base navigation buttons. The following buttons are returned with pre-set values:
 		
-		- :attr:`ViewButton.ID_GO_TO_FIRST_PAGE`
-		- :attr:`ViewButton.ID_PREVIOUS_PAGE`
-		- :attr:`ViewButton.ID_NEXT_PAGE`
-		- :attr:`ViewButton.ID_GO_TO_LAST_PAGE`
-		- :attr:`ViewButton.ID_GO_TO_PAGE`
-		- :attr:`ViewButton.ID_END_SESSION`
+		- Button 1
+			- style: `discord.ButtonStyle.gray`
+			- label: "First Page"
+			- custom_id: :attr:`ViewButton.ID_GO_TO_FIRST_PAGE`
+		- Button 2
+			- style: `discord.ButtonStyle.gray`
+			- label: "Back"
+			- custom_id: :attr:`ViewButton.ID_PREVIOUS_PAGE`
+		- Button 3
+			- style: `discord.ButtonStyle.gray`
+			- label: "Next"
+			- custom_id: :attr:`ViewButton.ID_NEXT_PAGE`
+		- Button 4
+			- style: `discord.ButtonStyle.gray`
+			- label: "Last Page"
+			- custom_id: :attr:`ViewButton.ID_GO_TO_LAST_PAGE`
+		- Button 5
+			- style: `discord.ButtonStyle.gray`
+			- label: "Page Selection"
+			- custom_id: :attr:`ViewButton.ID_GO_TO_PAGE`
+		- Button 6
+			- style: `discord.ButtonStyle.gray`
+			- label: "Close"
+			- custom_id: :attr:`ViewButton.ID_END_SESSION`
 
 		They are returned in that order
+		
+		Returns
+		-------
+		List[:class:`ViewButton`]
 		"""
 		return [cls.go_to_first_page(), cls.back(), cls.next(), cls.go_to_last_page(), cls.go_to_page(), cls.end_session()]
+	
+	@classmethod
+	def all_with_emojis(cls) -> List[ViewButton]:
+		"""|class method|
+		
+		A factory method that returns a list of all base navigation buttons with emojis assigned instead of labels. The following buttons are returned with pre-set values:
+		
+		- Button 1
+			- style: `discord.ButtonStyle.gray`
+			- emoji: ⏪
+			- custom_id: :attr:`ViewButton.ID_GO_TO_FIRST_PAGE`
+		- Button 2
+			- style: `discord.ButtonStyle.gray`
+			- emoji: ◀️
+			- custom_id: :attr:`ViewButton.ID_PREVIOUS_PAGE`
+		- Button 3
+			- style: `discord.ButtonStyle.gray`
+			- emoji: ▶️
+			- custom_id: :attr:`ViewButton.ID_NEXT_PAGE`
+		- Button 4
+			- style: `discord.ButtonStyle.gray`
+			- emoji: ⏩
+			- custom_id: :attr:`ViewButton.ID_GO_TO_LAST_PAGE`
+		- Button 5
+			- style: `discord.ButtonStyle.gray`
+			- emoji: 🔢
+			- custom_id: :attr:`ViewButton.ID_GO_TO_PAGE`
+		- Button 6
+			- style: `discord.ButtonStyle.gray`
+			- emoji: ⏹️
+			- custom_id: :attr:`ViewButton.ID_END_SESSION`
+
+		They are returned in that order
+		
+		Returns
+		-------
+		List[:class:`ViewButton`]
+
+			.. added:: v3.1.0
+		"""
+		return [
+			cls(style=discord.ButtonStyle.gray, emoji='⏪', custom_id=cls.ID_GO_TO_FIRST_PAGE),
+			cls(style=discord.ButtonStyle.gray, emoji='◀️', custom_id=cls.ID_PREVIOUS_PAGE),
+			cls(style=discord.ButtonStyle.gray, emoji='▶️', custom_id=cls.ID_NEXT_PAGE),
+			cls(style=discord.ButtonStyle.gray, emoji='⏩', custom_id=cls.ID_GO_TO_LAST_PAGE),
+			cls(style=discord.ButtonStyle.gray, emoji='🔢', custom_id=cls.ID_GO_TO_PAGE),
+			cls(style=discord.ButtonStyle.gray, emoji='⏹️', custom_id=cls.ID_END_SESSION)
+		]
 
 class ButtonType(Enum):
 	"""A helper class for :class:`ReactionMenu`. Determines the generic action a button can perform."""
