@@ -437,7 +437,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     
     @staticmethod #* Don't make this an instance method. It would be better as one, but it's main intended use is for :meth:`_check` in "views_menu.py"
     def _extract_proper_user(method: Union[Context, discord.Interaction]) -> Union[discord.Member, discord.User]:
-        """Get the proper :class:`discord.User` / :class:`discord.Member` from the attribute depending on the instance
+        """|static method| Get the proper :class:`discord.User` / :class:`discord.Member` from the attribute depending on the instance
 
             .. added v3.1.0
         """
@@ -445,7 +445,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     
     @classmethod
     def _quick_check(cls, pages: Sequence[Union[discord.Embed, str]]) -> _MenuType:
-        """Verification for :meth:`quick_start()`
+        """|class method| Verification for :meth:`quick_start()`
         
             .. added v3.1.0
         """

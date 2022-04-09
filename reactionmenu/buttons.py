@@ -479,7 +479,7 @@ class ButtonType(Enum):
 
 	@staticmethod
 	def _get_buttontype_name_from_type(type_: ButtonType) -> str:
-		"""|class method| Used to determine the `linked_to` type. Returns the full :class:`str` representation of that type"""
+		"""|static method| Used to determine the `linked_to` type. Returns the full :class:`str` representation of that type"""
 		return f'{type_.__class__.__name__}.{type_.name}'
 
 class ReactionButton(_BaseButton):
