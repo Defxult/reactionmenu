@@ -760,6 +760,9 @@ The `ViewButton` class comes with a set factory methods (class methods) that ret
 * `ViewButton.all()`
   * Returns a `list` of `ViewButton` in the following order
   * `.go_to_first_page()` `.back()` `.next()` `.go_to_last_page()` `.go_to_page()` `.end_session()`
+* `ViewButton.all_with_emojis()`
+  * Returns a `list` of `ViewButton` with their `emoji` parameters already set in the following order
+  * `.go_to_first_page()` `.back()` `.next()` `.go_to_last_page()` `.go_to_page()` `.end_session()`
 * `ViewButton.generate_skip(label: str, action: str, amount: int)`
   * `style`: `discord.ButtonStyle.gray`
   * `label`: `<label>`
