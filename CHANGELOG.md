@@ -1,4 +1,4 @@
-## v3.0.2 » Future Release
+## v3.0.2 » GitHub Only
 #### New Features
 ##### ReactionMenu & ViewMenu
 * Added class method `quick_start()`. Start a menu with it's default settings only adding the pages
