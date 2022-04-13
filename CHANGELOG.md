@@ -26,6 +26,8 @@ With this change, methods `.split_sessions()` & `.stop_only()` have been removed
 * Added property `menu_type`. Displays the menu type that was set in the constructor
 * Added method `.randomize_embed_colors()`. Selects a random color for all embeds added to the menu
 * Added method `.version_info()`. A simple shortcut to function `reactionmenu.version_info()`
+* Added the ability to set the separator between the page director and embed footer text via the `separator` parameter
+  * `.set_page_director_style(..., separator=DEFAULT)`
 ##### ViewMenu Only
 * Added the `persist` kwarg to `ViewButton`. This prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
 

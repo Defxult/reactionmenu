@@ -65,6 +65,7 @@ from .errors import *
 _DYNAMIC_EMBED_LIMIT: Final[int] = 4096
 _DEFAULT_STYLE: Final[str] = 'Page $/&'
 DEFAULT_BUTTONS = None
+DEFAULT = MISSING
 
 GB = TypeVar('GB', bound='_BaseButton')
 M = TypeVar('M', bound='_BaseMenu')
@@ -295,6 +296,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         self._pc:_PageController # initialized in child classes
         self._is_running = False
         self._stop_initiated = False
+        self._page_director_separator = ":"
 
         # dynamic session
         self._main_page_contents = collections.deque()
@@ -818,7 +820,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 OUTOF: Final[int] = len(pages)
                 all_embeds = [p.embed for p in pages]
                 for embed in all_embeds:
-                    embed.set_footer(text=f'{self._maybe_new_style(page_number, OUTOF)}{":" if embed.footer.text else ""} {embed.footer.text if embed.footer.text else ""}', icon_url=embed.footer.icon_url) # type: ignore
+                    embed.set_footer(text=f'{self._maybe_new_style(page_number, OUTOF)}{self._page_director_separator if embed.footer.text else ""} {embed.footer.text if embed.footer.text else ""}', icon_url=embed.footer.icon_url) # type: ignore
                     page_number += 1
             else:
                 # TypeText Only
@@ -1020,7 +1022,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         else:
             raise MenuException("Randomizing embed colors can only be used when the menu_type is TypeEmbed")
     
-    def set_page_director_style(self, style_id: int) -> None:
+    def set_page_director_style(self, style_id: int, separator: str=DEFAULT) -> None:
         """Set how the page numbers dictating what page you are on (in the footer of an embed/regular message) are displayed
 
         Parameters
@@ -1040,10 +1042,17 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             - `10` = 1 🔹 10
             - `11` = 1 🔸 10
         
+        separator: :class:`str`
+            The separator between the page director and any text you may have in the embed footer. The default separator is ":". It should be noted that whichever separator you assign,
+            if you wish to have spacing between the page director and the separator, you must place the space inside the string yourself as such: " :"
+        
         Raises
         ------
         - `MenuException`: The :param:`style_id` value was not valid 
         """
+        if separator:
+            self._page_director_separator = str(separator)
+        
         if style_id == 1:   self.style = _DEFAULT_STYLE
         elif style_id == 2: self.style = 'Page $ out of &'
         elif style_id == 3: self.style = '$ out of &'
