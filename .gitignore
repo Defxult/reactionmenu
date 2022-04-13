@@ -1,6 +1,7 @@
 dist/*
 reactionmenu.egg-info/*
 .vscode/*
+cogs/*
 bot_testing.py
 test.txt
 reactionmenu/__pycache__/*
