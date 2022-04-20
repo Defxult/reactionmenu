@@ -1089,6 +1089,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         
         Raises
         ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `MenuSettingsMismatch`: The messages provided did not have the correct values. For example, the `menu_type` was set to `TypeEmbed`, but the messages you've provided only contains text. If the `menu_type` is `TypeEmbed`, only messages with embeds should be provided
         - `IncorrectType`: All messages were not of type :class:`discord.Message`
         """
@@ -1131,6 +1132,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
 
         Raises
         ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `MenuSettingsMismatch`: The message IDs provided did not have the correct values when fetched. For example, the `menu_type` was set to `TypeEmbed`, but the messages you've provided for the library to fetch only contains text. If the `menu_type` is `TypeEmbed`, only messages with embeds should be provided
         - `MenuException`: An error occurred when attempting to fetch a message or not all :param:`message_ids` were of type int
         """
