@@ -132,7 +132,7 @@ class ViewMenu(_BaseMenu):
         self._menu_timed_out = True
         await self.stop(delete_menu_message=self.delete_on_timeout, remove_buttons=self.remove_buttons_on_timeout, disable_buttons=self.disable_buttons_on_timeout)
     
-    async def _on_dpy_view_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> NoReturn:
+    async def _on_dpy_view_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> NoReturn:
         try:
             raise error
         finally:
