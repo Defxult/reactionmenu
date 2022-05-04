@@ -466,8 +466,8 @@ from reactionmenu import ViewMenu, ViewButton
 | `wrap_in_codeblock` | `str` | `None` | `ViewMenu.TypeEmbedDynamic` | The discord codeblock language identifier to wrap your data in. Example: `ViewMenu(ctx, ..., wrap_in_codeblock='py')`
 | `custom_embed` | `discord.Embed` | `None` | `ViewMenu.TypeEmbedDynamic` | Embed object to use when adding data with `ViewMenu.add_row()`. Used for styling purposes
 | `delete_on_timeout` | `bool` | `False` | `All menu types` | Delete the menu when it times out
-| `disable_buttons_on_timeout` | `bool` | `True` | `All menu types` | Disable the buttons on the menu when the menu times out
-| `remove_buttons_on_timeout` | `bool` | `False` | `All menu types` | Remove the buttons on the menu when the menu times out
+| `disable_items_on_timeout` | `bool` | `True` | `All menu types` | Disable the items on the menu when the menu times out
+| `remove_items_on_timeout` | `bool` | `False` | `All menu types` | Remove the items on the menu when the menu times out
 | `only_roles` | `List[discord.Role]` | `None` | `All menu types` | If set, only members with any of the given roles are allowed to control the menu. The menu owner can always control the menu
 | `timeout` | `Union[int, float, None]` | `60.0` | `All menu types` | The timer for when the menu times out. Can be `None` for no timeout
 | `show_page_director` | `bool` | `True` | `All menu types` | Shown at the bottom of each embed page. "Page 1/20"

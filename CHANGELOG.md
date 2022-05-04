@@ -16,6 +16,9 @@
   * `.stop_session(name: str, include_all=False)`
   * `.get_sessions_count()`
   * With this change, methods `.split_sessions()` & `.stop_only()` have been removed
+* The following attributes have been renamed in the `ViewMenu` class
+  * `disable_buttons_on_timeout` → `disable_items_on_timeout`
+  * `remove_buttons_on_timeout` → `remove_items_on_timeout`
 #### New Features
 ##### ReactionMenu & ViewMenu
 * Pagination is no longer limited to just embeds or text. The normal embed menu can now paginate with embeds, text, as well as files. With this, method `.add_page()` has two new parameters

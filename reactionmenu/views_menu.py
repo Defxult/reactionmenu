@@ -120,9 +120,9 @@ class ViewMenu(_BaseMenu):
         Delete the prompt message by the bot and response message by the user when asked what page they would like to go to when using :attr:`ViewButton.ID_GO_TO_PAGE` (defaults to `True`)
     
     delete_on_timeout: :class:`bool`
-        Delete the menu when it times out (defaults to `False`) If `True`, :attr:`disable_buttons_on_timeout` and :attr:`remove_buttons_on_timeout` will not execute regardless of if they are `True`. This takes priority over those actions
+        Delete the menu when it times out (defaults to `False`) If `True`, :attr:`disable_items_on_timeout` and :attr:`remove_items_on_timeout` will not execute regardless of if they are `True`. This takes priority over those actions
     
-    disable_buttons_on_timeout: :class:`bool`
+    disable_items_on_timeout: :class:`bool`
         Disable the buttons on the menu when the menu times out (defaults to `True`) If :attr:`delete_on_timeout` is `True`, this will be overridden
     
     name: :class:`str`
@@ -131,8 +131,8 @@ class ViewMenu(_BaseMenu):
     only_roles: List[:class:`discord.Role`]
         If set, only members with any of the given roles are allowed to control the menu. The menu owner can always control the menu (defaults to :class:`None`)
     
-    remove_buttons_on_timeout: :class:`bool`
-        Remove the buttons on the menu when the menu times out (defaults to `False`) If :attr:`disable_buttons_on_timeout` is `True`, this will be overridden
+    remove_items_on_timeout: :class:`bool`
+        Remove the buttons on the menu when the menu times out (defaults to `False`) If :attr:`disable_items_on_timeout` is `True`, this will be overridden
     
     rows_requested: :class:`int`
         The amount of information per :meth:`ViewMenu.add_row()` you would like applied to each embed page (:attr:`ViewMenu.TypeEmbedDynamic` only/defaults to :class:`None`)
@@ -158,8 +158,8 @@ class ViewMenu(_BaseMenu):
         self.__buttons: List[ViewButton] = []
 
         # kwargs
-        self.disable_buttons_on_timeout: bool = kwargs.get('disable_buttons_on_timeout', True)
-        self.remove_buttons_on_timeout: bool = kwargs.get('remove_buttons_on_timeout', False)
+        self.disable_items_on_timeout: bool = kwargs.get('disable_items_on_timeout', True)
+        self.remove_items_on_timeout: bool = kwargs.get('remove_items_on_timeout', False)
         self.__timeout: Union[int, float, None] = kwargs.get('timeout', 60.0) # property get/set
 
         # view
