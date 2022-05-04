@@ -156,6 +156,7 @@ class ViewMenu(_BaseMenu):
         super().__init__(method, menu_type, **kwargs)
 
         self.__buttons: List[ViewButton] = []
+        self._stop_initiated = False
 
         # kwargs
         self.disable_items_on_timeout: bool = kwargs.get('disable_items_on_timeout', True)
