@@ -205,7 +205,7 @@ class ViewMenu(_BaseMenu):
         """
         Returns
         -------
-        List[:class:`ViewButton`]: A list of all the buttons that have been added to the menu
+        List[:class:`ViewButton`]: All buttons that have been added to the menu
         """
         return self.__buttons
     

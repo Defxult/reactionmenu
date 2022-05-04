@@ -15,8 +15,7 @@
   * `.stop_all_sessions()`
   * `.stop_session(name: str, include_all=False)`
   * `.get_sessions_count()`
-
-With this change, methods `.split_sessions()` & `.stop_only()` have been removed
+  * With this change, methods `.split_sessions()` & `.stop_only()` have been removed
 #### New Features
 ##### ReactionMenu & ViewMenu
 * Pagination is no longer limited to just embeds or text. The normal embed menu can now paginate with embeds, text, as well as files. With this, method `.add_page()` has two new parameters
@@ -39,6 +38,10 @@ With this change, methods `.split_sessions()` & `.stop_only()` have been removed
   * `.enable_select(select: ViewSelect)`
   * `.enable_all_selects()`
   * `.get_select(title: Union[str, None])`
+
+#### Miscellaneous
+* Added exception `SelectNotFound`
+* The `Page` class has been added to `__init__` and is now available for use
 
 
 

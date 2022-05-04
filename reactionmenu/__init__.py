@@ -12,6 +12,7 @@ A library to create a discord paginator. Supports pagination with Discords Butto
 from .buttons import ReactionButton, ViewButton
 from .core import ReactionMenu
 from .views_menu import ViewMenu, ViewSelect
+from .abc import Page
 
 
 def version_info():
@@ -34,4 +35,5 @@ __all__ = (
     'ViewMenu',
     'ViewButton',
     'ViewSelect',
+    'Page'
 )
