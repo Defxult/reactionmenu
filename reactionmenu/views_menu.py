@@ -166,6 +166,9 @@ class ViewMenu(_BaseMenu):
         self.__view = discord.ui.View(timeout=self.__timeout)
         self.__view.on_timeout = self._on_dpy_view_timeout
         self.__view.on_error = self._on_dpy_view_error
+
+        # select
+        self.__selects: List[ViewSelect] = []
     
     def __repr__(self):
         return f'<ViewMenu name={self.name!r} owner={str(self._extract_proper_user(self._method))!r} is_running={self._is_running} timeout={self.timeout} menu_type={self._menu_type.name}>'
@@ -186,6 +189,17 @@ class ViewMenu(_BaseMenu):
         new_view.on_timeout = self._on_dpy_view_timeout
         new_view.on_error = self._on_dpy_view_error
         return new_view
+    
+    @property
+    def selects(self) -> List[ViewSelect]:
+        """
+        Returns
+        -------
+        List[:class:`ViewSelect`]: All selects that have been added to the menu
+        
+            .. added:: v3.1.0
+        """
+        return self.__selects
     
     @property
     def timeout(self):

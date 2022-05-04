@@ -41,6 +41,7 @@
   * `.enable_select(select: ViewSelect)`
   * `.enable_all_selects()`
   * `.get_select(title: Union[str, None])`
+* Added property `.selects`. Returns all `ViewSelect` associated with the menu
 
 #### Miscellaneous
 * Added exception `SelectNotFound`
