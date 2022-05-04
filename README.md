@@ -16,12 +16,15 @@ Thank you!
 ```
 $ pip install git+https://github.com/Defxult/reactionmenu@discord.py-2.0-support
 ```
----
+
 ## Intents
 Minimum intents needed
 ```py
 bot = commands.Bot(..., intents=discord.Intents(messages=True, guilds=True, reactions=True, members=True))
 ```
+
+## Documentation
+* Jump to `ViewMenu` [documentation](#viewmenu)
 ---
 ## ReactionMenu
 
@@ -33,8 +36,8 @@ A `ReactionMenu` is a menu that uses emojis which are either custom guild emojis
 
 ![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
 
-<details>
-  <summary><b>Click to show ReactionMenu documentation</b></summary>
+<!-- <details>
+  <summary><b>Click to show ReactionMenu documentation</b></summary> -->
 
 ### How to import
 ```py
@@ -411,7 +414,7 @@ async def example(ctx):
 
 bot.run(...)
 ```
-</details>
+<!-- </details> -->
 
 
 
@@ -442,8 +445,8 @@ A `ViewMenu` is a menu that uses discords Buttons feature. With buttons, you can
 
 ![image](https://cdn.discordapp.com/attachments/655186216060321816/855818139450081280/buttons_showcase_reduced.gif)
 
-<details>
-  <summary><b>Click to show ViewMenu documentation</b></summary>
+<!-- <details>
+  <summary><b>Click to show ViewMenu documentation</b></summary> -->
 
 
 ### How to import
@@ -927,4 +930,4 @@ async def example(ctx):
 
 bot.run(...)
 ```
-</details>
+<!-- </details> -->
