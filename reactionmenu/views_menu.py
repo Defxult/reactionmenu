@@ -627,20 +627,19 @@ class ViewMenu(_BaseMenu):
     
     def remove_all_buttons(self) -> None:
         """Remove all buttons from the menu"""
-        persistent_buttons: List[ViewButton] = [] # this only contains link buttons
-        
+        # Set persists
+        persistent_link_buttons: List[ViewButton] = []
         for btn in self.__buttons:
             if self._should_persist(btn):
-                persistent_buttons.append(btn)
+                persistent_link_buttons.append(btn)
                 continue
-            btn._menu = None
-        
-        self.__buttons.clear()
-        self.__buttons.extend(persistent_buttons)
-        
-        self.__view.clear_items()
-        for subclassed_item in persistent_buttons:
-            self.__view.add_item(subclassed_item)
+        else:
+            while self.__buttons:
+                self.remove_button(self.__buttons[0])
+            else:
+                for plb in persistent_link_buttons:
+                    self._bypass_primed = True
+                    self.add_button(plb)
     
     def disable_button(self, button: ViewButton) -> None:
         """Disable a button on the menu
