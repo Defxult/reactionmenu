@@ -308,7 +308,7 @@ class ViewMenu(_BaseMenu):
                 elif event_type == ViewButton.Event._REMOVE:
                     self.remove_button(button)
                 
-                await self.refresh_menu_buttons()
+                await self.refresh_menu_items()
     
     def _remove_director(self, page: Page) -> Page:
         """Removes the page director contents from the page. This is used for :meth:`ViewMenu.update()`"""
@@ -590,21 +590,25 @@ class ViewMenu(_BaseMenu):
         """
         for btn in [button for button in self.__buttons if button.style not in (discord.ButtonStyle.link, discord.ButtonStyle.url)]:
             btn.style = style
-
-    async def refresh_menu_buttons(self) -> None:
+    
+    async def refresh_menu_items(self) -> None:
         """|coro|
         
-        When the menu is running, update the message to reflect the buttons that were removed, enabled, or disabled
+        When the menu is running, update the message to reflect the buttons/selects that were removed, enabled, or disabled
         """
         if self._is_running:
-            current_buttons = self.__buttons.copy()
+            current_items = self.__view.children.copy()
             self.remove_all_buttons()
+            self.remove_all_selects()
             self.__view.stop()
             self.__view = self._get_new_view()
-            for btn in current_buttons:
+            for item in current_items:
                 self._bypass_primed = True
-                self.add_button(btn)
-            await self._msg.edit(view=self.__view) # type: ignore / `edit` will not be `None` because the menu has started
+                if isinstance(item, discord.ui.Select):
+                    self.add_select(item) # type: ignore / it's subclassed
+                elif isinstance(item, ViewButton):
+                    self.add_button(item)
+            await self._msg.edit(view=self.__view)
     
     def remove_button(self, button: ViewButton) -> None:
         """Remove a button from the menu
