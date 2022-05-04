@@ -342,7 +342,7 @@ class ViewMenu(_BaseMenu):
             else:
                 raise TypeError(f'_remove_director parameter "page" expected discord.Embed or str, got {page.__class__.__name__}')
         else:
-            return page    
+            return page
     
     @ensure_not_primed
     def add_select(self, select: ViewSelect) -> None:

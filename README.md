@@ -697,7 +697,7 @@ Selects are used when you'd like to categorize information in your menu. Selects
   * `ViewMenu.disable_all_selects()`
   * `ViewMenu.enable_select(select: ViewSelect)`
   * `ViewMenu.enable_all_selects()`
-  * `ViewMenu.get_select(title: Union[str, None]`
+  * `ViewMenu.get_select(title: Union[str, None])`
 
 Example:
 ```py
