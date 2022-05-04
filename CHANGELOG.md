@@ -30,6 +30,15 @@ With this change, methods `.split_sessions()` & `.stop_only()` have been removed
   * `.set_page_director_style(..., separator=DEFAULT)`
 ##### ViewMenu Only
 * Added the `persist` kwarg to `ViewButton`. This prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
+* Added class `ViewSelect`. Used to choose categories in the menu.  With the addition of selects, the following methods have been added
+  * `.add_select(select: ViewSelect)`
+  * `.remove_select(select: ViewSelect)`
+  * `.remove_all_selects()`
+  * `.disable_select(select: ViewSelect)`
+  * `.disable_all_selects()`
+  * `.enable_select(select: ViewSelect)`
+  * `.enable_all_selects()`
+  * `.get_select(title: Union[str, None])`
 
 
 

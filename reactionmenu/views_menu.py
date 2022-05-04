@@ -50,6 +50,48 @@ from .abc import (
 from .decorators import ensure_not_primed
 from .errors import *
 
+class ViewSelect(discord.ui.Select):
+    """A class to assist in the process of categorizing information on a :class:`ViewMenu`
+
+    Parameters
+    ----------
+    title: Union[:class:`str`, `None`]
+        The category name. If `None`, the category name defaults to "Select a category"
+    
+    options: Dict[:class:`discord.SelectOption`, List[:class:`Page`]]
+        A key/value pair associating the category options with pages to navigate
+    
+    disabled: :class:`bool`
+        If the select should start enabled or disabled
+
+        .. added:: v3.1.0
+    """
+    def __init__(self, *, title: Union[str, None], options: Dict[discord.SelectOption, List[Page]], disabled: bool=False) -> None:
+        self._menu: Optional[ViewMenu] = None
+        self._view_select_options = options
+        
+        super().__init__(custom_id=discord.utils.MISSING, placeholder='Select a category' if title is None else title, min_values=1, max_values=1, options=options.keys(), disabled=disabled, row=None) # type: ignore
+    
+    def __repr__(self) -> str:
+        return f'<ViewSelect title={self.placeholder!r} disabled={self.disabled} menu={self.menu}>'
+    
+    @property
+    def menu(self) -> Optional[ViewMenu]:
+        """
+        Returns
+        -------
+        Optional[:class:`ViewMenu`]: The menu this select is attached to. Can be `None` if not attached to any menu
+        """
+        return self._menu
+    
+    async def callback(self, interaction: discord.Interaction) -> None:
+        """*INTERNAL USE ONLY* - The callback function from the select interaction. This should not be manually called"""
+        for option, pages in self._view_select_options.items():
+            if option.label == self.values[0]:
+                if self._menu:
+                    self._menu._pc = _PageController(pages)
+                    await interaction.response.edit_message(**self._menu._determine_kwargs(self._menu._pc.first_page()))
+                    break
 
 class ViewMenu(_BaseMenu):
     """A class to create a discord pagination menu using :class:`discord.ui.View`
@@ -286,6 +328,132 @@ class ViewMenu(_BaseMenu):
                 raise TypeError(f'_remove_director parameter "page" expected discord.Embed or str, got {page.__class__.__name__}')
         else:
             return page    
+    
+    @ensure_not_primed
+    def add_select(self, select: ViewSelect) -> None:
+        """Add a select category to the menu
+
+        Parameters
+        ----------
+        select: :class:`ViewSelect`
+            The category listing to add
+        
+        Raises
+        ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `ViewMenuException`:  The `menu_type` was not of :attr:`TypeEmbed` or the "embed" parameter in a :class:`Page` was not set 
+
+            .. added:: v3.1.0
+        """
+        pages = select._view_select_options.values()
+        for all_pages in pages:
+            for individual_page in all_pages:
+                if not individual_page.embed:
+                    raise ViewMenuException("The 'embed' parameter in a Page must be set when using selects")
+        else:
+            if self._menu_type == ViewMenu.TypeEmbed:
+                select._menu = self
+                self.__view.add_item(select)
+                self.__selects.append(select)
+            else:
+                raise ViewMenuException('Selects can only be added when the menu_type is TypeEmbed')
+    
+    def remove_select(self, select: ViewSelect) -> None:
+        """Remove a select from the menu
+        
+        Parameters
+        ----------
+        select: :class:`ViewSelect`
+            The select to remove
+        
+        Raises
+        ------
+        - `SelectNotFound`: The provided select was not found in the list of selects on the menu
+        
+            .. added:: v3.1.0
+        """
+        if select in self.__selects:
+            select._menu = None
+            self.__view.remove_item(select)
+            self.__selects.remove(select)
+        else:
+            raise SelectNotFound('Cannot remove a select that is not registered')
+    
+    def remove_all_selects(self) -> None:
+        """Remove all selects from the menu
+        
+            .. added:: v3.1.0
+        """
+        for select in self.__selects:
+            self.remove_select(select)
+
+    def disable_select(self, select: ViewSelect) -> None:
+        """Disable a select on the menu
+        
+        Parameters
+        ----------
+        select: :class:`ViewSelect`
+            The select to disable
+        
+        Raises
+        ------
+        - `SelectNotFound`: The provided select was not found in the list of selects on the menu
+        
+            .. added:: v3.1.0
+        """
+        if select in self.__selects:
+            select.disabled = True
+        else:
+            raise SelectNotFound('Cannot disable a select that is not registered')
+    
+    def disable_all_selects(self) -> None:
+        """Disable all selects on the menu
+        
+            .. added:: v3.1.0
+        """
+        for select in self.__selects:
+            select.disabled = True
+    
+    def enable_select(self, select: ViewSelect) -> None:
+        """Enable the specified select
+        
+        Parameters
+        ----------
+        select: :class:`ViewSelect`
+            The select to enable
+        
+        Raises
+        ------
+        - `SelectNotFound`: The provided select was not found in the list of selects on the menu
+        
+            .. added:: v3.1.0
+        """
+        if select in self.__selects:
+            select.disabled = False
+        else:
+            raise SelectNotFound('Cannot enable a select that is not registered')
+    
+    def enable_all_selects(self) -> None:
+        """Enable all selects on the menu
+        
+            .. added:: v3.1.0
+        """
+        for select in self.__selects:
+            self.enable_select(select)
+    
+    def get_select(self, title: Union[str, None]) -> List[ViewSelect]:
+        """Get a select by it's title (category name) that has been registered to the menu
+        
+        Parameters
+        ----------
+        title: Union[:class:`str`, `None`]
+            Title of the category
+        
+        Returns
+        -------
+        List[:class:`ViewSelect`]: All selects matching the given title
+        """
+        return [select for select in self.__selects if select.placeholder == title]
     
     async def update(self, *, new_pages: Union[List[Union[discord.Embed, str]], None], new_buttons: Union[List[ViewButton], None]) -> None:
         """|coro|
@@ -856,6 +1024,11 @@ class ViewMenu(_BaseMenu):
             "allowed_mentions" : self.allowed_mentions
         }
     
+    def __refresh_select_pages(self, menu_type: MenuType) -> None:
+        for vm_select in self.__selects:
+            for pages in vm_select._view_select_options.values():
+                self._refresh_page_director_info(menu_type, pages)
+    
     @ensure_not_primed
     async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel, discord.Thread]]=None, reply: bool=False) -> None:
         """|coro|
@@ -956,6 +1129,9 @@ class ViewMenu(_BaseMenu):
                     raise ViewMenuException(error_msg)
                 else:
                     await self._handle_send_to(send_to, menu_payload)
+            
+            if self.__selects:
+                self.__refresh_select_pages(ViewMenu.TypeEmbed)
 
         # add row (dynamic menu)
         elif self._menu_type == ViewMenu.TypeEmbedDynamic:

@@ -684,6 +684,42 @@ custom_embed_button = ViewButton(style=discord.ButtonStyle.blurple, label='Socia
 ---
 > **NOTE:** When it comes to buttons with a `custom_id` of `ViewButton.ID_CALLER`, `ViewButton.ID_SEND_MESSAGE`, `ViewButton.ID_CUSTOM_EMBED`, or link buttons, you can add as many as you'd like as long as in total it's 25 buttons or less. For all other button ID's, each menu can only have one.
 
+### Using Selects
+Selects are used when you'd like to categorize information in your menu. Selects can only be used when the menu's `menu_type` is `TypeEmbed`. You should keep in mind that discords limitations on how many menu UI items (rows) can be applied to each message.
+
+![select_showcase](https://cdn.discordapp.com/attachments/655186216060321816/971361708121653268/select_showcase.gif)
+
+* Associated Methods
+  * `ViewMenu.add_select(select: ViewSelect)`
+  * `ViewMenu.remove_select(select: ViewSelect)`
+  * `ViewMenu.remove_all_selects()`
+  * `ViewMenu.disable_select(select: ViewSelect)`
+  * `ViewMenu.disable_all_selects()`
+  * `ViewMenu.enable_select(select: ViewSelect)`
+  * `ViewMenu.enable_all_selects()`
+  * `ViewMenu.get_select(title: Union[str, None]`
+
+Example:
+```py
+menu = ViewMenu(ctx, menu_type=ViewMenu.TypeEmbed)
+menu.add_page(discord.Embed(title="A showcase of console video games", color=discord.Color.blurple()))
+
+menu.add_select(ViewSelect(title="Console Video Games", options={
+    discord.SelectOption(label="PlayStation", emoji="<:PlayStation:549638412538478602>") : [
+        Page(embed=discord.Embed(title="Ratchet & Clank", description=..., color=discord.Color.yellow()).set_image(url=...)),
+        Page(embed=discord.Embed(title="God of War", description=..., color=discord.Color.blue()).set_image(url=...))
+    ],
+    discord.SelectOption(label="Xbox", emoji="<:Xbox:501880493285834752>") : [
+        Page(embed=discord.Embed(title="Halo Infinite", description=..., color=discord.Color.green()).set_image(url=...)),
+        Page(embed=discord.Embed(title="Gears of War 4", description=..., color=discord.Color.red()).set_image(url=...))
+    ]
+}))
+
+menu.add_button(ViewButton.back())
+menu.add_button(ViewButton.next())
+await menu.start()
+```
+
 ### Updating ViewButton and Pages
 * Associated methods
   * `await ViewMenu.refresh_menu_buttons()`
