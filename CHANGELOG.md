@@ -16,6 +16,9 @@
   * `.stop_session(name: str, include_all=False)`
   * `.get_sessions_count()`
   * With this change, methods `.split_sessions()` & `.stop_only()` have been removed
+* Parameters `remove_buttons` and `disable_buttons` have been removed from method `ViewMenu.stop()`. With the addition of selects, the following new parameters will now take their place
+  * `remove_items`
+  * `disable_items`
 * The following attributes have been renamed in the `ViewMenu` class
   * `disable_buttons_on_timeout` → `disable_items_on_timeout`
   * `remove_buttons_on_timeout` → `remove_items_on_timeout`

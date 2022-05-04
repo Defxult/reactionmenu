@@ -175,7 +175,7 @@ class ViewMenu(_BaseMenu):
 
     async def _on_dpy_view_timeout(self) -> None:
         self._menu_timed_out = True
-        await self.stop(delete_menu_message=self.delete_on_timeout, remove_buttons=self.remove_buttons_on_timeout, disable_buttons=self.disable_buttons_on_timeout)
+        await self.stop(delete_menu_message=self.delete_on_timeout, disable_items=self.disable_items_on_timeout, remove_items=self.remove_items_on_timeout) 
     
     async def _on_dpy_view_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> NoReturn:
         try:
@@ -950,7 +950,7 @@ class ViewMenu(_BaseMenu):
 
         await self._contact_relay(inter.user, button)
 
-    async def stop(self, *, delete_menu_message: bool=False, remove_buttons: bool=False, disable_buttons: bool=False) -> None:
+    async def stop(self, *, delete_menu_message: bool=False, disable_items: bool=False, remove_items: bool=False) -> None:
         """|coro|
         
         Stops the process of the menu with the option of deleting the menu's message, removing the buttons, or disabling the buttons upon stop
@@ -960,17 +960,16 @@ class ViewMenu(_BaseMenu):
         delete_menu_message: :class:`bool`
             Delete the message the menu is operating from
 
-        remove_buttons: :class:`bool`
-            Remove the buttons from the menu
-
-        disable_buttons: :class:`bool`
-            Disable the buttons on the menu
+        disable_items: :class:`bool`
+            Disable the buttons & selects on the menu
+        
+        remove_items: :class:`bool`
+            Remove the buttons & selects from the menu
 
         Parameter Hierarchy
         -------------------
         Only one option is available when stopping the menu. If you have multiple parameters as `True`, only one will execute
-        - `delete_menu_message` > `disable_buttons`
-        - `disable_buttons` > `remove_buttons`
+        - `disable_items` > `remove_items`
 
         Raises
         ------
@@ -980,19 +979,18 @@ class ViewMenu(_BaseMenu):
             self._stop_initiated = True
             try:
                 if delete_menu_message:
-                    await self._msg.delete() # type: ignore
-                
-                elif disable_buttons:
-                    if not self.__buttons:
-                        return # if there are no buttons (they've all been removed) to disable, skip this step
-                    self.disable_all_buttons()
-                    await self._msg.edit(view=self.__view) # type: ignore
-
-                elif remove_buttons:
-                    if not self.__buttons:
-                        return # if there are no buttons (they've already been removed), skip this step
-                    self.remove_all_buttons()
-                    await self._msg.edit(view=self.__view) # type: ignore
+                    await self._msg.delete()
+                else:
+                    if self.__buttons or self.__selects:
+                        if disable_items:
+                            self.disable_all_buttons()
+                            self.disable_all_selects()
+                            await self._msg.edit(view=self.__view)
+                        
+                        elif remove_items:
+                            self.remove_all_buttons()
+                            self.remove_all_selects()
+                            await self._msg.edit(view=self.__view)
             
             except discord.DiscordException as dpy_error:
                 raise dpy_error
