@@ -32,7 +32,7 @@ def ensure_not_primed(func):
     """Check to make sure certain methods cannot be ran once the menu has been fully started"""
     if iscoroutinefunction(func):
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs): # type: ignore
             inst = args[0]
             if not inst._is_running or inst._bypass_primed:
                 if inst._bypass_primed:
