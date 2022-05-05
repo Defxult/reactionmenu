@@ -73,7 +73,7 @@ class ViewSelect(discord.ui.Select):
         super().__init__(custom_id=discord.utils.MISSING, placeholder='Select a category' if title is None else title, min_values=1, max_values=1, options=options.keys(), disabled=disabled, row=None) # type: ignore
     
     def __repr__(self) -> str:
-        return f'<ViewSelect title={self.placeholder!r} disabled={self.disabled} menu={self.menu}>'
+        return f'<ViewSelect title={self.placeholder!r} disabled={self.disabled}>'
     
     @property
     def menu(self) -> Optional[ViewMenu]:
