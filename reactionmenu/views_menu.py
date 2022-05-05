@@ -399,8 +399,8 @@ class ViewMenu(_BaseMenu):
         
             .. added:: v3.1.0
         """
-        for select in self.__selects:
-            self.remove_select(select)
+        while self.__selects:
+            self.remove_select(self.__selects[0])
 
     def disable_select(self, select: ViewSelect) -> None:
         """Disable a select on the menu
