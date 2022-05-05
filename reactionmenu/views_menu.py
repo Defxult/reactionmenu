@@ -25,10 +25,11 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
+import collections
 import inspect
 import random
 import re
-from typing import TYPE_CHECKING, List, NoReturn, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Callable, Dict, Final, List, NamedTuple, NoReturn, Optional, Sequence, Union
 
 from typing_extensions import Self
 
@@ -49,6 +50,8 @@ from .abc import (
 
 from .decorators import ensure_not_primed
 from .errors import *
+
+_SelectOptionRelayPayload = collections.namedtuple('_SelectOptionRelayPayload', ['func', 'only'])
 
 class ViewSelect(discord.ui.Select):
     """A class to assist in the process of categorizing information on a :class:`ViewMenu`
@@ -84,6 +87,33 @@ class ViewSelect(discord.ui.Select):
         """
         return self._menu
     
+    async def __dispatch_relay(self, interaction: discord.Interaction) -> None:
+        if self._menu:
+            relay_info = self._menu._options_relay_info
+            if relay_info is not None:
+                SelectOptionRelayPayload = collections.namedtuple('SelectOptionRelayPayload', ['member', 'option', 'menu'])
+                CLICKED_OPTION: Final[str] = self.values[0]
+                
+                # Find which :class:`discord.SelectOption` was clicked
+                filtered_options = [sel for sel in self._view_select_options if sel.label == CLICKED_OPTION]
+                select_option = filtered_options[0]
+                payload = SelectOptionRelayPayload(member=interaction.user, option=select_option, menu=self._menu)
+
+                async def call():
+                    if asyncio.iscoroutinefunction(relay_info.func):
+                        await relay_info.func(payload)
+                    else:
+                        relay_info.func(payload)
+                
+                if relay_info.only:
+                    for option_label in relay_info.only:
+                        if CLICKED_OPTION == option_label:
+                            await call()
+                            break
+                else:
+                    if filtered_options:
+                        await call()
+    
     async def callback(self, interaction: discord.Interaction) -> None:
         """*INTERNAL USE ONLY* - The callback function from the select interaction. This should not be manually called"""
         for option, pages in self._view_select_options.items():
@@ -92,6 +122,7 @@ class ViewSelect(discord.ui.Select):
                     self._menu._pc = _PageController(pages)
                     await interaction.response.edit_message(**self._menu._determine_kwargs(self._menu._pc.first_page()))
                     break
+        await self.__dispatch_relay(interaction)
 
 class ViewMenu(_BaseMenu):
     """A class to create a discord pagination menu using :class:`discord.ui.View`
@@ -170,6 +201,7 @@ class ViewMenu(_BaseMenu):
 
         # select
         self.__selects: List[ViewSelect] = []
+        self._options_relay_info: Optional[_SelectOptionRelayPayload] = None
     
     def __repr__(self):
         return f'<ViewMenu name={self.name!r} owner={str(self._extract_proper_user(self._method))!r} is_running={self._is_running} timeout={self.timeout} menu_type={self._menu_type.name}>'
@@ -343,6 +375,42 @@ class ViewMenu(_BaseMenu):
                 raise TypeError(f'_remove_director parameter "page" expected discord.Embed or str, got {page.__class__.__name__}')
         else:
             return page
+    
+    def set_select_option_relay(self, func: Callable[[NamedTuple], None], *, only: Optional[Sequence[str]]=None) -> None:
+        """Set a function to be called with a given set of information when a select option is pressed on the menu. The information passed is `SelectOptionRelayPayload`, a named tuple.
+        The named tuple contains the following attributes:
+
+        - `member`: The :class:`discord.Member` object of the person who pressed the option. Could be :class:`discord.User` if the menu was started in a DM
+        - `option`: The :class:`discord.SelectOption` that was pressed
+        - `menu`: An instance of :class:`ViewMenu` that the select option is operating under
+
+        Parameters
+        ----------
+        func: Callable[[:class:`NamedTuple`], :class:`None`]
+            The function should only contain a single positional argument. Command functions (`@bot.command()`) not supported
+
+        only: Optional[Sequence[:class:`str`]]
+            A sequence of :class:`discord.SelectOption` labels associated with the current menu instance. If this is :class:`None`, all select options on the menu will be relayed.
+            If set, only presses from the options matching the given labels specified will be relayed
+
+        Raises
+        ------
+        - `IncorrectType`: The :param:`func` argument provided was not callable
+        
+            .. added:: v3.1.0
+        """
+        
+        if callable(func):
+            self._options_relay_info = _SelectOptionRelayPayload(func, only)
+        else:
+            raise IncorrectType('When setting the relay for a select option, argument "func" must be callable')
+    
+    def remove_select_option_relay(self) -> None:
+        """Remove the relay that's been set
+        
+            .. added:: v3.1.0
+        """
+        self._options_relay_info = None
     
     @ensure_not_primed
     def add_select(self, select: ViewSelect) -> None:

@@ -47,6 +47,8 @@
   * `.enable_select(select: ViewSelect)`
   * `.enable_all_selects()`
   * `.get_select(title: Union[str, None])`
+  * `.set_select_option_relay(func: Callable[[NamedTuple], None], *, only: Optional[Sequence[str]]=None)`
+  * `.remove_select_option_relay()`
 * Added property `.selects`. Returns all `ViewSelect` associated with the menu
 
 #### Miscellaneous
