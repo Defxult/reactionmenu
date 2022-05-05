@@ -704,6 +704,8 @@ Selects are used when you'd like to categorize information in your menu. Selects
 
 Example:
 ```py
+from reactionmenu import ViewMenu, ViewSelect, Page
+
 menu = ViewMenu(ctx, menu_type=ViewMenu.TypeEmbed)
 menu.add_page(discord.Embed(title="A showcase of console video games", color=discord.Color.blurple()))
 
