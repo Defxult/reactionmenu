@@ -585,7 +585,7 @@ Buttons are what you use to interact with the menu. Unlike reactions, they look 
   * `ViewMenu.get_button(identity: str, *, search_by='label')`
   * `ViewMenu.remove_all_buttons()`
   * `ViewMenu.remove_button(button: ViewButton)`
-  * `await ViewMenu.refresh_menu_buttons()`
+  * `await ViewMenu.refresh_menu_items()`
 
 #### ViewButton
 ```
@@ -724,10 +724,10 @@ await menu.start()
 
 ### Updating ViewButton and Pages
 * Associated methods
-  * `await ViewMenu.refresh_menu_buttons()`
+  * `await ViewMenu.refresh_menu_items()`
   * `await ViewMenu.update(*, new_pages: Union[List[Union[Embed, str]], None], new_buttons: Union[List[ViewButton], None])`
 
-When the menu is running, you can update the pages or buttons on the menu. Using `ViewMenu.update()`, you can replace the pages and buttons. Using `ViewMenu.refresh_menu_buttons()` updates the buttons you have changed.
+When the menu is running, you can update the pages or buttons on the menu. Using `ViewMenu.update()`, you can replace the pages and buttons. Using `ViewMenu.refresh_menu_items()` updates the buttons you have changed.
 
 #### Updating a Button
 ```py
@@ -748,9 +748,9 @@ async def disable(ctx):
     link_button = menu[0].get_button('Link', search_by='label')
     
     menu.disable_button(link_button)
-    await menu.refresh_menu_buttons()
+    await menu.refresh_menu_items()
 ```
-If the buttons are not refreshed with `ViewMenu.refresh_menu_buttons()`, the menu will not be updated when changing a button.
+If the buttons are not refreshed with `ViewMenu.refresh_menu_items()`, the menu will not be updated when changing a button.
 
 #### Updating Pages and Buttons
 Method `ViewMenu.update(...)` is used when you want to replace all or a few of the buttons on the menu. 
@@ -761,7 +761,7 @@ menu = ViewMenu(...)
 await menu.update(new_pages=[hello_embed, goodbye_embed], new_buttons=[link_button, next_button])
 ```
 
-> **NOTE**: When using `ViewMenu.update(...)`, there is no need to use `ViewMenu.refresh_menu_buttons()` because they are updated during the update call. 
+> **NOTE**: When using `ViewMenu.update(...)`, there is no need to use `ViewMenu.refresh_menu_items()` because they are updated during the update call. 
 
 ---
 #### ViewButton Methods
