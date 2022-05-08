@@ -29,9 +29,18 @@ import collections
 import inspect
 import random
 import re
-from typing import TYPE_CHECKING, Callable, Dict, Final, List, NamedTuple, NoReturn, Optional, Sequence, Union
-
-from typing_extensions import Self
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    Final,
+    List,
+    NamedTuple,
+    NoReturn,
+    Optional,
+    Sequence,
+    Union
+)
 
 if TYPE_CHECKING:
     from .abc import MenuType
@@ -266,7 +275,7 @@ class ViewMenu(_BaseMenu):
         return self._sort_buttons(self.__buttons)
     
     @classmethod
-    async def quick_start(cls, method: Union[Context, discord.Interaction], /, pages: Sequence[Union[discord.Embed, str]], buttons: Optional[Sequence[ViewButton]]=DEFAULT_BUTTONS) -> Self:
+    async def quick_start(cls, method: Union[Context, discord.Interaction], /, pages: Sequence[Union[discord.Embed, str]], buttons: Optional[Sequence[ViewButton]]=DEFAULT_BUTTONS) -> ViewMenu:
         """|coro class method|
         
         Start a menu with default settings either with a `menu_type` of `ViewMenu.TypeEmbed` (all values in `pages` are of type `discord.Embed`) or `ViewMenu.TypeText` (all values in `pages` are of type `str`)
@@ -541,7 +550,8 @@ class ViewMenu(_BaseMenu):
     async def update(self, *, new_pages: Union[List[Union[discord.Embed, str]], None], new_buttons: Union[List[ViewButton], None]) -> None:
         """|coro|
         
-        When the menu is running, update the pages or buttons 
+        When the menu is running, update the pages or buttons. It should be noted that `ViewSelect`s are not supported here, and they will automatically be removed
+        once the menu is updated. This method only supports pages and buttons.
         
         Parameters
         ----------
@@ -609,6 +619,7 @@ class ViewMenu(_BaseMenu):
                 self._pc = _PageController(self._pages)
             
             kwargs_to_pass = {}
+            self.remove_all_selects()
 
             self.__view.stop()
             self.__view = self._get_new_view()
@@ -636,7 +647,7 @@ class ViewMenu(_BaseMenu):
             else:
                 kwargs_to_pass['content'] = self._pages[0].content
             
-            await self._msg.edit(**kwargs_to_pass) # type: ignore / `edit` will not be `None` because the menu has started
+            await self._msg.edit(**kwargs_to_pass)
     
     def randomize_button_styles(self) -> None:
         """Set all buttons currently registered to the menu to a random :class:`discord.ButtonStyle` excluding link buttons"""
@@ -921,7 +932,7 @@ class ViewMenu(_BaseMenu):
             else:
                 if 1 <= page <= len(self._pages):
                     self._pc.index = page - 1
-                    await self._msg.edit(**self._determine_kwargs(self._pc.current_page)) # type: ignore
+                    await self._msg.edit(**self._determine_kwargs(self._pc.current_page))
                     if self.delete_interactions:
                         await prompt.delete()
                         await selection_message.delete()
@@ -1109,10 +1120,11 @@ class ViewMenu(_BaseMenu):
         }
     
     def __refresh_select_pages(self, menu_type: MenuType) -> None:
-        for vm_select in self.__selects:
-            for pages in vm_select._view_select_options.values():
-                self._refresh_page_director_info(menu_type, pages)
-    
+        if self.__selects:
+            for vm_select in self.__selects:
+                for pages in vm_select._view_select_options.values():
+                    self._refresh_page_director_info(menu_type, pages)
+
     @ensure_not_primed
     async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel, discord.Thread]]=None, reply: bool=False) -> None:
         """|coro|
@@ -1214,8 +1226,7 @@ class ViewMenu(_BaseMenu):
                 else:
                     await self._handle_send_to(send_to, menu_payload)
             
-            if self.__selects:
-                self.__refresh_select_pages(ViewMenu.TypeEmbed)
+            self.__refresh_select_pages(ViewMenu.TypeEmbed)
 
         # add row (dynamic menu)
         elif self._menu_type == ViewMenu.TypeEmbedDynamic:
