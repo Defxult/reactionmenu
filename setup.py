@@ -58,7 +58,7 @@ setup(
     author='Defxult#8269',
     name='reactionmenu',
     version='3.1.0b3',
-    description='A library to create a discord.py 2.0+ paginator. Supports pagination with Discords Buttons feature and reactions.',
+    description='A library to create a discord.py 2.0+ paginator. Supports pagination with buttons, reactions, and category selection using selects.',
     url='https://github.com/Defxult/reactionmenu',
     project_urls=details,
     classifiers=classifiers,
