@@ -546,7 +546,7 @@ class ReactionMenu(_BaseMenu):
 						await update_and_dispatch(emoji, user, btn)
 						await self._msg.edit(embed=btn.custom_embed)
 
-	async def stop(self, *, delete_menu_message=False, clear_reactions=False) -> None:
+	async def stop(self, *, delete_menu_message: bool=False, clear_reactions: bool=False) -> None:
 		"""|coro|
 		
 		Stops the process of the menu with the option of deleting the menu's message or clearing reactions upon stop
