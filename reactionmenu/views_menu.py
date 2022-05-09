@@ -415,7 +415,7 @@ class ViewMenu(_BaseMenu):
             raise IncorrectType('When setting the relay for a select option, argument "func" must be callable')
     
     def remove_select_option_relay(self) -> None:
-        """Remove the relay that's been set
+        """Remove the select option relay that's been set
         
             .. added:: v3.1.0
         """
