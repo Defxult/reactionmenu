@@ -133,6 +133,64 @@ class ViewSelect(discord.ui.Select):
                     break
         await self.__dispatch_relay(interaction)
 
+    class GoTo(discord.ui.Select):
+        """Represents a UI based version of a :class:`ViewButton` with the ID `ViewButton.ID_GO_TO_PAGE`
+
+        Paramaters
+        ----------
+        title: Union[:class:`str`, `None`]
+            The selects name. If `None`, the name defaults to "Navigate to page..."
+        
+        page_numbers: This parameter accepts 3 different types and are explained below
+        - List[:class:`int`]
+            - If set to a list of integers, those specified values are the only options that are available when the select is clicked
+        
+        - Dict[:class:`int`, Union[:class:`str`, :class:`discord.Emoji`, :class:`discord.PartialEmoji`]]
+            - You can use this type if you'd like to utilize emojis in your select options
+        
+        - `ellipsis`
+            - Set an ellipsis to have the library automatically assign all page numbers to the amount of pages that you've added to the menu.
+            
+        NOTE: Setting the `page_numbers` parameter to an ellipsis (...) only works as intended if you've added the go to select AFTER you've added pages to the menu
+        
+            .. added:: v3.1.0
+        """
+        def __init__(self, *, title: Union[str, None], page_numbers: Union[List[int], Dict[int, Union[str, discord.Emoji, discord.PartialEmoji]], ellipsis]) -> None:
+            self.callback = self._select_go_to_callback
+            self._menu: Optional[ViewMenu] = None
+            self._page_numbers = page_numbers
+            self._gt_options: List[discord.SelectOption] = []
+            
+            if isinstance(page_numbers, list):
+                self._gt_options.extend([discord.SelectOption(label=str(n)) for n in page_numbers])
+            elif isinstance(page_numbers, dict):
+                for n, emoji in page_numbers.items():
+                    self._gt_options.append(discord.SelectOption(label=str(n), emoji=emoji))
+            
+            super().__init__(placeholder="Navigate to page..." if title is None else str(title), options=self._gt_options)
+        
+        @property
+        def menu(self) -> Optional[ViewMenu]:
+            """
+            Returns
+            -------
+            Optional[:class:`ViewMenu`]: The menu this select is attached to. Can be `None` if not attached to any menu
+            """
+            return self._menu
+        
+        async def _select_go_to_callback(self, interaction: discord.Interaction) -> None:
+            if interaction.data:
+                values = interaction.data.get('values') 
+                if values:
+                    CLICKED_OPTION: Final[int] = int(values[0])
+                    if self._menu:
+                        if 1 <= CLICKED_OPTION <= self._menu._pc.total_pages + 1:
+                            self._menu._pc.index = CLICKED_OPTION - 1
+                            await interaction.response.edit_message(**self._menu._determine_kwargs(self._menu._pc.current_page))
+                            return
+            else:
+                assert False, "No interaction data"
+
 class ViewMenu(_BaseMenu):
     """A class to create a discord pagination menu using :class:`discord.ui.View`
     
@@ -211,6 +269,7 @@ class ViewMenu(_BaseMenu):
         # select
         self.__selects: List[ViewSelect] = []
         self._options_relay_info: Optional[_SelectOptionRelayPayload] = None
+        self._gotos: List[ViewSelect.GoTo] = []
     
     def __repr__(self):
         return f'<ViewMenu name={self.name!r} owner={str(self._extract_proper_user(self._method))!r} is_running={self._is_running} timeout={self.timeout} menu_type={self._menu_type.name}>'
@@ -242,6 +301,17 @@ class ViewMenu(_BaseMenu):
             .. added:: v3.1.0
         """
         return self.__selects
+    
+    @property
+    def go_to_selects(self) -> List[ViewSelect.GoTo]:
+        """
+        Returns
+        -------
+        List[:class:`ViewSelect.GoTo`]: All go to selects that have been added to the menu
+        
+            .. added:: v3.1.0
+        """
+        return self._gotos
     
     @property
     def timeout(self):
@@ -433,10 +503,13 @@ class ViewMenu(_BaseMenu):
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `ViewMenuException`:  The `menu_type` was not of :attr:`TypeEmbed` or the "embed" parameter in a :class:`Page` was not set 
+        - `ViewMenuException`:  The `menu_type` was not of :attr:`TypeEmbed`. The "embed" parameter in a :class:`Page` was not set. Or both :class:`ViewSelect` and a :class:`ViewSelect.GoTo` were being used
 
             .. added:: v3.1.0
         """
+        if self._gotos:
+            raise ViewMenuException('Category selects cannot be used in conjunction with go to selects')
+        
         pages = select._view_select_options.values()
         for all_pages in pages:
             for individual_page in all_pages:
@@ -546,6 +619,103 @@ class ViewMenu(_BaseMenu):
         List[:class:`ViewSelect`]: All selects matching the given title
         """
         return [select for select in self.__selects if select.placeholder == title]
+    
+    @ensure_not_primed
+    def add_go_to_select(self, goto: ViewSelect.GoTo) -> None:
+        """Add a select where the user can choose which page they'd like to navigate to.
+
+        Parameters
+        ----------
+        goto: :class:`ViewSelect.GoTo`
+            The navigation listing
+        
+        Raises
+        ------
+        - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
+        - `ViewMenuException`:  A :class:`ViewSelect` was already added to the menu. A :class:`ViewSelect` and a :class:`ViewSelect.GoTo` cannot both be used on a single menu 
+
+            .. added:: v3.1.0
+        """
+        if not self.__selects:
+            goto._menu = self
+            if goto._page_numbers is ...:
+                for n in range(1, len(self._pages) + 1):
+                    goto._gt_options.append(discord.SelectOption(label=str(n)))
+            self._gotos.append(goto)
+            self.__view.add_item(goto)
+        else:
+            raise ViewMenuException('Category selects cannot be used in conjunction with go to selects')
+    
+    def enable_go_to_select(self, goto: ViewSelect.GoTo) -> None:
+        """Enable the specified go to select
+
+        Parameters
+        ----------
+        goto: :class:`ViewSelect.GoTo`
+            The go to select to enable
+        
+            .. added:: v3.1.0
+        """
+        if goto in self._gotos:
+            goto.disabled = False
+    
+    def enable_all_go_to_selects(self) -> None:
+        """Enable all go to selects
+        
+            .. added:: v3.1.0
+        """
+        for goto in self._gotos:
+            goto.disabled = False
+    
+    def disable_go_to_select(self, goto: ViewSelect.GoTo) -> None:
+        """Disable the specified go to select
+
+        Parameters
+        ----------
+        goto: :class:`ViewSelect.GoTo`
+            The go to select to disable
+        
+            .. added:: v3.1.0
+        """
+        if goto in self._gotos:
+            goto.disabled = True
+    
+    def disable_all_go_to_selects(self) -> None:
+        """Disable all go to selects
+        
+            .. added:: v3.1.0
+        """
+        for goto in self._gotos:
+            goto.disabled = True
+    
+    def remove_go_to_select(self, goto: ViewSelect.GoTo) -> None:
+        """Remove a go to select from the menu
+        
+        Parameters
+        ----------
+        goto: :class:`ViewSelect.GoTo`
+            The go to select to remove
+        
+        Raises
+        ------
+        - `SelectNotFound`: The provided go to select was not found in the list of selects on the menu
+        
+            .. added:: v3.1.0
+        """
+        if goto in self._gotos:
+            goto._menu = None
+            self.__view.remove_item(goto)
+            self._gotos.remove(goto)
+        else:
+            raise SelectNotFound('Cannot remove a go to select that is not registered')
+
+    def remove_all_go_to_selects(self) -> None:
+        """Remove all go to selects from the menu
+        
+            .. added:: v3.1.0
+        """
+        while self._gotos:
+            self.remove_go_to_select(self._gotos[0])
     
     async def update(self, *, new_pages: Union[List[Union[discord.Embed, str]], None], new_buttons: Union[List[ViewButton], None]) -> None:
         """|coro|
@@ -680,14 +850,20 @@ class ViewMenu(_BaseMenu):
             current_items = self.__view.children.copy()
             self.remove_all_buttons()
             self.remove_all_selects()
+            self.remove_all_go_to_selects()
             self.__view.stop()
             self.__view = self._get_new_view()
             for item in current_items:
                 self._bypass_primed = True
                 if isinstance(item, discord.ui.Select):
-                    self.add_select(item) # type: ignore / it's subclassed
+                    if item.__class__.__name__ == "ViewSelect":
+                        self.add_select(item) # type: ignore / it's subclassed
+                    elif item.__class__.__name__ == "GoTo":
+                        self.add_go_to_select(item) # type: ignore / it's subclassed
                 elif isinstance(item, ViewButton):
                     self.add_button(item)
+                elif isinstance(item, ViewSelect.GoTo):
+                    self.add_go_to_select(item)
             await self._msg.edit(view=self.__view)
     
     def remove_button(self, button: ViewButton) -> None:
@@ -1064,16 +1240,19 @@ class ViewMenu(_BaseMenu):
                 if delete_menu_message:
                     await self._msg.delete()
                 else:
-                    if self.__buttons or self.__selects:
-                        if disable_items:
-                            self.disable_all_buttons()
-                            self.disable_all_selects()
-                            await self._msg.edit(view=self.__view)
-                        
-                        elif remove_items:
-                            self.remove_all_buttons()
-                            self.remove_all_selects()
-                            await self._msg.edit(view=self.__view)
+                    already_disabled = False
+                    if disable_items:
+                        self.disable_all_buttons()
+                        self.disable_all_selects()
+                        self.disable_all_go_to_selects()
+                        already_disabled = True
+                        await self._msg.edit(view=self.__view)
+                    
+                    if remove_items and not already_disabled:
+                        self.remove_all_buttons()
+                        self.remove_all_selects()
+                        self.remove_all_go_to_selects()
+                        await self._msg.edit(view=self.__view)
             
             except discord.DiscordException as dpy_error:
                 raise dpy_error

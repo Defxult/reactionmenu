@@ -75,12 +75,13 @@ class Page:
     
         .. added:: v3.1.0
     """
-    __slots__ = ("content", "embed", "files")
+    __slots__ = ("content", "embed", "files", "_go_to")
     
     def __init__(self, *, content: Optional[str]=None, embed: Optional[discord.Embed]=MISSING, files: Optional[List[discord.File]]=MISSING) -> None:
         self.content = content
         self.embed = embed
         self.files = files
+        self._go_to: Optional[int] = None
     
     def __repr__(self) -> str:
         return f"<Page {' '.join([f'{attr_name}={getattr(self, attr_name)!r}' for attr_name in self.__class__.__slots__ if type(getattr(self, attr_name)) not in (type(None), type(MISSING))])}>"

@@ -727,6 +727,48 @@ menu.add_button(ViewButton.next())
 await menu.start()
 ```
 
+#### Go to page navigation
+You can use this type of select when you'd like to use the UI to select a page to go to.
+
+![goto_showcase](https://cdn.discordapp.com/attachments/655186216060321816/973629631905300501/Discord_6SP5AjoOOM.gif)
+
+* Associated methods
+  * `ViewMenu.add_go_to_select(goto: ViewSelect.GoTo)`
+  * `ViewMenu.enable_go_to_select(goto: ViewSelect.GoTo)`
+  * `ViewMenu.enable_all_go_to_selects()`
+  * `ViewMenu.disable_go_to_select(goto: ViewSelect.GoTo)`
+  * `ViewMenu.disable_all_go_to_selects()`
+  * `ViewMenu.remove_go_to_select(goto: ViewSelect.GoTo)`
+  * `ViewMenu.remove_all_go_to_selects()`
+
+The `page_numbers` parameter for `ViewSelect.GoTo` can be used with 3 different types
+
+1. `List[int]` If set to a list of integers, those specified values are the only options that are available when the select is clicked
+   1. `page_numbers=[1, 5, 10]`
+2. `Dict[int, Union[str, discord.Emoji, discord.PartialEmoji]]` You can use this type if you'd like to utilize emojis in your select
+   1. `page_numbers={1 : "🗯️", 2 : "📺"}`
+3. `ellipsis` You can set a *literal* ellipsis to have the library automatically assign all page numbers to the amount of pages that you've added to the menu. This can come in handy if you have 25 pages or less
+   1. `page_numbers=...`
+> **NOTE**: Setting the `page_numbers` parameter to an ellipsis (...) only works as intended if you've added the go to select AFTER you've added pages to the menu
+
+```py
+@bot.command()
+async def navigate(ctx):
+    menu = ViewMenu(ctx, menu_type=ViewMenu.TypeEmbed)
+
+    menu.add_page(discord.Embed(title="Twitter").set_image(url="..."))
+    menu.add_page(discord.Embed(title="YouTube").set_image(url="..."))
+    menu.add_page(discord.Embed(title="Discord").set_image(url="..."))
+    # ...
+    
+    menu.add_go_to_select(ViewSelect.GoTo(title="Go to page...", page_numbers=...))
+
+    menu.add_button(ViewButton.back())
+    menu.add_button(ViewButton.next())
+
+    await menu.start()
+```
+
 ### Updating ViewButton and Pages
 * Associated methods
   * `await ViewMenu.refresh_menu_items()`
