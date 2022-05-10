@@ -387,11 +387,16 @@ await menu.start(send_to=channel)
 ### Full Example
 Here is a basic implementation of `ReactionMenu` that you can copy & paste for a quick demonstration.
 ```py
+import asyncio
 import discord
 from discord.ext import commands
 from reactionmenu import ReactionMenu, ReactionButton
 
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
+
+async def start_bot():
+    async with bot:
+        await bot.start('...')
 
 @bot.command()
 async def example(ctx):
@@ -409,7 +414,7 @@ async def example(ctx):
     
     await menu.start()
 
-bot.run(...)
+asyncio.run(start_bot())
 ```
 </details>
 
@@ -905,11 +910,16 @@ Only one option is available when stopping the menu. If you have multiple parame
 ### Full Example
 Here is a basic implementation of `ViewMenu` that you can copy & paste for a quick demonstration.
 ```py
+import asyncio
 import discord
 from discord.ext import commands
 from reactionmenu import ViewMenu, ViewButton
 
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
+
+async def start_bot():
+    async with bot:
+        await bot.start('...')
 
 @bot.command()
 async def example(ctx):
@@ -927,6 +937,6 @@ async def example(ctx):
     
     await menu.start()
 
-bot.run(...)
+asyncio.run(start_bot())
 ```
 </details>
