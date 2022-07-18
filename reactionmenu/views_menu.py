@@ -136,7 +136,7 @@ class ViewSelect(discord.ui.Select):
     class GoTo(discord.ui.Select):
         """Represents a UI based version of a :class:`ViewButton` with the ID `ViewButton.ID_GO_TO_PAGE`
 
-        Paramaters
+        Parameters
         ----------
         title: Union[:class:`str`, `None`]
             The selects name. If `None`, the name defaults to "Navigate to page..."
@@ -236,7 +236,7 @@ class ViewMenu(_BaseMenu):
         The amount of information per :meth:`ViewMenu.add_row()` you would like applied to each embed page (:attr:`ViewMenu.TypeEmbedDynamic` only/defaults to :class:`None`)
     
     show_page_director: :class:`bool`
-        Shown at the botttom of each embed page. "Page 1/20" (defaults to `True`)
+        Shown at the bottom of each embed page. "Page 1/20" (defaults to `True`)
     
     style: :class:`str`
         A custom page director style you can select. "$" represents the current page, "&" represents the total amount of pages (defaults to "Page $/&") Example: `ViewMenu(ctx, ..., style='On $ out of &')`

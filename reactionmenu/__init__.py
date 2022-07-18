@@ -20,13 +20,12 @@ def version_info():
 
     - `version` Current version of the library
     - `releasetype` Either "final" (the PyPI version) or "pre-release" (the GitHub version)
-    - `patch` The last significant bug fix
     
     >>> print(reactionmenu.version_info())
     """
     from collections import namedtuple
-    VersionInfo = namedtuple('VersionInfo', ['version', 'releasetype', 'patch'])
-    return VersionInfo(version='3.1.0b4', releasetype='pre-release', patch='1b')
+    VersionInfo = namedtuple('VersionInfo', ['version', 'releasetype'])
+    return VersionInfo(version='3.1.0b5', releasetype='pre-release')
 
 __source__ = 'https://github.com/Defxult/reactionmenu'
 __all__ = (
