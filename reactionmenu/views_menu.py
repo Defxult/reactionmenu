@@ -395,7 +395,7 @@ class ViewMenu(_BaseMenu):
     def _check(self, inter: discord.Interaction) -> bool:
         """Base menu button interaction check. Verifies who (user, everyone, or role) can interact with the button"""
         author_pass = False
-        if self._extract_proper_user(inter).id == inter.user.id: author_pass = True
+        if self._extract_proper_user(inter).id == self.owner.id: author_pass = True
         if self.only_roles: self.all_can_click = False
 
         if self.only_roles:
