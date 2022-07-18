@@ -656,7 +656,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         Returns
         -------
         :class:`int`: The amount of pages that have been added to the menu. If the `menu_type` is :attr:`TypeEmbedDynamic`, the amount of pages is not known until AFTER the menu has started. 
-        If attempted to retreive the value before a dynamic menu has started, this will return a value of -1
+        If attempted to retrieve the value before a dynamic menu has started, this will return a value of -1
         """
         if self._menu_type == _BaseMenu.TypeEmbedDynamic:
             return len(self._pages) if self._is_running else -1
@@ -1144,7 +1144,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                     fetched_message = await messageable.fetch_message(msg_id)
                     to_paginate.append(fetched_message)
                 except (discord.NotFound, discord.Forbidden, discord.HTTPException) as error:
-                    raise MenuException(f'An error occurred when attempting to retreive message with the ID {msg_id}: {error}')
+                    raise MenuException(f'An error occurred when attempting to retrieve message with the ID {msg_id}: {error}')
             
             if self._menu_type == _BaseMenu.TypeEmbed:
                 embeds_to_paginate: List[discord.Embed] = []
@@ -1372,7 +1372,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         - `IncorrectType`: Parameter "func" was not a callable object
         """
         if not callable(func): raise IncorrectType('Parameter "func" must be callable')
-        self._on_timeout_details = func
+        self._on_timeout_details = func # type: ignore
     
     def remove_on_timeout(self) -> None:
         """Remove the timeout call to the function you have set when the menu times out"""

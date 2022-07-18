@@ -130,7 +130,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		**kwargs
 		):
 		super().__init__(style=style, label=label, disabled=disabled, custom_id=custom_id, url=url, emoji=emoji, row=None)
-		_BaseButton.__init__(self, name=kwargs.get('name'), event=event, skip=kwargs.get('skip'))
+		_BaseButton.__init__(self, name=kwargs.get('name'), event=event, skip=kwargs.get('skip')) # type: ignore
 		self.followup = followup
 		self.persist: bool = kwargs.get('persist', False)
 		
@@ -496,7 +496,7 @@ class ReactionButton(_BaseButton):
 	Kwargs
 	------
 	embed: :class:`discord.Embed`
-		Only used when :param:`linked_to` is set as :attr:`ReactionButton.Type.CUSTOM_EMBED`. This is the embed that can be selected seperately from the menu (`TypeEmbed` menu's only)
+		Only used when :param:`linked_to` is set as :attr:`ReactionButton.Type.CUSTOM_EMBED`. This is the embed that can be selected separately from the menu (`TypeEmbed` menu's only)
 
 	name: :class:`str`
 		An optional name for the button. Can be set to retrieve it later via :meth:`ReactionMenu.get_button()`
@@ -514,7 +514,7 @@ class ReactionButton(_BaseButton):
 	Type = ButtonType
 
 	def __init__(self, *, emoji: str, linked_to: ReactionButton.Type, **kwargs):
-		super().__init__(name=kwargs.get('name'), event=kwargs.get('event'), skip=kwargs.get('skip'))
+		super().__init__(name=kwargs.get('name'), event=kwargs.get('event'), skip=kwargs.get('skip')) # type: ignore
 		self.emoji = str(emoji)
 		self.linked_to = linked_to
 		

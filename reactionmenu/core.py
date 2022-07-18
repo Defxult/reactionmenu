@@ -89,7 +89,7 @@ class ReactionMenu(_BaseMenu):
 		The amount of information per :meth:`ReactionMenu.add_row()` you would like applied to each embed page (:attr:`ReactionMenu.TypeEmbedDynamic` only/defaults to :class:`None`)
 
 	show_page_director: :class:`bool`
-		Shown at the botttom of each embed page. "Page 1/20" (defaults to `True`)
+		Shown at the bottom of each embed page. "Page 1/20" (defaults to `True`)
 
 	style: :class:`str`
 		A custom page director style you can select. "$" represents the current page, "&" represents the total amount of pages (defaults to "Page $/&") Example: `ReactionMenu(ctx, ..., style='On $ out of &')`
