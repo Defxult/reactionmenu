@@ -39,7 +39,7 @@
 ##### ViewMenu Only
 * Added the ability to use a select to go to a page instead of using text input
 * Added the `persist` kwarg to `ViewButton`. This prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
-* Added class `ViewSelect`. Used to [choose categories](https://github.com/Defxult/reactionmenu/tree/discord.py-2.0-support#using-selects) in the menu.  With the addition of selects, the following methods have been added
+* Added class `ViewSelect`. Used to choose categories in the menu.  With the addition of selects, the following methods have been added
   * `.add_select(select: ViewSelect)`
   * `.remove_select(select: ViewSelect)`
   * `.remove_all_selects()`
