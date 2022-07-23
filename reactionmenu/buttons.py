@@ -24,13 +24,25 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Final, List, NamedTuple, Optional, Tuple, Union
+from typing import (
+	TYPE_CHECKING,
+	Any,
+	Callable,
+	Dict,
+	Final,
+	Iterable,
+	List,
+	NamedTuple,
+	Optional,
+	Tuple,
+	Union
+)
 
 if TYPE_CHECKING:
 	from . import ViewMenu, ReactionButton, ReactionMenu
 
 import re
-from collections import namedtuple
+from enum import auto, Enum
 
 import discord
 from discord.ext.commands import Command
@@ -38,6 +50,14 @@ from discord.ext.commands import Command
 from .abc import _BaseButton, PaginationEmojis
 from .errors import IncorrectType
 
+
+class _Details(NamedTuple):
+	"""Used for buttons with a `custom_id` of `ID_CALLER`"""
+	func: Callable[..., None]
+	args: Iterable[Any]
+	kwargs: Dict[str, Any]
+
+Details = _Details
 
 class ViewButton(discord.ui.Button, _BaseButton):
 	"""A helper class for :class:`ViewMenu`. Represents a UI button.
@@ -79,7 +99,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	persist: :class:`bool`
 		Available only when using link buttons. This prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
 	
-		.. added v3.0.2
+		.. added v3.1.0
 			:param:`persist`
 	"""
 	ID_NEXT_PAGE: Final[str] = '0'
@@ -110,12 +130,12 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		**kwargs
 		):
 		super().__init__(style=style, label=label, disabled=disabled, custom_id=custom_id, url=url, emoji=emoji, row=None)
-		_BaseButton.__init__(self, name=kwargs.get('name'), event=event, skip=kwargs.get('skip'))
+		_BaseButton.__init__(self, name=kwargs.get('name'), event=event, skip=kwargs.get('skip')) # type: ignore
 		self.followup = followup
 		self.persist: bool = kwargs.get('persist', False)
 		
 		# abc
-		self._menu: ViewMenu = None
+		self._menu: Optional[ViewMenu] = None
 	
 	def __repr__(self):
 		total_clicks = '' if self.style == discord.ButtonStyle.link else f' total_clicks={self.total_clicks}'
@@ -124,7 +144,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 
 	async def callback(self, interaction: discord.Interaction) -> None:
 		"""*INTERNAL USE ONLY* - The callback function from the button interaction. This should not be manually called"""
-		await self._menu._paginate(self, interaction)
+		await self._menu._paginate(self, interaction) # type: ignore
 	
 	class Followup:
 		"""A class that represents the message sent using a :class:`ViewButton`. Contains parameters similar to method `discord.abc.Messageable.send`. Only to be used with :class:`ViewButton` kwarg "followup".
@@ -189,8 +209,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 			self.allowed_mentions = allowed_mentions
 			self.delete_after = delete_after
 			self.ephemeral = ephemeral
-			
-			self.details: NamedTuple = kwargs.get('details')
+			self.details: Optional[Details] = kwargs.get('details')
 		
 		def _to_dict(self) -> dict:
 			"""This is a :class:`ViewButton.Followup` method"""
@@ -199,9 +218,9 @@ class ViewButton(discord.ui.Button, _BaseButton):
 				new[i] = getattr(self, i)
 			return new
 		
-		@classmethod
-		def set_caller_details(cls, func: Callable[..., None], *args, **kwargs) -> NamedTuple:
-			"""|class method|
+		@staticmethod
+		def set_caller_details(func: Callable[..., None], *args, **kwargs) -> Details:
+			"""|static method|
 			
 			Set the parameters for the function you set for a :class:`ViewButton` with the custom_id :attr:`ViewButton.ID_CALLER`
 			
@@ -210,22 +229,21 @@ class ViewButton(discord.ui.Button, _BaseButton):
 			func: Callable[..., :class:`None`]
 				The function object that will be called when the associated button is pressed
 			
-			*args: :class:`Any`
+			*args: `Any`
 				An argument list that represents the parameters of that function
 			
-			**kwargs: :class:`Any`
+			**kwargs: `Any`
 				An argument list that represents the kwarg parameters of that function
 			
 			Returns
 			-------
-			:class:`NamedTuple`: The values needed to internally call the function you have set
+			:class:`Details`: The :class:`NamedTuple` containing the values needed to internally call the function you have set
 			
 			Raises
 			------
 			- `IncorrectType`: Parameter "func" was not a callable object
 			"""
 			if callable(func):
-				Details = namedtuple('Details', ['func', 'args', 'kwargs'])
 				func = func.callback if isinstance(func, Command) else func
 				return Details(func=func, args=args, kwargs=kwargs)
 			else:
@@ -233,7 +251,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 
 	@classmethod
 	def _base_nav_buttons(cls) -> Tuple[str, str, str, str, str]:
-		return (ViewButton.ID_PREVIOUS_PAGE, ViewButton.ID_NEXT_PAGE, ViewButton.ID_GO_TO_FIRST_PAGE, ViewButton.ID_GO_TO_LAST_PAGE, ViewButton.ID_GO_TO_PAGE)
+		return (cls.ID_PREVIOUS_PAGE, cls.ID_NEXT_PAGE, cls.ID_GO_TO_FIRST_PAGE, cls.ID_GO_TO_LAST_PAGE, cls.ID_GO_TO_PAGE)
 	
 	@classmethod
 	def _get_id_name_from_id(cls, id_: str, **kwargs) -> str:
@@ -251,18 +269,20 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		for key, val in cls.__dict__.items():
 			if id_ == val:
 				return f'ViewButton.{key}'
+		
+		assert False, "id name could not be found"
 	
 	@property
-	def menu(self) -> ViewMenu:
+	def menu(self) -> Optional[ViewMenu]:
 		"""
 		Returns
 		-------
-		:class:`ViewMenu`: The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
+		Optional[:class:`ViewMenu`]: The menu instance this button is attached to. Could be :class:`None` if the button is not attached to a menu
 		"""
 		return self._menu
 	
 	@classmethod
-	def skip(cls, label: str, action: str, amount: int) -> ViewButton:
+	def generate_skip(cls, label: str, action: str, amount: int) -> ViewButton:
 		"""|class method|
 		
 		A factory method that returns a :class:`ViewButton` with the following parameters set:
@@ -272,7 +292,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- custom_id: :attr:`ViewButton.ID_SKIP`
 		- skip: `ViewButton.Skip(<action>, <amount>)`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label=label, custom_id=ViewButton.ID_SKIP, skip=_BaseButton.Skip(action, amount))
+		return cls(style=discord.ButtonStyle.gray, label=label, custom_id=cls.ID_SKIP, skip=cls.Skip(action, amount))
 	
 	@classmethod
 	def link(cls, label: str, url: str) -> ViewButton:
@@ -296,7 +316,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "Back"
 		- custom_id: :attr:`ViewButton.ID_PREVIOUS_PAGE`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='Back', custom_id=ViewButton.ID_PREVIOUS_PAGE)
+		return cls(style=discord.ButtonStyle.gray, label='Back', custom_id=cls.ID_PREVIOUS_PAGE)
 	
 	@classmethod
 	def next(cls) -> ViewButton:
@@ -308,7 +328,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "Next"
 		- custom_id: :attr:`ViewButton.ID_NEXT_PAGE`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='Next', custom_id=ViewButton.ID_NEXT_PAGE)
+		return cls(style=discord.ButtonStyle.gray, label='Next', custom_id=cls.ID_NEXT_PAGE)
 	
 	@classmethod
 	def go_to_first_page(cls) -> ViewButton:
@@ -320,7 +340,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "First Page"
 		- custom_id: :attr:`ViewButton.ID_GO_TO_FIRST_PAGE`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='First Page', custom_id=ViewButton.ID_GO_TO_FIRST_PAGE)
+		return cls(style=discord.ButtonStyle.gray, label='First Page', custom_id=cls.ID_GO_TO_FIRST_PAGE)
 	
 	@classmethod
 	def go_to_last_page(cls) -> ViewButton:
@@ -332,7 +352,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "Last Page"
 		- custom_id: :attr:`ViewButton.ID_GO_TO_LAST_PAGE`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='Last Page', custom_id=ViewButton.ID_GO_TO_LAST_PAGE)
+		return cls(style=discord.ButtonStyle.gray, label='Last Page', custom_id=cls.ID_GO_TO_LAST_PAGE)
 	
 	@classmethod
 	def go_to_page(cls) -> ViewButton:
@@ -344,7 +364,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "Page Selection"
 		- custom_id: :attr:`ViewButton.ID_GO_TO_PAGE`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='Page Selection', custom_id=ViewButton.ID_GO_TO_PAGE)
+		return cls(style=discord.ButtonStyle.gray, label='Page Selection', custom_id=cls.ID_GO_TO_PAGE)
 	
 	@classmethod
 	def end_session(cls) -> ViewButton:
@@ -356,53 +376,111 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		- label: "Close"
 		- custom_id: :attr:`ViewButton.ID_END_SESSION`
 		"""
-		return cls(style=discord.ButtonStyle.gray, label='Close', custom_id=ViewButton.ID_END_SESSION)
+		return cls(style=discord.ButtonStyle.gray, label='Close', custom_id=cls.ID_END_SESSION)
 	
 	@classmethod
 	def all(cls) -> List[ViewButton]:
 		"""|class method|
 		
-		A factory method that returns a `list` of all base navigation buttons. Base navigation buttons are :class:`ViewButton` with the `custom_id`:
+		A factory method that returns a list of all base navigation buttons. The following buttons are returned with pre-set values:
 		
-		- :attr:`ViewButton.ID_GO_TO_FIRST_PAGE`
-		- :attr:`ViewButton.ID_PREVIOUS_PAGE`
-		- :attr:`ViewButton.ID_NEXT_PAGE`
-		- :attr:`ViewButton.ID_GO_TO_LAST_PAGE`
-		- :attr:`ViewButton.ID_GO_TO_PAGE`
-		- :attr:`ViewButton.ID_END_SESSION`
+		- Button 1
+			- style: `discord.ButtonStyle.gray`
+			- label: "First Page"
+			- custom_id: :attr:`ViewButton.ID_GO_TO_FIRST_PAGE`
+		- Button 2
+			- style: `discord.ButtonStyle.gray`
+			- label: "Back"
+			- custom_id: :attr:`ViewButton.ID_PREVIOUS_PAGE`
+		- Button 3
+			- style: `discord.ButtonStyle.gray`
+			- label: "Next"
+			- custom_id: :attr:`ViewButton.ID_NEXT_PAGE`
+		- Button 4
+			- style: `discord.ButtonStyle.gray`
+			- label: "Last Page"
+			- custom_id: :attr:`ViewButton.ID_GO_TO_LAST_PAGE`
+		- Button 5
+			- style: `discord.ButtonStyle.gray`
+			- label: "Page Selection"
+			- custom_id: :attr:`ViewButton.ID_GO_TO_PAGE`
+		- Button 6
+			- style: `discord.ButtonStyle.gray`
+			- label: "Close"
+			- custom_id: :attr:`ViewButton.ID_END_SESSION`
 
 		They are returned in that order
+		
+		Returns
+		-------
+		List[:class:`ViewButton`]
 		"""
 		return [cls.go_to_first_page(), cls.back(), cls.next(), cls.go_to_last_page(), cls.go_to_page(), cls.end_session()]
-
-class ButtonType:
-	"""A helper class for :class:`ReactionMenu`. Determines the generic action a button can perform."""
-	NEXT_PAGE: Final[int] = 0
-	PREVIOUS_PAGE: Final[int] = 1
-	GO_TO_FIRST_PAGE: Final[int] = 2
-	GO_TO_LAST_PAGE: Final[int] = 3
-	GO_TO_PAGE: Final[int] = 4
-	END_SESSION: Final[int] = 5
-	CUSTOM_EMBED: Final[int] = 6
-	CALLER: Final[int] = 7
-	SKIP: Final[int] = 8
-
+	
 	@classmethod
-	def _get_buttontype_name_from_type(cls, type_: int) -> str:
-		"""|class method| Used to determine the `linked_to` type. Returns the :class:`str` representation of that type"""
-		BASE = 'ButtonType.'
-		dict_ = {
-			cls.NEXT_PAGE : BASE + 'NEXT_PAGE',
-			cls.PREVIOUS_PAGE : BASE + 'PREVIOUS_PAGE',
-			cls.GO_TO_FIRST_PAGE : BASE + 'GO_TO_FIRST_PAGE',
-			cls.GO_TO_LAST_PAGE : BASE + 'GO_TO_LAST_PAGE',
-			cls.GO_TO_PAGE : BASE + 'GO_TO_PAGE',
-			cls.END_SESSION : BASE + 'END_SESSION',
-			cls.CUSTOM_EMBED : BASE + 'CUSTOM_EMBED',
-			cls.CALLER : BASE + 'CALLER',
-			cls.SKIP : BASE + 'SKIP'
-		}
-		return dict_[type_]
+	def all_with_emojis(cls) -> List[ViewButton]:
+		"""|class method|
+		
+		A factory method that returns a list of all base navigation buttons with emojis assigned instead of labels. The following buttons are returned with pre-set values:
+		
+		- Button 1
+			- style: `discord.ButtonStyle.gray`
+			- emoji: ⏪
+			- custom_id: :attr:`ViewButton.ID_GO_TO_FIRST_PAGE`
+		- Button 2
+			- style: `discord.ButtonStyle.gray`
+			- emoji: ◀️
+			- custom_id: :attr:`ViewButton.ID_PREVIOUS_PAGE`
+		- Button 3
+			- style: `discord.ButtonStyle.gray`
+			- emoji: ▶️
+			- custom_id: :attr:`ViewButton.ID_NEXT_PAGE`
+		- Button 4
+			- style: `discord.ButtonStyle.gray`
+			- emoji: ⏩
+			- custom_id: :attr:`ViewButton.ID_GO_TO_LAST_PAGE`
+		- Button 5
+			- style: `discord.ButtonStyle.gray`
+			- emoji: 🔢
+			- custom_id: :attr:`ViewButton.ID_GO_TO_PAGE`
+		- Button 6
+			- style: `discord.ButtonStyle.gray`
+			- emoji: ⏹️
+			- custom_id: :attr:`ViewButton.ID_END_SESSION`
+
+		They are returned in that order
+		
+		Returns
+		-------
+		List[:class:`ViewButton`]
+
+			.. added:: v3.1.0
+		"""
+		return [
+			cls(style=discord.ButtonStyle.gray, emoji='⏪', custom_id=cls.ID_GO_TO_FIRST_PAGE),
+			cls(style=discord.ButtonStyle.gray, emoji='◀️', custom_id=cls.ID_PREVIOUS_PAGE),
+			cls(style=discord.ButtonStyle.gray, emoji='▶️', custom_id=cls.ID_NEXT_PAGE),
+			cls(style=discord.ButtonStyle.gray, emoji='⏩', custom_id=cls.ID_GO_TO_LAST_PAGE),
+			cls(style=discord.ButtonStyle.gray, emoji='🔢', custom_id=cls.ID_GO_TO_PAGE),
+			cls(style=discord.ButtonStyle.gray, emoji='⏹️', custom_id=cls.ID_END_SESSION)
+		]
+
+class ButtonType(Enum):
+	"""A helper class for :class:`ReactionMenu`. Determines the generic action a button can perform."""
+	NEXT_PAGE = auto()
+	PREVIOUS_PAGE = auto()
+	GO_TO_FIRST_PAGE = auto()
+	GO_TO_LAST_PAGE = auto()
+	GO_TO_PAGE = auto()
+	END_SESSION = auto()
+	CUSTOM_EMBED = auto()
+	CALLER = auto()
+	SKIP = auto()
+
+	@staticmethod
+	def _get_buttontype_name_from_type(type_: ButtonType) -> str:
+		"""|static method| Used to determine the `linked_to` type. Returns the full :class:`str` representation of that type"""
+		return f'{type_.__class__.__name__}.{type_.name}'
 
 class ReactionButton(_BaseButton):
 	"""A helper class for :class:`ReactionMenu`. Represents a reaction.
@@ -418,7 +496,7 @@ class ReactionButton(_BaseButton):
 	Kwargs
 	------
 	embed: :class:`discord.Embed`
-		Only used when :param:`linked_to` is set as :attr:`ReactionButton.Type.CUSTOM_EMBED`. This is the embed that can be selected seperately from the menu (`TypeEmbed` menu's only)
+		Only used when :param:`linked_to` is set as :attr:`ReactionButton.Type.CUSTOM_EMBED`. This is the embed that can be selected separately from the menu (`TypeEmbed` menu's only)
 
 	name: :class:`str`
 		An optional name for the button. Can be set to retrieve it later via :meth:`ReactionMenu.get_button()`
@@ -433,18 +511,18 @@ class ReactionButton(_BaseButton):
 		Set the action and the amount of pages to skip when using a `linked_to` of `ReactionButton.Type.SKIP`
 	"""
 
-	Type: Final[ButtonType] = ButtonType
+	Type = ButtonType
 
 	def __init__(self, *, emoji: str, linked_to: ReactionButton.Type, **kwargs):
-		super().__init__(name=kwargs.get('name'), event=kwargs.get('event'), skip=kwargs.get('skip'))
+		super().__init__(name=kwargs.get('name'), event=kwargs.get('event'), skip=kwargs.get('skip')) # type: ignore
 		self.emoji = str(emoji)
 		self.linked_to = linked_to
 		
-		self.custom_embed: discord.Embed = kwargs.get('embed')
-		self.details: NamedTuple = kwargs.get('details')
+		self.custom_embed: Optional[discord.Embed] = kwargs.get('embed')
+		self.details: Optional[Details] = kwargs.get('details')
 		
 		# abc
-		self._menu: ReactionMenu = None
+		self._menu: Optional[ReactionMenu] = None
 	
 	def __str__(self):
 		return self.emoji
@@ -453,17 +531,17 @@ class ReactionButton(_BaseButton):
 		return f'<ReactionButton emoji={self.emoji!r} linked_to={ButtonType._get_buttontype_name_from_type(self.linked_to)} total_clicks={self.total_clicks} name={self.name!r}>'
 	
 	@property
-	def menu(self) -> ReactionMenu:
+	def menu(self) -> Optional[ReactionMenu]:
 		"""
 		Returns
 		-------
-		:class:`ReactionMenu`: The menu the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
+		Optional[:class:`ReactionMenu`]: The menu the button is currently operating under. Can be :class:`None` if the button is not registered to a menu
 		"""
 		return self._menu
 	
-	@classmethod
-	def set_caller_details(cls, func: Callable[..., None], *args, **kwargs) -> NamedTuple:
-		"""|class method|
+	@staticmethod
+	def set_caller_details(func: Callable[..., None], *args, **kwargs) -> Details:
+		"""|static method|
 		
 		Set the parameters for the function you set for a :class:`ReactionButton` with a `linked_to` of :attr:`ReactionButton.Type.CALLER`
 
@@ -472,29 +550,28 @@ class ReactionButton(_BaseButton):
 		func: Callable[..., :class:`None`]
 			The function object that will be called when the associated button is pressed
 		
-		*args: :class:`Any`
+		*args: `Any`
 			An argument list that represents the parameters of that function
 		
-		**kwargs: :class:`Any`
+		**kwargs: `Any`
 			An argument list that represents the kwarg parameters of that function
 		
 		Returns
 		-------
-		:class:`NamedTuple`: The values needed to internally call the function you have set
+		:class:`Details`: The :class:`NamedTuple` containing the values needed to internally call the function you have set
 		
 		Raises
 		------
 		- `IncorrectType`: Parameter "func" was not a callable object
 		"""
 		if callable(func):
-			Details = namedtuple('Details', ['func', 'args', 'kwargs'])
 			func = func.callback if isinstance(func, Command) else func
 			return Details(func=func, args=args, kwargs=kwargs)
 		else:
 			raise IncorrectType('Parameter "func" must be callable')
 	
 	@classmethod
-	def skip(cls, emoji: str, action: str, amount: int) -> ReactionButton:
+	def generate_skip(cls, emoji: str, action: str, amount: int) -> ReactionButton:
 		"""|class method|
 		
 		A factory method that returns a :class:`ReactionButton` with the following parameters set:
@@ -503,7 +580,7 @@ class ReactionButton(_BaseButton):
 		- linked_to: :attr:`ReactionButton.Type.SKIP`
 		- skip: `ReactionButton.Skip(<action>, <amount>)`
 		"""
-		return cls(emoji=emoji, linked_to=cls.Type.SKIP, skip=_BaseButton.Skip(action, amount))
+		return cls(emoji=emoji, linked_to=cls.Type.SKIP, skip=cls.Skip(action, amount))
 	
 	@classmethod
 	def back(cls) -> ReactionButton:

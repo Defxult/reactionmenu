@@ -20,6 +20,8 @@ tags = [
     'buttons menu',
     'discord',
     'discord.py',
+    'discord.py 2.0',
+    'd.py',
     'components',
     'components paginator',
     'components menu',
@@ -40,11 +42,11 @@ tags = [
     'embed paginator',
     'interactions',
     'interactions menu',
+    'interactions paginator',
+    'menus',
     'paginator',
     'pagination',
     'pagination menu',
-    'pycord',
-    'py-cord',
     'reaction menu'
 ]
 
@@ -55,8 +57,8 @@ details = {
 setup(
     author='Defxult#8269',
     name='reactionmenu',
-    version='3.0.2',
-    description='A library to create a discord paginator. Supports pagination with Discords Buttons feature and reactions.',
+    version='3.1.0b4',
+    description='A library to create a discord.py 2.0+ paginator. Supports pagination with buttons, reactions, and category selection using selects.',
     url='https://github.com/Defxult/reactionmenu',
     project_urls=details,
     classifiers=classifiers,
@@ -65,5 +67,5 @@ setup(
     license='MIT',
     keywords=tags,
     packages=find_packages()
-    #! for release, install requires needs to be here
+    #! install_requires=['discord.py>=2.0.0']
 )

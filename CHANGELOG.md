@@ -1,4 +1,67 @@
+## v3.1.0 » Future Release
+
+#### Breaking Changes
+* **This library is no longer dependent on Pycord. It has changed back to discord.py**
+* Parameter `ctx` has been changed to `method` for `ReactionMenu` & `ViewMenu` constructor and is now positional only
+* Parameter `menu_type` for `ReactionMenu` & `ViewMenu` constructor is now keyword only
+* The auto-paginate feature for `ReactionMenu` has been removed
+* The `Page` class has been added. Represents each "page" added via `.add_page()`/`.add_pages()`
+* Using `.last_viewed` now returns a `Page`. `.pages` now returns a `List[Page]`
+* Class methods `ViewButton.skip()` & `ReactionButton.skip()` has been renamed to `.generate_skip()`
+* The default behavior for the below methods have changed. Previously, using the below methods would return/stop menu's for both `ReactionMenu` & `ViewMenu`. With this update, each method by default now returns or stops menu's according to whichever class the method was invoked from. For example, `ViewMenu.stop_all_sessions()` only stops all `ViewMenu` sessions instead of all `ReactionMenu` sessions as well as `ViewMenu` sessions. 
+  * `.get_all_dm_sessions()`
+  * `.get_all_sessions()`
+  * `.get_session(name: str)`
+  * `.stop_all_sessions()`
+  * `.stop_session(name: str, include_all=False)`
+  * `.get_sessions_count()`
+  * With this change, methods `.split_sessions()` & `.stop_only()` have been removed
+* With the addition of selects in `ViewMenu`, method `.refresh_menu_buttons()` has been renamed to `.refresh_menu_items()`
+* Parameters `remove_buttons` and `disable_buttons` have been removed from method `ViewMenu.stop()`. With the addition of selects, the following new parameters will now take their place
+  * `remove_items`
+  * `disable_items`
+* The following attributes have been renamed in the `ViewMenu` class
+  * `disable_buttons_on_timeout` → `disable_items_on_timeout`
+  * `remove_buttons_on_timeout` → `remove_items_on_timeout`
+#### Bug Fixes
+* Fixed an issue where `ViewButton` link buttons would be removed even after setting it as persistent
+#### New Features
+##### ReactionMenu & ViewMenu
+* Pagination is no longer limited to just embeds or text. The normal embed menu can now paginate with embeds, text, as well as files. With this, method `.add_page()` has two new parameters
+  * Old: `.add_page(embed)`
+  * New: `.add_page(embed=MISSING, content=None, files=MISSING)`
+* Added class method `quick_start()`. Start a menu with it's default settings only adding the pages
+* Added property `menu_type`. Displays the menu type that was set in the constructor
+* Added method `.randomize_embed_colors()`. Selects a random color for all embeds added to the menu
+* Added method `.version_info()`. A simple shortcut to function `reactionmenu.version_info()`
+* Added the ability to set the separator between the page director and embed footer text via the `separator` parameter
+  * `.set_page_director_style(..., separator=DEFAULT)`
+##### ViewMenu Only
+* Added the ability to use a select to go to a page instead of using text input
+* Added the `persist` kwarg to `ViewButton`. This prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
+* Added class `ViewSelect`. Used to [choose categories](https://github.com/Defxult/reactionmenu/tree/discord.py-2.0-support#using-selects) in the menu.  With the addition of selects, the following methods have been added
+  * `.add_select(select: ViewSelect)`
+  * `.remove_select(select: ViewSelect)`
+  * `.remove_all_selects()`
+  * `.disable_select(select: ViewSelect)`
+  * `.disable_all_selects()`
+  * `.enable_select(select: ViewSelect)`
+  * `.enable_all_selects()`
+  * `.get_select(title: Union[str, None])`
+  * `.set_select_option_relay(func: Callable[[NamedTuple], None], *, only: Optional[Sequence[str]]=None)`
+  * `.remove_select_option_relay()`
+* Added property `.selects`. Returns all `ViewSelect` associated with the menu
+
+#### Miscellaneous
+* Added exception `SelectNotFound`
+* The `Page` class has been added to `__init__` and is now available for use
+
+
+
 ## v3.0.2 » GitHub Only
+<details>
+  <summary>Click to display changelog</summary>
+ 
 #### New Features
 ##### ReactionMenu & ViewMenu
 * Added class method `quick_start()`. Start a menu with it's default settings only adding the pages
@@ -17,6 +80,7 @@
   * `.get_sessions_count(fixed=True)`
   
   With this change, method `.stop_only()` is now deprecated
+ </details>
 
 
 ## v3.0.1 » Feb. 02, 2022

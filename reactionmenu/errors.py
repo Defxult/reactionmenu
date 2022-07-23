@@ -87,3 +87,10 @@ class MenuAlreadyRunning(MenuException):
 class ButtonNotFound(MenuException):
 	"""Raised when :meth:`.remove_button()` did not find any matching buttons"""
 	pass
+
+class SelectNotFound(MenuException):
+	"""Raised when :meth:`.remove_select()` did not find any matching selects
+	
+		.. added:: v3.1.0
+	"""
+	pass
