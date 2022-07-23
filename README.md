@@ -9,12 +9,20 @@
 </div>
 
 ## reactionmenu v3.1.0
-This branch is in development to support the release of discord.py 2.0 and is now available for testing. If you discover any issues/bugs, please feel free to comment/report it in any of the [reactionmenu discussions](https://github.com/Defxult/reactionmenu/discussions/categories/reactionmenu-v3-1-0-testing) that are available.
+To support the release of discord.py 2.0, 3.1.0 is now available for testing. If you discover any issues/bugs, please feel free to comment/report it in any of the [reactionmenu discussions](https://github.com/Defxult/reactionmenu/discussions/categories/reactionmenu-v3-1-0-testing) that are available.
 
-Thank you!
+
+*- Note -*
+
+With the amount of libraries that are now available for the Discord API resulting from the original end of development of discord.py, this library will not support multiple libraries (pycord, nextcord, etc.). It will only be supporting discord.py. I understand that this will be frustrating for users that were using this library with pycord. 
+
+This library was originally designed with discord.py, but because of the sudden end of development, I wanted this library to continue. So I had to make a sudden switch to a different library. I vast majority of the people using this library were using discord.py, so I figured it would be best to go back to discord.py now that it has continued development.
+
+If you will not be making the switch to discord.py and continuing to use reactionmenu, I just wanted to say thank you for choosing my library! 120K+ downloads! Wow! Never thought I'd see the day. I appreciate everyone who have used/is using reactionmenu.
+
 ## How to install
 ```
-$ pip install git+https://github.com/Defxult/reactionmenu@discord.py-2.0-support
+$ pip install git+https://github.com/Defxult/reactionmenu
 ```
 
 ## Intents
