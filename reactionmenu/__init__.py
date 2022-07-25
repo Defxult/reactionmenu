@@ -16,16 +16,21 @@ from .abc import Page
 
 
 def version_info():
-    """Shows the current version, release type, and patch of the library
+    """Shows the current version of the library
 
-    - `version` Current version of the library
-    - `releasetype` Either "final" (the PyPI version) or "pre-release" (the GitHub version)
-    
     >>> print(reactionmenu.version_info())
     """
-    from collections import namedtuple
-    VersionInfo = namedtuple('VersionInfo', ['version', 'releasetype'])
-    return VersionInfo(version='3.1.0b5', releasetype='pre-release')
+    from typing import NamedTuple, Literal
+    class VersionInfo(NamedTuple):
+        major: int
+        minor: int
+        patch: int
+        releaseLevel: Literal['alpha', 'beta', 'candidate', 'final']
+        
+        def __str__(self) -> str:
+            return f'{self.major}.{self.minor}.{self.patch}' + 'b5'
+
+    return VersionInfo(major=3, minor=1, patch=0, releaseLevel='beta')
 
 __source__ = 'https://github.com/Defxult/reactionmenu'
 __all__ = (
