@@ -16,9 +16,9 @@ To support the release of discord.py 2.0, 3.1.0 is now available for testing. If
 
 With the amount of libraries that are now available for the Discord API resulting from the original end of development of discord.py, this library will not support multiple libraries (pycord, nextcord, etc.). It will only be supporting discord.py. I understand that this will be frustrating for users that were using this library with pycord. 
 
-This library was originally designed with discord.py, but because of the sudden end of development, I wanted this library to continue. So I had to make a sudden switch to a different library. I vast majority of the people using this library were using discord.py, so I figured it would be best to go back to discord.py now that it has continued development.
+This library was originally designed with discord.py, but because of the sudden end of development, I wanted this library to continue. So I had to make a sudden switch to a different library. A vast majority of the people using this library were using discord.py, so I figured it would be best to go back to discord.py now that it has continued development.
 
-If you will not be making the switch to discord.py and continuing to use reactionmenu, I just wanted to say thank you for choosing my library! 120K+ downloads! Wow! Never thought I'd see the day. I appreciate everyone who have used/is using reactionmenu.
+If you will not be making the switch to discord.py and continuing to use reactionmenu, I just want to say thank you for choosing my library! 120K+ downloads! Wow! Never thought I'd see the day. I appreciate everyone who have used/is using reactionmenu.
 
 ## How to install
 ```
