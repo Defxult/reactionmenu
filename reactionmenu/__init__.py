@@ -25,7 +25,7 @@ def version_info():
         major: int
         minor: int
         patch: int
-        releaseLevel: Literal['alpha', 'beta', 'candidate', 'final']
+        releaseLevel: Literal['alpha', 'beta', 'rc', 'final']
         
         @property
         def _version(self) -> str:
