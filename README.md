@@ -949,6 +949,11 @@ await menu.start(send_to=1234567890123456)
 # channel object
 channel = guild.get_channel(1234567890123456)
 await menu.start(send_to=channel)
+
+# there's no need to specify send_to unless you want the menu to be sent to a different channel
+# from the one you're sending the initial message/using the command in. the menu can be started
+# in the current channel by omitting the send_to parameter
+await menu.start()
 ```
 > **NOTE:** `send_to` is not valid if a menu was started in DM's
 
