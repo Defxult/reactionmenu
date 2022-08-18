@@ -2,7 +2,7 @@
 reactionmenu • discord pagination
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A library to create a discord paginator. Supports pagination with Discords Buttons feature and reactions.
+A library to create a discord.py 2.0+ paginator. Supports pagination with buttons, reactions, and category selection using selects.
 
 :copyright: (c) 2021-present Defxult#8269
 :license: MIT
@@ -36,6 +36,7 @@ def version_info():
     return VersionInfo(major=3, minor=1, patch=0, releaseLevel='rc', serial=2)
 
 __source__ = 'https://github.com/Defxult/reactionmenu'
+__version__ = version_info()._version
 __all__ = (
     'ReactionMenu',
     'ReactionButton',
