@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-from typing import TYPE_CHECKING, ClassVar, List, Optional, Sequence, Union
+from typing import TYPE_CHECKING, ClassVar, List, Optional, Sequence, Union, overload
 
 import discord
 from discord.ext.commands import Context
@@ -611,6 +611,26 @@ class ReactionMenu(_BaseMenu):
 			"files" : self._pages[0].files if self._pages else discord.utils.MISSING,
 			"allowed_mentions" : self.allowed_mentions
 		}
+	
+	@overload
+	async def start(self, *, send_to: Optional[str]=None, reply: bool=False) -> None:
+		...
+	
+	@overload
+	async def start(self, *, send_to: Optional[int]=None, reply: bool=False) -> None:
+		...
+	
+	@overload
+	async def start(self, *, send_to: Optional[discord.TextChannel]=None, reply: bool=False) -> None:
+		...
+	
+	@overload
+	async def start(self, *, send_to: Optional[discord.VoiceChannel]=None, reply: bool=False) -> None:
+		...
+	
+	@overload
+	async def start(self, *, send_to: Optional[discord.Thread]=None, reply: bool=False) -> None:
+		...
 	
 	@ensure_not_primed
 	async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel, discord.Thread]]=None, reply: bool=False) -> None:

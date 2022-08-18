@@ -39,7 +39,8 @@ from typing import (
     NoReturn,
     Optional,
     Sequence,
-    Union
+    Union,
+    overload
 )
 
 if TYPE_CHECKING:
@@ -1304,6 +1305,26 @@ class ViewMenu(_BaseMenu):
                 for pages in vm_select._view_select_options.values():
                     self._refresh_page_director_info(menu_type, pages)
 
+    @overload
+    async def start(self, *, send_to: Optional[str]=None) -> None:
+        ...
+    
+    @overload
+    async def start(self, *, send_to: Optional[int]=None) -> None:
+        ...
+    
+    @overload
+    async def start(self, *, send_to: Optional[discord.TextChannel]=None) -> None:
+        ...
+    
+    @overload
+    async def start(self, *, send_to: Optional[discord.VoiceChannel]=None) -> None:
+        ...
+    
+    @overload
+    async def start(self, *, send_to: Optional[discord.Thread]=None) -> None:
+        ...
+    
     @ensure_not_primed
     async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel, discord.Thread]]=None, reply: bool=False) -> None:
         """|coro|
