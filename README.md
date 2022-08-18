@@ -14,11 +14,9 @@ To support the release of discord.py 2.0, 3.1.0 is now available for testing. If
 
 *- Note -*
 
-With the amount of libraries that are now available for the Discord API resulting from the original end of development of discord.py, this library will not support multiple libraries (pycord, nextcord, etc.). It will only be supporting discord.py. I understand that this will be frustrating for users that were using this library with pycord. 
+As of today (8/18/2022), discord.py 2.0 has officially been released to PyPI. This means the release of reactionmenu 3.1.0 will be released to PyPI very soon as well. For the next week or so, reactionmenu 3.1.0 has moved out of the beta stage and into release candidate just to give myself and others using my library to find any bugs that needs to be ironed out before release. 
 
-This library was originally designed with discord.py, but because of the sudden end of development, I wanted this library to continue. So I had to make a sudden switch to a different library. A vast majority of the people using this library were using discord.py, so I figured it would be best to go back to discord.py now that it has continued development.
-
-If you will not be making the switch to discord.py and continuing to use reactionmenu, I just want to say thank you for choosing my library! 120K+ downloads! Wow! Never thought I'd see the day. I appreciate everyone who have used/is using reactionmenu.
+If you're using reactionmenu 3.1.0rc-1 or higher and find any bugs, please report it in the reactionmeu discussions link above. Thank you.
 
 ## How to install
 ```
