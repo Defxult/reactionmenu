@@ -25,13 +25,15 @@ def version_info():
         major: int
         minor: int
         patch: int
-        releaseLevel: Literal['alpha', 'beta', 'candidate', 'final']
+        releaseLevel: Literal['alpha', 'beta', 'rc', 'final']
+        serial: int
         
         @property
         def _version(self) -> str:
-            return f'{self.major}.{self.minor}.{self.patch}' + 'b5'
+            base = f'{self.major}.{self.minor}.{self.patch}'
+            return base if self.releaseLevel == 'final' else base + f'{self.releaseLevel}-{self.serial}'
 
-    return VersionInfo(major=3, minor=1, patch=0, releaseLevel='beta')
+    return VersionInfo(major=3, minor=1, patch=0, releaseLevel='rc', serial=1)
 
 __source__ = 'https://github.com/Defxult/reactionmenu'
 __all__ = (

@@ -51,7 +51,7 @@ import re
 import warnings
 from collections.abc import Sequence
 from enum import Enum, auto
-from typing import NamedTuple
+from typing import NamedTuple, Union
 
 import discord
 from discord.ext.commands import Context
@@ -293,7 +293,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         self._method = method
         self._menu_type = menu_type
 
-        self._msg: discord.Message # initialized in child classes
+        self._msg: Union[discord.Message, discord.InteractionMessage] # initialized in child classes
         self._pc:_PageController # initialized in child classes
         self._is_running = False
         self._stop_initiated = False
@@ -1005,7 +1005,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         
         elif isinstance(self._method, discord.Interaction):
             await self._method.response.send_message(**menu_payload)
-            self._msg = await self._method.original_message()
+            self._msg = await self._method.original_response()
 
     def randomize_embed_colors(self) -> None:
         """Randomize the color of all the embeds that have been added to the menu
