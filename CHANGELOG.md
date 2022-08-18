@@ -7,7 +7,7 @@
 * The auto-paginate feature for `ReactionMenu` has been removed
 * The `Page` class has been added. Represents each "page" added via `.add_page()`/`.add_pages()`
 * Using `.last_viewed` now returns a `Page`. `.pages` now returns a `List[Page]`
-* Class methods `ViewButton.skip()` & `ReactionButton.skip()` has been renamed to `.generate_skip()`
+* Class methods `ViewButton.skip()` & `ReactionButton.skip()` has been renamed to `.generate_skip()` because of an earlier name conflict.
 * The default behavior for the below methods have changed. Previously, using the below methods would return/stop menu's for both `ReactionMenu` & `ViewMenu`. With this update, each method by default now returns or stops menu's according to whichever class the method was invoked from. For example, `ViewMenu.stop_all_sessions()` only stops all `ViewMenu` sessions instead of all `ReactionMenu` sessions as well as `ViewMenu` sessions. 
   * `.get_all_dm_sessions()`
   * `.get_all_sessions()`
