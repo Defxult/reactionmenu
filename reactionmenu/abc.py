@@ -1006,6 +1006,9 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         elif isinstance(self._method, discord.Interaction):
             await self._method.response.send_message(**menu_payload)
             self._msg = await self._method.original_response()
+        
+        else:
+            raise IncorrectType('Parameter "method" was not of the correct type')
 
     def randomize_embed_colors(self) -> None:
         """Randomize the color of all the embeds that have been added to the menu
