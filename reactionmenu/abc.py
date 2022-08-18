@@ -950,7 +950,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             'mention_author' : self.allowed_mentions.replied_user
         }
     
-    async def _handle_send_to(self, send_to: Union[str, int, discord.TextChannel, discord.Thread, None], menu_payload: dict) -> None:
+    async def _handle_send_to(self, send_to: Union[str, int, discord.TextChannel, discord.VoiceChannel, discord.Thread, None], menu_payload: dict) -> None:
         """|coro| For the :param:`send_to` kwarg in :meth:`Menu.start()`. Determine what channel the menu should start in"""
         if isinstance(self._method, Context):
 
@@ -964,11 +964,11 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 if send_to is None:
                     await register_message(self._method.channel)
                 else:
-                    if not isinstance(send_to, (str, int, discord.TextChannel, discord.Thread)):
-                        raise IncorrectType(f'Parameter "send_to" expected str, int, discord.TextChannel, or discord.Thread, got {send_to.__class__.__name__}')
+                    if not isinstance(send_to, (str, int, discord.TextChannel, discord.VoiceChannel, discord.Thread)):
+                        raise IncorrectType(f'Parameter "send_to" expected str, int, discord.TextChannel, discord.VoiceChannel, or discord.Thread, got {send_to.__class__.__name__}')
                     else:
-                        class_name = self.__class__.__name__
-                        all_messageable_channels: List[discord.TextChannel] = self._method.guild.text_channels + self._method.guild.threads # type: ignore
+                        class_name = self.__class__.__name__                    # converted to list because its a sequence proxy
+                        all_messageable_channels = self._method.guild.text_channels + list(self._method.guild.threads) + self._method.guild.voice_channels # type: ignore
                         
                         # before we continue, check if there are any duplicate named text channels or threads/no matching names found if a str was provided
                         if isinstance(send_to, str):
@@ -989,13 +989,9 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                                 if channel.id == send_to:
                                     await register_message(channel)
                                     break
-
-                            elif isinstance(send_to, discord.TextChannel):
-                                if channel == send_to:
-                                    await register_message(channel)
-                                    break
                             
-                            elif isinstance(send_to, discord.Thread):
+                            # it should be a discord.TextChannel, discord.VoiceChannel, or discord.Thread
+                            else:
                                 if channel == send_to:
                                     await register_message(channel)
                                     break

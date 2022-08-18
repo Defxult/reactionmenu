@@ -36,6 +36,7 @@
 * Added method `.version_info()`. A simple shortcut to function `reactionmenu.version_info()`
 * Added the ability to set the separator between the page director and embed footer text via the `separator` parameter
   * `.set_page_director_style(..., separator=DEFAULT)`
+* Added support for voice channels to be utilized via the `send_to` parameter in the `.start()` method.
 ##### ViewMenu Only
 * Added the ability to use a select to go to a page instead of using text input
 * Added the `persist` kwarg to `ViewButton`. This prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable

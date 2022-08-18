@@ -633,14 +633,14 @@ class ReactionMenu(_BaseMenu):
 		...
 	
 	@ensure_not_primed
-	async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel, discord.Thread]]=None, reply: bool=False) -> None:
+	async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel, discord.VoiceChannel, discord.Thread]]=None, reply: bool=False) -> None:
 		"""|coro|
 		
 		Start the menu
 
 		Parameters
 		----------
-		send_to: Optional[Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`, :class:`discord.Thread`]]
+		send_to: Optional[Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`, :class:`discord.VoiceChannel`, :class:`discord.Thread`]]
 			The channel/thread you'd like the menu to start in. Use the channel/threads name, ID, or it's object. Please note that if you intend to use a channel/thread object, using
 			method :meth:`discord.Client.get_channel()` (or any other related methods), that channel should be in the same list as if you were to use `ctx.guild.text_channels`
 			or `ctx.guild.threads`. This only works on a context guild channel basis. That means a menu instance cannot be created in one guild and the menu itself (:param:`send_to`)
