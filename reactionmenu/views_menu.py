@@ -1326,7 +1326,6 @@ class ViewMenu(_BaseMenu):
         ...
     
     @ensure_not_primed
-    async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel, discord.Thread]]=None, reply: bool=False) -> None:
         """|coro|
         
         Start the menu
@@ -1340,9 +1339,6 @@ class ViewMenu(_BaseMenu):
 			be sent to another. Whichever guild context the menu was instantiated in, the channels/threads of that guild are the only options for :param:`send_to`
 
             Note: This parameter is not available if your `method` is a :class:`discord.Interaction`, aka a slash command
-        
-        reply: :class:`bool`
-			Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True`
         
         Raises
         ------
@@ -1369,11 +1365,11 @@ class ViewMenu(_BaseMenu):
         if not self.__buttons: raise NoButtons
         if self._menu_type not in ViewMenu._all_menu_types(): raise ViewMenuException('ViewMenu menu_type not recognized')
 
-        reply_kwargs = self._handle_reply_kwargs(send_to, reply)
+        # reply_kwargs = self._handle_reply_kwargs(send_to, reply)
         menu_payload = self.__generate_viewmenu_payload()
         
-        if isinstance(self._method, Context):
-            menu_payload.update(reply_kwargs)
+        # if isinstance(self._method, Context):
+        #     menu_payload.update(reply_kwargs)
 
         # add page (normal menu)
         if self._menu_type == ViewMenu.TypeEmbed:
