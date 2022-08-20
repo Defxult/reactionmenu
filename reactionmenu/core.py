@@ -180,7 +180,7 @@ class ReactionMenu(_BaseMenu):
 			.. added v3.1.0
 		"""
 		menu = cls(method, menu_type=cls._quick_check(pages))
-		menu.add_pages(pages)
+		menu.add_pages(pages) # type: ignore
 		menu.add_buttons(ReactionButton.all() if not buttons else buttons)
 		await menu.start()
 		return menu
@@ -238,6 +238,14 @@ class ReactionMenu(_BaseMenu):
 			self._is_running = False # already set in :meth:`.stop()`, but just in case this was reached without that method being called
 			if self in ReactionMenu._active_sessions:
 				ReactionMenu._active_sessions.remove(self)
+	
+	@overload
+	def get_button(self, identity: str, *, search_by: str='name') -> List[ReactionButton]:
+		...
+	
+	@overload
+	def get_button(self, identity: int, *, search_by: str='name') -> List[ReactionButton]:
+		...
 	
 	def get_button(self, identity: Union[str, int], *, search_by: str='name') -> List[ReactionButton]:
 		"""Get a button that has been registered to the menu by name, emoji, or type

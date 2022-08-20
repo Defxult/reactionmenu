@@ -39,6 +39,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union
+    overload
 )
 
 if TYPE_CHECKING:
@@ -1314,6 +1315,14 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         else:
             raise MenuSettingsMismatch('add_page method cannot be used with the current menu_type')
     
+    @overload
+    def add_pages(self, pages: Sequence[discord.Embed]) -> None:
+        ...
+    
+    @overload
+    def add_pages(self, pages: Sequence[str]) -> None:
+        ...
+
     @ensure_not_primed
     def add_pages(self, pages: Sequence[Union[discord.Embed, str]]) -> None:
         """Add multiple pages to the menu at once

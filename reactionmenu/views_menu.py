@@ -376,7 +376,7 @@ class ViewMenu(_BaseMenu):
             .. added v3.1.0
         """
         menu = cls(method, menu_type=cls._quick_check(pages))
-        menu.add_pages(pages)
+        menu.add_pages(pages) # type: ignore
         menu.add_buttons(ViewButton.all() if buttons is DEFAULT_BUTTONS else buttons) # type: ignore
         await menu.start()
         return menu
@@ -606,6 +606,14 @@ class ViewMenu(_BaseMenu):
         """
         for select in self.__selects:
             self.enable_select(select)
+    
+    @overload
+    def get_select(self, title: str) -> List[ViewSelect]:
+        ...
+    
+    @overload
+    def get_select(self, title: None) -> List[ViewSelect]:
+        ...
     
     def get_select(self, title: Union[str, None]) -> List[ViewSelect]:
         """Get a select by it's title (category name) that has been registered to the menu
