@@ -38,7 +38,7 @@ from typing import (
     Set,
     Tuple,
     TypeVar,
-    Union
+    Union,
     overload
 )
 
@@ -688,11 +688,11 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         return self._pages.copy() if self._pages else None # Return a copy so the core list of pages cannot be manipulated
 
     @property
-    def message(self) -> Optional[discord.Message]:
+    def message(self) -> Optional[Union[discord.Message, discord.InteractionMessage]]:
         """
         Returns
         -------
-        Optional[:class:`discord.Message`]: The menu's message object. Can be :class:`None` if the menu has not been started
+        Optional[Union[:class:`discord.Message`, :class:`discord.InteractionMessage`]]: The menu's message object. Can be :class:`None` if the menu has not been started
         """
         return self._msg
     
