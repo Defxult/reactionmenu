@@ -59,7 +59,6 @@
 #### Miscellaneous
 * Added exception `SelectNotFound`
 * The `Page` class has been added to `__init__` and is now available for use
-* Removed the redundant `reply` parameter in `ViewMenu.start()`
 * If the `method` parameter in either the `ReactionMenu` or `ViewMenu` constructor is of the wrong type, `IncorrectType` is now raised
 
 
