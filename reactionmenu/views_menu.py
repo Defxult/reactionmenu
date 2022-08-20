@@ -35,6 +35,7 @@ from typing import (
     Dict,
     Final,
     List,
+    Literal,
     NamedTuple,
     NoReturn,
     Optional,
@@ -401,7 +402,7 @@ class ViewMenu(_BaseMenu):
 
         if self.only_roles:
             for role in self.only_roles:
-                if role in inter.user.roles: # type: ignore / will be :class:`Member`. Interactions cannot be used inside DMs
+                if role in inter.user.roles: # type: ignore / will be :class:`discord.Member`. :attr:`only_roles` will always be `None` because of overridden DM settings so this line will never be reached
                     author_pass = True
                     break
         if self.all_can_click:
@@ -1047,7 +1048,7 @@ class ViewMenu(_BaseMenu):
         for btn in buttons:
             self.add_button(btn)
     
-    def get_button(self, identity: str, *, search_by: str='label') -> List[ViewButton]:
+    def get_button(self, identity: str, *, search_by: Literal['label', 'id', 'name']='label') -> List[ViewButton]:
         """Get a button that has been registered to the menu by it's label, custom_id, or name
         
         Parameters
@@ -1068,7 +1069,7 @@ class ViewMenu(_BaseMenu):
         - `ViewMenuException`: Parameter :param:`search_by` was not "label", "id", or "name"
         """
         identity = str(identity)
-        search_by = str(search_by).lower()
+        search_by = str(search_by).lower() # type: ignore
 
         if search_by == 'label':
             matched_labels: List[ViewButton] = [btn for btn in self.__buttons if btn.label and btn.label == identity]
@@ -1359,7 +1360,7 @@ class ViewMenu(_BaseMenu):
         - `NoButtons`: Attempted to start the menu when no Buttons have been registered
         - `ViewMenuException`: The :class:`ViewMenu`'s `menu_type` was not recognized. There were more than one base navigation buttons. Or a :attr:`ViewButton.ID_CUSTOM_EMBED` button was not correctly formatted
         - `DescriptionOversized`: When using a `menu_type` of :attr:`ViewMenu.TypeEmbedDynamic`, the embed description was over discords size limit
-        - `IncorrectType`: Parameter :param:`send_to` was not :class:`str`, :class:`int`, or :class:`discord.TextChannel`
+        - `IncorrectType`: Parameter :param:`send_to` was not of the expected type
         - `MenuException`: The channel set in :param:`send_to` was not found
         """
         if ViewMenu._sessions_limit_details.set_by_user:

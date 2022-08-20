@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-from typing import TYPE_CHECKING, ClassVar, List, Optional, Sequence, Union, overload
+from typing import TYPE_CHECKING, ClassVar, List, Literal, Optional, Sequence, Union, overload
 
 import discord
 from discord.ext.commands import Context
@@ -240,14 +240,14 @@ class ReactionMenu(_BaseMenu):
 				ReactionMenu._active_sessions.remove(self)
 	
 	@overload
-	def get_button(self, identity: str, *, search_by: str='name') -> List[ReactionButton]:
+	def get_button(self, identity: str, *, search_by: Literal['name', 'emoji', 'type']='name') -> List[ReactionButton]:
 		...
 	
 	@overload
-	def get_button(self, identity: int, *, search_by: str='name') -> List[ReactionButton]:
+	def get_button(self, identity: int, *, search_by: Literal['name', 'emoji', 'type']='name') -> List[ReactionButton]:
 		...
 	
-	def get_button(self, identity: Union[str, int], *, search_by: str='name') -> List[ReactionButton]:
+	def get_button(self, identity: Union[str, int], *, search_by: Literal['name', 'emoji', 'type']='name') -> List[ReactionButton]:
 		"""Get a button that has been registered to the menu by name, emoji, or type
 
 		Parameters
@@ -267,7 +267,7 @@ class ReactionMenu(_BaseMenu):
 		------
 		- `ReactionMenuException`: Parameter :param:`search_by` was not "name", "emoji", or "type"
 		"""
-		search_by = str(search_by).lower()
+		search_by = str(search_by).lower() # type: ignore
 		if search_by in ('name', 'emoji'):
 			identity = str(identity)
 
@@ -396,16 +396,6 @@ class ReactionMenu(_BaseMenu):
 	def __get_custom_embed_buttons(self) -> List[ReactionButton]:
 		"""Gets all custom embed buttons that have been set"""
 		return [btn for btn in self.__buttons if btn.linked_to == ReactionButton.Type.CUSTOM_EMBED]
-	
-	# Not in use
-	# def _get_navigation_buttons(self) -> List[ReactionButton]:
-	# 	return [btn for btn in self.__buttons if btn.linked_to in (
-	# 		ReactionButton.Type.PREVIOUS_PAGE,
-	# 		ReactionButton.Type.NEXT_PAGE,
-	# 		ReactionButton.Type.GO_TO_FIRST_PAGE,
-	# 		ReactionButton.Type.GO_TO_LAST_PAGE,
-	# 		ReactionButton.Type.GO_TO_PAGE
-	# 	)]
 	
 	def __extract_proper_client(self) -> Union[Bot, discord.Client]:
 		"""Depending on the :attr:`_method`, this retrieves the proper client depending on if it's :class:`discord.Client` or :class:`commands.Bot`"""
@@ -655,7 +645,7 @@ class ReactionMenu(_BaseMenu):
 			be sent to another. Whichever guild context the menu was instantiated in, the channels/threads of that guild are the only options for :param:`send_to`
 
 		reply: :class:`bool`
-			Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True`
+			Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True`. This only pertains to a non-interaction based menu.
 
 		Raises
 		------
@@ -664,7 +654,7 @@ class ReactionMenu(_BaseMenu):
 		- `NoButtons`: Attempted to start the menu when no Buttons have been registered
 		- `ReactionMenuException`: The :class:`ReactionMenu`'s `menu_type` was not recognized
 		- `DescriptionOversized`: When using a `menu_type` of :attr:`ReactionMenu.TypeEmbedDynamic`, the embed description was over discords size limit
-		- `IncorrectType`: Parameter :param:`send_to` was not :class:`str`, :class:`int`, or :class:`discord.TextChannel`
+		- `IncorrectType`: Parameter :param:`send_to` was not of the expected type
 		- `MenuException`: The channel set in :param:`send_to` was not found
 		"""
 		if ReactionMenu._sessions_limit_details.set_by_user:
