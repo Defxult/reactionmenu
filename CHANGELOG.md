@@ -23,6 +23,7 @@
 * The following attributes have been renamed in the `ViewMenu` class
   * `disable_buttons_on_timeout` → `disable_items_on_timeout`
   * `remove_buttons_on_timeout` → `remove_items_on_timeout`
+* Method `.add_from_messages()` is no longer `async`
 #### Bug Fixes
 * Fixed an issue where `ViewButton` link buttons would be removed even after setting it as persistent
 * Using the `reply` kwarg for `ReactionMenu` in a thread or voice channel now works as intended

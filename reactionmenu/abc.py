@@ -954,8 +954,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     
     def _handle_reply_kwargs(self, send_to, reply: bool) -> dict:
         """Used to determine the mentions for the `reply` parameter in :meth:`.start()`"""
-        result = any([isinstance(send_to, discord.TextChannel), isinstance(send_to, discord.VoiceChannel), isinstance(send_to, discord.Thread)])
-        if result and send_to == self._method.channel:
+        if isinstance(send_to, (discord.TextChannel, discord.VoiceChannel, discord.Thread)) and send_to == self._method.channel:
             send_to = None
         return {
             'reference' : self._method.message if all([send_to is None, reply is True]) else None,
@@ -1089,10 +1088,8 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         await self._on_close_event.wait()
     
     @ensure_not_primed
-    async def add_from_messages(self, messages: Sequence[discord.Message]) -> None:
-        """|coro|
-        
-        Add pages to the menu using the message object itself
+    def add_from_messages(self, messages: Sequence[discord.Message]) -> None:
+        """Add pages to the menu using the message object itself
         
         Parameters
         ----------
