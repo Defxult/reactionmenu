@@ -33,6 +33,7 @@ from typing import (
     Generic,
     Iterable,
     List,
+    Literal,
     Optional,
     Set,
     Tuple,
@@ -248,7 +249,7 @@ class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
         amount: :class:`int`
             The amount of pages to skip. Must be >= 1. If value is <= 0, it is implicitly set to 2
         """
-        def __init__(self, action: str, amount: int):
+        def __init__(self, action: Literal['+', '-'], amount: int):
             if amount <= 0: amount = 2
             if action in ('+', '-'):
                 self.action = action
@@ -270,9 +271,9 @@ class _BaseButton(Generic[GB], metaclass=abc.ABCMeta):
         _DISABLE = 'disable'
         _REMOVE = 'remove'
 
-        def __init__(self, event_type: str, value: int):
+        def __init__(self, event_type: Literal['disable', 'remove'], value: int):
             if value <= 0: value = 1
-            event_type = str(event_type).lower()
+            event_type = str(event_type).lower() # type: ignore
             cls = self.__class__
             
             if event_type in (cls._DISABLE, cls._REMOVE):
@@ -523,7 +524,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         return len(cls._active_sessions)
     
     @classmethod
-    def set_sessions_limit(cls, limit: int, per: str='guild', message: str='Too many active menus. Wait for other menus to be finished.') -> None:
+    def set_sessions_limit(cls, limit: int, per: Literal['channel', 'guild', 'member']='guild', message: str='Too many active menus. Wait for other menus to be finished.') -> None:
         """|class method|
         
         Sets the amount of menu sessions that can be active at the same time per guild, channel, or member. This applies to both :class:`ReactionMenu` & :class:`ViewMenu`
@@ -550,7 +551,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             if limit <= 0:
                 raise MenuException('The session limit must be greater than or equal to one')
             
-            per = str(per).lower()
+            per = str(per).lower() # type: ignore
             if per not in ('guild', 'channel', 'member'):
                 raise MenuException('Parameter value of "per" was not recognized. Expected: "channel", "guild", or "member"')
 
@@ -620,6 +621,17 @@ class _BaseMenu(metaclass=abc.ABCMeta):
             if menu._msg.id == message_id: # type: ignore
                 return menu
         return None
+
+    @property
+    def rows(self) -> Optional[List[str]]:
+        """
+        Returns
+        -------
+        Optional[List[:class:`str`]]: All rows that's been added to the menu. Can return `None` if the menu has not started or the `menu_type` is not `TypeEmbedDynamic`
+        
+            .. added: v3.1.0
+        """
+        return None if self._is_running is False or self._menu_type != _MenuType.TypeEmbedDynamic else self._dynamic_data_builder.copy()
     
     @property
     def menu_type(self) -> str:
@@ -942,8 +954,8 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     
     def _handle_reply_kwargs(self, send_to, reply: bool) -> dict:
         """Used to determine the mentions for the `reply` parameter in :meth:`.start()`"""
-        # sometimes users do `.start(send_to=ctx.channel)`. its not needed but handle it just in case
-        if isinstance(send_to, discord.TextChannel) and send_to == self._method.channel:
+        result = any([isinstance(send_to, discord.TextChannel), isinstance(send_to, discord.VoiceChannel), isinstance(send_to, discord.Thread)])
+        if result and send_to == self._method.channel:
             send_to = None
         return {
             'reference' : self._method.message if all([send_to is None, reply is True]) else None,

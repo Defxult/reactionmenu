@@ -32,6 +32,7 @@ from typing import (
 	Final,
 	Iterable,
 	List,
+	Literal,
 	NamedTuple,
 	Optional,
 	Tuple,
@@ -282,7 +283,7 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		return self._menu
 	
 	@classmethod
-	def generate_skip(cls, label: str, action: str, amount: int) -> ViewButton:
+	def generate_skip(cls, label: str, action: Literal['+', '-'], amount: int) -> ViewButton:
 		"""|class method|
 		
 		A factory method that returns a :class:`ViewButton` with the following parameters set:
@@ -571,7 +572,7 @@ class ReactionButton(_BaseButton):
 			raise IncorrectType('Parameter "func" must be callable')
 	
 	@classmethod
-	def generate_skip(cls, emoji: str, action: str, amount: int) -> ReactionButton:
+	def generate_skip(cls, emoji: str, action: Literal['+', '-'], amount: int) -> ReactionButton:
 		"""|class method|
 		
 		A factory method that returns a :class:`ReactionButton` with the following parameters set:

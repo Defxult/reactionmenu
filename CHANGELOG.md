@@ -25,6 +25,7 @@
   * `remove_buttons_on_timeout` → `remove_items_on_timeout`
 #### Bug Fixes
 * Fixed an issue where `ViewButton` link buttons would be removed even after setting it as persistent
+* Using the `reply` kwarg for `ReactionMenu` in a thread or voice channel now works as intended
 #### New Features
 ##### ReactionMenu & ViewMenu
 * Pagination is no longer limited to just embeds or text. The normal embed menu can now paginate with embeds, text, as well as files. With this, method `.add_page()` has two new parameters
@@ -32,6 +33,7 @@
   * New: `.add_page(embed=MISSING, content=None, files=MISSING)`
 * Added class method `quick_start()`. Start a menu with it's default settings only adding the pages
 * Added property `menu_type`. Displays the menu type that was set in the constructor
+* Added property `rows`. Returns all the data that was added to the menu via `.add_row()`
 * Added method `.randomize_embed_colors()`. Selects a random color for all embeds added to the menu
 * Added method `.version_info()`. A simple shortcut to function `reactionmenu.version_info()`
 * Added the ability to set the separator between the page director and embed footer text via the `separator` parameter
