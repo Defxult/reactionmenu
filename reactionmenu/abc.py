@@ -369,7 +369,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         raise NotImplementedError
     
     @staticmethod
-    def version_info():
+    def version_info() -> str:
         """|static method|
         
         A shortcut to the function `reactionmenu.version_info()`

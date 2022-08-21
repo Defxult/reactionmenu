@@ -15,28 +15,35 @@ from .views_menu import ViewMenu, ViewSelect
 from .abc import Page
 
 
-def version_info():
+def version_info() -> str:
     """Shows the current version of the library
 
     >>> print(reactionmenu.version_info())
     """
-    from typing import NamedTuple, Literal
-    class VersionInfo(NamedTuple):
-        major: int
-        minor: int
-        patch: int
-        releaseLevel: Literal['alpha', 'beta', 'rc', 'final']
-        serial: int
-        
-        @property
-        def _version(self) -> str:
-            base = f'{self.major}.{self.minor}.{self.patch}'
-            return base if self.releaseLevel == 'final' else base + f'{self.releaseLevel}-{self.serial}'
+    from typing import Final, Literal
 
-    return VersionInfo(major=3, minor=1, patch=0, releaseLevel='rc', serial=4)
+    version = (3, 1, 0)
+    release_level: Literal['alpha', 'beta', 'rc', 'final'] = 'rc'
+        
+    BASE: Final[str] = '.'.join([str(n) for n in version])
+
+    if release_level == 'final':
+        return BASE
+    else:
+        # try and get the last commit hash for a more precise version, if it fails, just use the basic version
+        try:
+            import subprocess
+            p = subprocess.Popen(['git', 'ls-remote', __source__, 'HEAD'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, _ = p.communicate()
+            short_hash = out.decode('utf-8')[:7]
+            p.kill()
+            return BASE + f"{release_level}+{short_hash}"
+        except Exception:
+            print('reactionmenu notification: An error occurred when attempting to get the last commit ID of the repo for a more precise version of the library. Returning base development version instead.')
+            return BASE + release_level
 
 __source__ = 'https://github.com/Defxult/reactionmenu'
-__version__ = version_info()._version
+__version__ = version_info()
 __all__ = (
     'ReactionMenu',
     'ReactionButton',
