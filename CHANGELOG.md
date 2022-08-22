@@ -60,7 +60,6 @@
 * Added exception `SelectNotFound`
 * The `Page` class has been added to `__init__` and is now available for use
 * If the `method` parameter in either the `ReactionMenu` or `ViewMenu` constructor is of the wrong type, `IncorrectType` is now raised
-* Using `reactionmenu.version_info()` now returns a string. If you're using the developer build (version number appended by alpha/beta/rc), the version number now includes the git commit hash for a more precise version of the library.
 
 
 

@@ -369,17 +369,6 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         raise NotImplementedError
     
     @staticmethod
-    def version_info() -> str:
-        """|static method|
-        
-        A shortcut to the function `reactionmenu.version_info()`
-        
-            .. added:: v3.1.0
-        """
-        from . import version_info
-        return version_info()
-    
-    @staticmethod
     def separate(values: Sequence[Any]) -> Tuple[List[discord.Embed], List[str]]:
         """|static method|
         

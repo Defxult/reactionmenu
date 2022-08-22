@@ -1,9 +1,31 @@
-from reactionmenu import version_info
-from setuptools import setup, find_packages
+from typing import Final, Literal
+from setuptools import find_packages, setup
+from reactionmenu import __source__
 
-def _get_readme():
+def _get_readme() -> str:
     with open('README.md', encoding='utf-8') as fp:
         return fp.read()
+
+def _version_info() -> str:
+    version = (3, 1, 0)
+    release_level: Literal['alpha', 'beta', 'rc', 'final'] = 'rc'
+        
+    BASE: Final[str] = '.'.join([str(n) for n in version])
+
+    if release_level == 'final':
+        return BASE
+    else:
+        # try and get the last commit hash for a more precise version, if it fails, just use the basic version
+        try:
+            import subprocess
+            p = subprocess.Popen(['git', 'ls-remote', __source__, 'HEAD'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, _ = p.communicate()
+            short_hash = out.decode('utf-8')[:7]
+            p.kill()
+            return BASE + f"{release_level}+{short_hash}"
+        except Exception:
+            print('reactionmenu notification: An error occurred when attempting to get the last commit ID of the repo for a more precise version of the library. Returning base development version instead.')
+            return BASE + release_level
 
 classifiers = [
     'Development Status :: 5 - Production/Stable',
@@ -58,7 +80,7 @@ details = {
 setup(
     author='Defxult#8269',
     name='reactionmenu',
-    version=version_info(),
+    version=_version_info(),
     description='A library to create a discord.py 2.0+ paginator. Supports pagination with buttons, reactions, and category selection using selects.',
     url='https://github.com/Defxult/reactionmenu',
     project_urls=details,
