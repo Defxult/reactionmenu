@@ -8,20 +8,12 @@
 ![python_version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue)
 </div>
 
-## reactionmenu v3.1.0
-To support the release of discord.py 2.0, 3.1.0 is now available for testing. If you discover any issues/bugs, please feel free to comment/report it in any of the [reactionmenu discussions](https://github.com/Defxult/reactionmenu/discussions/categories/reactionmenu-v3-1-0-testing) that are available.
-
-
-*- Note -*
-
-As of today (8/18/2022), discord.py 2.0 has officially been released to PyPI. This means the release of reactionmenu 3.1.0 will be released to PyPI very soon as well. For the next week or so, reactionmenu 3.1.0 has moved out of the beta stage and into release candidate just to give myself and others the opportunity to find any bugs that needs to be ironed out before release.
-
 ## How to install
-Install from [PyPI](https://pypi.org/project/reactionmenu/):
+You can install the latest [PyPI](https://pypi.org/project/reactionmenu/) version of the library by doing:
 ```
 $ pip install reactionmenu
 ```
-Install the 3.1.0 developer build:
+Or the development version:
 ```
 $ pip install git+https://github.com/Defxult/reactionmenu
 ```
