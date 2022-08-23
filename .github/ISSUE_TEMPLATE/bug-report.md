@@ -27,6 +27,6 @@ Minimal code to reproduce the bug/error
 - [ ] I have the required [intents](https://github.com/Defxult/reactionmenu#intents) enabled
 
 **Version Info**
-What's the exact version of reactionmenu/discord.py are you using?
+What version of reactionmenu/discord.py are you using?
+- reactionmenu: [version here
 - discord.py: [version here]
-- reactionmenu: [version here]
