@@ -1,4 +1,14 @@
+## v3.1.1 » Future Release
+
+#### Bug Fixes
+* Fixed an issue where a `ViewMenu` would result in an exception/indefinite "thinking" state if the user already responded to the interaction ([#38](https://github.com/Defxult/reactionmenu/pull/38))
+
+#### Miscellaneous
+* Added support for GitHub commit hash versioning. This will help determine exactly what commit version of the library the user is using.
+
 ## v3.1.0 » Aug. 23, 2022
+<details>
+  <summary>Click to display changelog</summary>
 
 #### Breaking Changes
 * **This library is no longer dependent on Pycord. It has changed back to discord.py**
@@ -60,6 +70,7 @@
 * Added exception `SelectNotFound`
 * The `Page` class has been added to `__init__` and is now available for use
 * If the `method` parameter in either the `ReactionMenu` or `ViewMenu` constructor is of the wrong type, `IncorrectType` is now raised
+</details>
 
 
 
