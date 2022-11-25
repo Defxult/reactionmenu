@@ -1001,7 +1001,10 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                             raise MenuException(f'When using parameter "send_to" in {class_name}.start(), the channel {send_to} was not found')
         
         elif isinstance(self._method, discord.Interaction):
-            await self._method.response.send_message(**menu_payload)
+            if self._method.response.is_done():
+                await self._method.followup.send(**menu_payload)
+            else:
+                await self._method.response.send_message(**menu_payload)
             self._msg = await self._method.original_response()
         
         else:
