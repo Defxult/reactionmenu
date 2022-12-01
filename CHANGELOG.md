@@ -1,4 +1,4 @@
-## v3.1.1 » Future Release
+## v3.1.1 » Dec. 1, 2022
 
 #### Bug Fixes
 * Fixed an issue where a `ViewMenu` would result in an exception/indefinite "thinking" state if the user already responded to the interaction ([#38](https://github.com/Defxult/reactionmenu/pull/38))
