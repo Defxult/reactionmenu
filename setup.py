@@ -8,7 +8,7 @@ def _get_readme() -> str:
 
 def _version_info() -> str:
     version = (3, 1, 1)
-    release_level: Literal['alpha', 'beta', 'rc', 'final'] = 'rc'
+    release_level: Literal['alpha', 'beta', 'rc', 'final'] = 'final'
         
     BASE: Final[str] = '.'.join([str(n) for n in version])
 
