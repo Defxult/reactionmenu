@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+authors = [{name = "Defxult#8269"}]
+name = "reactionmenu"
+readme = "README.md"
+version = "3.1.2"
+description = "A library to create a discord.py 2.0+ paginator. Supports pagination with buttons, reactions, and category selection using selects."
+requires-python = ">=3.8"
+license = {text = "MIT"}
+dependencies = ["discord.py>=2.0.0"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+keywords = [
+    "buttons",
+    "buttons paginator",
+    "buttons menu",
+    "discord",
+    "discord.py",
+    "discord.py 2.0",
+    "d.py",
+    "components",
+    "components paginator",
+    "components menu",
+    "discord components",
+    "discord components menu",
+    "discord buttons",
+    "discord buttons paginator",
+    "discord buttons menu",
+    "discord paginator",
+    "discord pagination",
+    "discord reaction menu",
+    "discord reactions",
+    "discord embed",
+    "discord menu",
+    "discord interactions",
+    "embed menu",
+    "embed reaction menu",
+    "embed paginator",
+    "interactions",
+    "interactions menu",
+    "interactions paginator",
+    "menus",
+    "paginator",
+    "pagination",
+    "pagination menu",
+    "reaction menu"
+]
+
+
+[project.urls]
+Homepage = "https://github.com/Defxult/reactionmenu"
+Changelog = "https://github.com/Defxult/reactionmenu/blob/main/CHANGELOG.md"
+
+
+[tool.setuptools]
+packages = ["reactionmenu"]

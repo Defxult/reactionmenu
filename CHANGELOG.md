@@ -1,10 +1,18 @@
+## v3.1.2 » Jan. 9, 2023
+
+#### Bug Fixes
+* Fixed an issue where an error would occur when `pip` installing the library
+
 ## v3.1.1 » Dec. 1, 2022
+<details>
+  <summary>Click to display changelog</summary>
 
 #### Bug Fixes
 * Fixed an issue where a `ViewMenu` would result in an exception/indefinite "thinking" state if the user already responded to the interaction ([#38](https://github.com/Defxult/reactionmenu/pull/38))
 
 #### Miscellaneous
 * Added support for GitHub commit hash versioning. This will help determine exactly what commit version of the library the user is using.
+</details>
 
 ## v3.1.0 » Aug. 23, 2022
 <details>
