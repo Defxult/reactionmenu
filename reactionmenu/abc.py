@@ -44,6 +44,7 @@ from typing import (
 
 if TYPE_CHECKING:
     from datetime import datetime
+    from typing_extensions import Self
 
 import abc
 import asyncio
@@ -58,7 +59,6 @@ from typing import NamedTuple, Union
 import discord
 from discord.ext.commands import Context
 from discord.utils import MISSING
-from typing_extensions import Self
 
 from .decorators import ensure_not_primed
 from .errors import *
