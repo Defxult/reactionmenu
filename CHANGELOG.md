@@ -1,7 +1,13 @@
+## v3.1.3 » Future Release
+* Fixed a dependency issue where typing-extenstions would cause installation problems
+
 ## v3.1.2 » Jan. 9, 2023
+<details>
+  <summary>Click to display changelog</summary>
 
 #### Bug Fixes
 * Fixed an issue where an error would occur when `pip` installing the library
+</details>
 
 ## v3.1.1 » Dec. 1, 2022
 <details>
