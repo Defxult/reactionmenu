@@ -1,4 +1,4 @@
-## v3.1.3 » Future Release
+## v3.1.3 » Feb. 9, 2023
 * Fixed a dependency issue where typing-extensions would cause installation problems
 
 ## v3.1.2 » Jan. 9, 2023
