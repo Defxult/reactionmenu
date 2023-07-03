@@ -292,7 +292,16 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     _active_sessions: List[Self] # initialized in child classes
 
     def __init__(self, method: Union[Context, discord.Interaction], /, menu_type: _MenuType, **kwargs):
-        self._method = method
+        # `Context` has an `interaction` attribute. If that attribute is `None`,
+        # it's not an application command, if so, it's an application command so access
+        # and set the interaction attribute so a `ViewMenu` can be used.
+        if isinstance(method, Context) and method.interaction is None:
+            self._method = method
+        elif isinstance(method, Context) and method.interaction is not None:
+            self._method = method.interaction
+        else:
+            self._method = method # will be an interaction
+
         self._menu_type = menu_type
 
         self._msg: Union[discord.Message, discord.InteractionMessage] # initialized in child classes

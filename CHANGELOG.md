@@ -1,5 +1,13 @@
+## v3.1.4 » Pending Release
+#### Bug Fixes
+- Fixed an issue where the slash command in hybrid commands would result in a "The application did not respond" error ([#47](https://github.com/Defxult/reactionmenu/issues/47)).
+
 ## v3.1.3 » Feb. 9, 2023
+<details>
+  <summary>Click to display changelog</summary>
+
 * Fixed a dependency issue where typing-extensions would cause installation problems
+</details>
 
 ## v3.1.2 » Jan. 9, 2023
 <details>
