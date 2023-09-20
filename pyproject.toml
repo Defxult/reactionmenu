@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 authors = [{name = "Defxult"}]
 name = "reactionmenu"
 readme = "README.md"
-version = "3.1.4"
+version = "3.1.5"
 description = "A library to create a discord.py 2.0+ paginator. Supports pagination with buttons, reactions, and category selection using selects."
 requires-python = ">=3.8"
 license = {text = "MIT"}

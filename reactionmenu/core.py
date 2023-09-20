@@ -443,11 +443,9 @@ class ReactionMenu(_BaseMenu):
 				if self.__navigation_speed == ReactionMenu.NORMAL:
 					reaction, user = await client.wait_for('reaction_add', check=self.__wait_check, timeout=self.timeout)
 				elif self.__navigation_speed == ReactionMenu.FAST:
-					wait_for_aws = (
-						client.wait_for('reaction_add', check=self.__wait_check, timeout=self.timeout),
-						client.wait_for('reaction_remove', check=self.__wait_check, timeout=proper_timeout()) 
-					)
-					done, pending = await asyncio.wait(wait_for_aws, return_when=asyncio.FIRST_COMPLETED)
+					add = asyncio.create_task(client.wait_for('reaction_add', check=self.__wait_check, timeout=self.timeout))
+					remove = asyncio.create_task(client.wait_for('reaction_remove', check=self.__wait_check, timeout=proper_timeout()) )
+					done, pending = await asyncio.wait([add, remove], return_when=asyncio.FIRST_COMPLETED)
 					
 					temp_pending: asyncio.Task = list(pending)[0]
 					temp_pending.cancel()
