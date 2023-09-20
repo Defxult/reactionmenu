@@ -1,6 +1,14 @@
+## v3.1.5 » Pending release
+### Updated
+- Removed explicit passing of coroutines to `asyncio.wait()` ([#51](https://github.com/Defxult/reactionmenu/issues/51)).
+
 ## v3.1.4 » Aug. 4, 2023
+<details>
+  <summary>Click to display changelog</summary>
+  
 #### Bug Fixes
 - Fixed an issue where the slash command in hybrid commands would result in a "The application did not respond" error ([#47](https://github.com/Defxult/reactionmenu/issues/47)).
+</details>
 
 ## v3.1.3 » Feb. 9, 2023
 <details>
