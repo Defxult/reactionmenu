@@ -1,4 +1,4 @@
-## v3.1.5 » Pending release
+## v3.1.5 » Nov. 29, 2023
 ### Updated
 - Removed explicit passing of coroutines to `asyncio.wait()` ([#51](https://github.com/Defxult/reactionmenu/issues/51)).
 
