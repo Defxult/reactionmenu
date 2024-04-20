@@ -718,6 +718,7 @@ menu = ViewMenu(ctx, menu_type=ViewMenu.TypeEmbed)
 menu.add_page(discord.Embed(title="A showcase of console video games", color=discord.Color.blurple()))
 
 menu.add_select(ViewSelect(title="Console Video Games", options={
+    # NOTE: The discord.SelectOption parameter "default" cannot be set to True
     discord.SelectOption(label="PlayStation", emoji="<:PlayStation:549638412538478602>") : [
         Page(embed=discord.Embed(title="Ratchet & Clank", description=..., color=discord.Color.yellow()).set_image(url=...)),
         Page(embed=discord.Embed(title="God of War", description=..., color=discord.Color.blue()).set_image(url=...))

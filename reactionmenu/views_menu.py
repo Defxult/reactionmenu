@@ -521,6 +521,12 @@ class ViewMenu(_BaseMenu):
         else:
             if self._menu_type == ViewMenu.TypeEmbed:
                 select._menu = self
+
+                # prevent default select options (https://github.com/Defxult/reactionmenu/issues/55)
+                for option in select.options:
+                    if option.default:
+                        option.default = False
+                
                 self.__view.add_item(select)
                 self.__selects.append(select)
             else:

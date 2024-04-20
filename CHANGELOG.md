@@ -1,3 +1,7 @@
+#### Miscellaneous
+* In a `ViewSelect`, the `discord.SelectOption` parameter `default` can no longer be set to `True`
+
+
 ## v3.1.5 » Nov. 29, 2023
 <details>
   <summary>Click to display changelog</summary>
