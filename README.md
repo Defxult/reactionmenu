@@ -1,4 +1,4 @@
-![logo](https://cdn.discordapp.com/attachments/655186216060321816/820162226316378162/discord.jpg)
+![logo](https://cdn.discordapp.com/attachments/655186216060321816/820162226316378162/discord.jpg?ex=662c8918&is=661a1418&hm=8cec97b3bc3727c866814e3890eee87fd2eec32c638a5b377a9e564fb488881c&)
 <div align="center">
 
 [![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) 
@@ -32,7 +32,7 @@ class reactionmenu.ReactionMenu(method: Union[Context, discord.Interaction], /, 
 
 A `ReactionMenu` is a menu that uses emojis which are either custom guild emojis or a normal emoji to control the pagination process. If you're not looking for any of the fancy features and just want something simple, this is the one to use.
 
-![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif)
+![showcase](https://cdn.discordapp.com/attachments/655186216060321816/819885696176226314/showcase.gif?ex=6634c20e&is=66224d0e&hm=9c7a9960dfe95e2abf99cc37fc88af9b40d036d047158a6c4e51b9cc59edcf16&)
 
 <details>
   <summary><b>Click to show ReactionMenu documentation</b></summary>
@@ -105,7 +105,7 @@ menu.add_page(content='Its so cold!')
 #### ReactionMenu.TypeText
 A `TypeText` menu is a text based pagination menu. No embeds are involved in the pagination process, only plain text is used.
 
-![showcase-text](https://cdn.discordapp.com/attachments/655186216060321816/929172629947027466/text_showcase.gif)
+![showcase-text](https://cdn.discordapp.com/attachments/655186216060321816/929172629947027466/text_showcase.gif?ex=663583f2&is=66230ef2&hm=08e5208f0b95dd6d6fc203878fab1a19d32566cf28a32b25e7a4320ce3d4e924&)
 
 #### Stacked Pages
 With `v3.1.0+`, you can paginate with more than just an embed or text. You can combine text, embeds, as well as files. But depending on the `menu_type` the combination can be restricted. Here is an example of a menu with a `menu_type` of `TypeEmbed` that is stacked.
@@ -125,7 +125,7 @@ async def stacked(interaction: discord.Interaction):
     
     await menu.start()
 ```
-![stacked](https://cdn.discordapp.com/attachments/655186216060321816/955966821268332554/stacked.gif)
+![stacked](https://cdn.discordapp.com/attachments/655186216060321816/955966821268332554/stacked.gif?ex=66317a7b&is=661f057b&hm=06c4a45634f7471fbfdee81d3fb18cef4390bdc01740c304ea6ef000396adf06&)
 
 Since the `menu_type` is `TypeEmbed`, there always has to be an embed on each page. If the `menu_type` was `TypeText`, embeds aren't allowed and you will be restricted to only using the `files` parameter.
 
@@ -451,7 +451,7 @@ class reactionmenu.ViewMenu(method: Union[Context, discord.Interaction], /, *, m
 
 A `ViewMenu` is a menu that uses discords Buttons feature. With buttons, you can enable and disable them, set a certain color for them with emojis, have buttons that send hidden messages, and add hyperlinks. This library offers a broader range of functionalities such as who pressed the button, how many times it was pressed and more. It uses views (`discord.ui.View`) to implement the Buttons functionality, but uses some of its own methods in order to make a Button pagination menu simple.
 
-![image](https://cdn.discordapp.com/attachments/655186216060321816/855818139450081280/buttons_showcase_reduced.gif)
+![image](https://cdn.discordapp.com/attachments/655186216060321816/855818139450081280/buttons_showcase_reduced.gif?ex=662d0d40&is=661a9840&hm=c27d8af03d464b3bb3942831c1f592042752aeb0baf903a3dbbffee7caade991&)
 
 <details>
   <summary><b>Click to show ViewMenu documentation</b></summary>
@@ -519,7 +519,7 @@ menu.add_page(content='Its so cold!')
 #### ViewMenu.TypeText
 A `TypeText` menu is a text based pagination menu. No embeds are involved in the pagination process, only plain text is used.
 
-![text_view_showcase](https://cdn.discordapp.com/attachments/655186216060321816/929744985656549386/text_view_showcase.gif)
+![text_view_showcase](https://cdn.discordapp.com/attachments/655186216060321816/929744985656549386/text_view_showcase.gif?ex=66247b3e&is=662329be&hm=b94fa63761dee697cf4ce0a2e488e8a8119e65b9264d1178d64d8e26e944da91&)
 
 #### Stacked Pages
 With `v3.1.0+`, you can paginate with more than just an embed or text. You can combine text, embeds, as well as files. But depending on the `menu_type` the combination can be restricted. Here is an example of a menu with a `menu_type` of `TypeEmbed` that is stacked.
@@ -539,7 +539,7 @@ async def stacked(interaction: discord.Interaction):
     
     await menu.start()
 ```
-![stacked_view](https://cdn.discordapp.com/attachments/655186216060321816/955983620038860910/stacked_view.gif)
+![stacked_view](https://cdn.discordapp.com/attachments/655186216060321816/955983620038860910/stacked_view.gif?ex=66318a20&is=661f1520&hm=dc93e797cb16a1e3f87f36e02fa40b2733a40a1d469b7f1337d34d6037dad06e&)
 
 Since the `menu_type` is `TypeEmbed`, there always has to be an embed on each page. If the `menu_type` was `TypeText`, embeds aren't allowed and you will be restricted to only using the `files` parameter.
 
@@ -698,7 +698,7 @@ custom_embed_button = ViewButton(style=discord.ButtonStyle.blurple, label='Socia
 ### Using Selects
 Selects are used when you'd like to categorize information in your menu. Selects can only be used when the menu's `menu_type` is `TypeEmbed`. You should keep in mind that discords limitations on how many menu UI items (rows) can be applied to each message.
 
-![select_showcase](https://cdn.discordapp.com/attachments/655186216060321816/971361708121653268/select_showcase.gif)
+![select_showcase](https://cdn.discordapp.com/attachments/655186216060321816/971361708121653268/select_showcase.gif?ex=66321d16&is=661fa816&hm=f5a668a33715d0d5c77eb7c2a8ec9d01ef14b21c2d2f200c97d12ba70a7ab2bd&)
 
 * Associated Methods
   * `ViewMenu.add_select(select: ViewSelect)`
@@ -736,7 +736,7 @@ await menu.start()
 #### Go to page navigation
 You can use this type of select when you'd like to use the UI to select a page to go to.
 
-![goto_showcase](https://cdn.discordapp.com/attachments/655186216060321816/973629631905300501/Discord_6SP5AjoOOM.gif)
+![goto_showcase](https://cdn.discordapp.com/attachments/655186216060321816/973629631905300501/Discord_6SP5AjoOOM.gif?ex=663122c1&is=661eadc1&hm=a14135c7fa1c0b9c901b8216cbee7e77435fa1ba3148767d1870d52ba625001e&)
 
 * Associated methods
   * `ViewMenu.add_go_to_select(goto: ViewSelect.GoTo)`
