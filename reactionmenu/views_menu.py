@@ -131,7 +131,8 @@ class ViewSelect(discord.ui.Select):
             if option.label == self.values[0]:
                 if self._menu:
                     self._menu._pc = _PageController(pages)
-                    await interaction.response.edit_message(**self._menu._determine_kwargs(self._menu._pc.first_page()))
+                    first_page = self._menu._pc.first_page()
+                    await interaction.response.edit_message(**self._menu._determine_kwargs(first_page))
                     break
         await self.__dispatch_relay(interaction)
 
@@ -1109,9 +1110,9 @@ class ViewMenu(_BaseMenu):
         
         elif button.custom_id == ViewButton.ID_GO_TO_PAGE:
             await inter.response.defer()
-            prompt: discord.Message = await self._msg.channel.send(f'{inter.user.display_name}, what page would you like to go to?') # type: ignore / `.channel` is know at this point
+            prompt: discord.Message = await self._msg.channel.send(f'{inter.user.display_name}, what page would you like to go to?') # type: ignore / `.channel` is known at this point
             try:
-                selection_message: discord.Message = await inter.client.wait_for('message', check=lambda m: all([m.channel.id == self._msg.channel.id, m.author.id == inter.user.id]), timeout=self.timeout) # type: ignore / `.channel` is know at this point
+                selection_message: discord.Message = await inter.client.wait_for('message', check=lambda m: all([m.channel.id == self._msg.channel.id, m.author.id == inter.user.id]), timeout=self.timeout) # type: ignore / `.channel` is known at this point
                 page = int(selection_message.content)
             except (asyncio.TimeoutError, ValueError):
                 return
@@ -1148,7 +1149,7 @@ class ViewMenu(_BaseMenu):
                 except Exception as err:
                     call_failed_error_msg = inspect.cleandoc(
                         f"""
-                        The button with custom_id ViewButton.ID_CALLER with the label "{button.label}" raised an error during it's execution
+                        The button with custom_id ViewButton.ID_CALLER with the label "{button.label}" raised an error during its execution
                         -> {err.__class__.__name__}: {err}
                         """
                     )

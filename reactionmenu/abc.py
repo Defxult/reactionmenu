@@ -373,7 +373,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     
     # ABC class methods
     
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     async def quick_start(cls):
         raise NotImplementedError
     
