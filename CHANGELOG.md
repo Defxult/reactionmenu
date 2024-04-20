@@ -1,3 +1,7 @@
+## v3.1.6 » Pending Release
+#### New Features
+* Added method `Page.from_embeds()`
+
 #### Miscellaneous
 * In a `ViewSelect`, the `discord.SelectOption` parameter `default` can no longer be set to `True`
 

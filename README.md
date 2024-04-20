@@ -701,6 +701,7 @@ Selects are used when you'd like to categorize information in your menu. Selects
 ![select_showcase](https://cdn.discordapp.com/attachments/655186216060321816/971361708121653268/select_showcase.gif?ex=66321d16&is=661fa816&hm=f5a668a33715d0d5c77eb7c2a8ec9d01ef14b21c2d2f200c97d12ba70a7ab2bd&)
 
 * Associated Methods
+  * `Page.from_embeds(embeds: Sequence[Embed])` 
   * `ViewMenu.add_select(select: ViewSelect)`
   * `ViewMenu.remove_select(select: ViewSelect)`
   * `ViewMenu.remove_all_selects()`

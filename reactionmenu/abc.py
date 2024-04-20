@@ -91,6 +91,17 @@ class Page:
     def _shallow(self) -> Self:
         from copy import copy
         return copy(self)
+    
+    @staticmethod
+    def from_embeds(embeds: Sequence[discord.Embed]) -> List[Page]:
+        """|static method|
+        
+        Converts a sequence of embeds into a list of :class:`Page`
+        """
+        pages: List[Page] = []
+        for e in embeds:
+            pages.append(Page(embed=discord.Embed.copy(e)))
+        return pages
 
 class PaginationEmojis:
     """A set of basic emojis for your convenience to use for your buttons emoji
