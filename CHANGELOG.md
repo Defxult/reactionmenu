@@ -3,7 +3,7 @@
 * Added method `Page.from_embeds()`
 
 #### Miscellaneous
-* In a `ViewSelect`, the `discord.SelectOption` parameter `default` can no longer be set to `True`
+* In a `ViewSelect`, the `discord.SelectOption` parameter `default` can no longer be set to `True` ([#55](https://github.com/Defxult/reactionmenu/issues/55))
 
 
 ## v3.1.5 » Nov. 29, 2023
