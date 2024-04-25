@@ -1,9 +1,9 @@
-## v3.1.6 » Pending Release
+## v3.1.6 » Apr. 25, 2024
 #### New Features
 * Added method `Page.from_embeds()`
 
 #### Miscellaneous
-* In a `ViewSelect`, the `discord.SelectOption` parameter `default` can no longer be set to `True` ([#55](https://github.com/Defxult/reactionmenu/issues/55))
+* In a `ViewSelect`, the `discord.SelectOption` parameter `default` can no longer be set to `True` ([#55](https://github.com/Defxult/reactionmenu/issues/55)).
 
 
 ## v3.1.5 » Nov. 29, 2023
