@@ -1,4 +1,4 @@
-![logo](https://cdn.discordapp.com/attachments/655186216060321816/820162226316378162/discord.jpg?ex=662c8918&is=661a1418&hm=8cec97b3bc3727c866814e3890eee87fd2eec32c638a5b377a9e564fb488881c&)
+![logo](https://cdn.discordapp.com/attachments/655186216060321816/1235615813357142168/reactionmenu_logonew_upload.jpeg?ex=66350466&is=6633b2e6&hm=e384c6cccb931b67267d03e3b885f3af5393add70f01be3ffe35fd93466989a8&)
 <div align="center">
 
 [![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) 
