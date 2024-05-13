@@ -1,4 +1,4 @@
-![logo](https://cdn.discordapp.com/attachments/655186216060321816/1235615813357142168/reactionmenu_logonew_upload.jpeg?ex=66350466&is=6633b2e6&hm=e384c6cccb931b67267d03e3b885f3af5393add70f01be3ffe35fd93466989a8&)
+![logo](https://i.imgur.com/nxpxiT4.jpg)
 <div align="center">
 
 [![Downloads](https://pepy.tech/badge/reactionmenu)](https://pepy.tech/project/reactionmenu) 
