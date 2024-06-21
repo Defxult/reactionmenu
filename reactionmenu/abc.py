@@ -755,7 +755,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 
                 if self._main_page_contents:
                     self._main_page_contents.reverse()
-                    self._pages.extendleft(convert_to_page(self._main_page_contents))
+                    self._pages.extendleft(convert_to_page(self._main_page_contents)) # type: ignore (converted to deque above)
                 
                 if self._last_page_contents:
                     self._pages.extend(convert_to_page(self._last_page_contents))
