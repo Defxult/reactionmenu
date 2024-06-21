@@ -1,10 +1,19 @@
+## v3.1.7 » Pending Release
+
+#### Bug Fixes
+* Fixed an issue where `ViewSelect.GoTo` allowed all users to control it ([#57](https://github.com/Defxult/reactionmenu/issues/57))
+
+
 ## v3.1.6 » Apr. 25, 2024
+<details>
+  <summary>Click to display changelog</summary>
+
 #### New Features
 * Added method `Page.from_embeds()`
 
 #### Miscellaneous
 * In a `ViewSelect`, the `discord.SelectOption` parameter `default` can no longer be set to `True` ([#55](https://github.com/Defxult/reactionmenu/issues/55)).
-
+</details>
 
 ## v3.1.5 » Nov. 29, 2023
 <details>
