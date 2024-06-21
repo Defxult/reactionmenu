@@ -182,17 +182,20 @@ class ViewSelect(discord.ui.Select):
             return self._menu
         
         async def _select_go_to_callback(self, interaction: discord.Interaction) -> None:
-            if interaction.data:
-                values = interaction.data.get('values') 
-                if values:
-                    CLICKED_OPTION: Final[int] = int(values[0])
-                    if self._menu:
-                        if 1 <= CLICKED_OPTION <= self._menu._pc.total_pages + 1:
-                            self._menu._pc.index = CLICKED_OPTION - 1
-                            await interaction.response.edit_message(**self._menu._determine_kwargs(self._menu._pc.current_page))
-                            return
+            if self._menu._check(interaction): # type: ignore
+                if interaction.data:
+                    values = interaction.data.get('values') 
+                    if values:
+                        CLICKED_OPTION: Final[int] = int(values[0])
+                        if self._menu:
+                            if 1 <= CLICKED_OPTION <= self._menu._pc.total_pages + 1:
+                                self._menu._pc.index = CLICKED_OPTION - 1
+                                await interaction.response.edit_message(**self._menu._determine_kwargs(self._menu._pc.current_page))
+                                return
+                else:
+                    assert False, "No interaction data"
             else:
-                assert False, "No interaction data"
+                await interaction.response.defer()
 
 class ViewMenu(_BaseMenu):
     """A class to create a discord pagination menu using :class:`discord.ui.View`
