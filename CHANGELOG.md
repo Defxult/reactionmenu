@@ -1,4 +1,4 @@
-## v3.1.7 » Pending Release
+## v3.1.7 » Jul. 6, 2024
 
 #### Bug Fixes
 * Fixed an issue where `ViewSelect.GoTo` allowed all users to control the menu ([#57](https://github.com/Defxult/reactionmenu/issues/57))
