@@ -176,8 +176,6 @@ class ReactionMenu(_BaseMenu):
 		- `NoPages`: The menu was started when no pages have been added
 		- `NoButtons`: Attempted to start the menu when no Buttons have been registered
 		- `IncorrectType`: All items in :param:`pages` were not of type :class:`discord.Embed` or :class:`str`
-
-			.. added v3.1.0
 		"""
 		menu = cls(method, menu_type=cls._quick_check(pages))
 		menu.add_pages(pages) # type: ignore
@@ -597,10 +595,7 @@ class ReactionMenu(_BaseMenu):
 				self.timeout = 60.0
 		
 	def __generate_reactionmenu_payload(self) -> dict:
-		"""Creates the parameters needed for :meth:`discord.Messageable.send()`
-
-			.. added:: v3.1.0
-		"""
+		"""Creates the parameters needed for :meth:`discord.Messageable.send()`"""
 		return {
 			"content" : self._pages[0].content if self._pages else None,
 			"embed" : self._pages[0].embed if self._pages else discord.utils.MISSING,

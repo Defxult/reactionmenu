@@ -73,10 +73,7 @@ GB = TypeVar('GB', bound='_BaseButton')
 M = TypeVar('M', bound='_BaseMenu')
 
 class Page:
-    """Represents a single "page" in the pagination process
-    
-        .. added:: v3.1.0
-    """
+    """Represents a single "page" in the pagination process"""
     __slots__ = ("content", "embed", "files", "_go_to")
     
     def __init__(self, *, content: Optional[str]=None, embed: Optional[discord.Embed]=MISSING, files: Optional[List[discord.File]]=MISSING) -> None:
@@ -451,18 +448,12 @@ class _BaseMenu(metaclass=abc.ABCMeta):
     
     @staticmethod #* Don't make this an instance method. It would be better as one, but it's main intended use is for :meth:`_check` in "views_menu.py"
     def _extract_proper_user(method: Union[Context, discord.Interaction]) -> Union[discord.Member, discord.User]:
-        """|static method| Get the proper :class:`discord.User` / :class:`discord.Member` from the attribute depending on the instance
-
-            .. added v3.1.0
-        """
+        """|static method| Get the proper :class:`discord.User` / :class:`discord.Member` from the attribute depending on the instance"""
         return method.author if isinstance(method, Context) else method.user
     
     @classmethod
     def _quick_check(cls, pages: Sequence[Union[discord.Embed, str]]) -> _MenuType:
-        """|class method| Verification for :meth:`quick_start()`
-        
-            .. added v3.1.0
-        """
+        """|class method| Verification for :meth:`quick_start()`"""
         if cls.all_embeds(pages):  return cls.TypeEmbed
         if cls.all_strings(pages): return cls.TypeText
         raise IncorrectType(f'All items in the sequence were not of type discord.Embed or str')
@@ -638,8 +629,6 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         Returns
         -------
         Optional[List[:class:`str`]]: All rows that's been added to the menu. Can return `None` if the menu has not started or the `menu_type` is not `TypeEmbedDynamic`
-        
-            .. added: v3.1.0
         """
         return None if self._is_running is False or self._menu_type != _MenuType.TypeEmbedDynamic else self._dynamic_data_builder.copy()
     
@@ -648,10 +637,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """
         Returns
         -------
-        :class:`str`: The `menu_type` you set via the constructor. This will either be `TypeEmbed`, `TypeEmbedDynamic`, or `TypeText`
-
-            .. added:: v3.1.0
-        """
+        :class:`str`: The `menu_type` you set via the constructor. This will either be `TypeEmbed`, `TypeEmbedDynamic`, or `TypeText`"""
         return self._menu_type.name
     
     @property
@@ -741,10 +727,7 @@ class _BaseMenu(metaclass=abc.ABCMeta):
                 raise DescriptionOversized('With the amount of data that was received, the embed description is over discords size limit. Lower the amount of "rows_requested" to solve this problem')
         else:
             def convert_to_page(main_last: Iterable[discord.Embed]) -> List[Page]:
-                """Initializing the :class:`deque` only supports :class:`discord.Embed`. This converts those embed objects to the supported :class:`Page` type for proper pagination
-                
-                    .. added:: v3.1.0
-                """
+                """Initializing the :class:`deque` only supports :class:`discord.Embed`. This converts those embed objects to the supported :class:`Page` type for proper pagination"""
                 return [Page(embed=item) for item in main_last]
             
             # set the main/last pages if any
@@ -1036,8 +1019,6 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         Raises
         ------
         - `MenuException`: The `menu_type` was not of `TypeEmbed`
-        
-            .. added:: v3.1.0
         """
         if self._menu_type == _BaseMenu.TypeEmbed:
             for page in self._pages:
@@ -1054,17 +1035,17 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         style_id: :class:`int`
             Varying formats of how the page director can be presented. The following ID's are available:
 
-            - `1` = Page 1/10
-            - `2` = Page 1 out of 10
-            - `3` = 1 out of 10
-            - `4` = 1 • 10
-            - `5` = 1 » 10
-            - `6` = 1 | 10
-            - `7` = 1 : 10
-            - `8` = 1 - 10
-            - `9` = 1 / 10
-            - `10` = 1 🔹 10
-            - `11` = 1 🔸 10
+        - `1` = Page 1/10
+        - `2` = Page 1 out of 10
+        - `3` = 1 out of 10
+        - `4` = 1 • 10
+        - `5` = 1 » 10
+        - `6` = 1 | 10
+        - `7` = 1 : 10
+        - `8` = 1 - 10
+        - `9` = 1 / 10
+        - `10` = 1 🔹 10
+        - `11` = 1 🔸 10
         
         separator: :class:`str`
             The separator between the page director and any text you may have in the embed footer. The default separator is ":". It should be noted that whichever separator you assign,
@@ -1095,8 +1076,6 @@ class _BaseMenu(metaclass=abc.ABCMeta):
         """|coro|
         
         Waits until the menu session ends using `.stop()` or when the menu times out. This should not be used inside relays
-        
-            .. added:: v3.0.1
         """
         await self._on_close_event.wait()
     

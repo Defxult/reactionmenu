@@ -77,8 +77,6 @@ class ViewSelect(discord.ui.Select):
     
     disabled: :class:`bool`
         If the select should start enabled or disabled
-
-        .. added:: v3.1.0
     """
     def __init__(self, *, title: Union[str, None], options: Dict[discord.SelectOption, List[Page]], disabled: bool=False) -> None:
         self._menu: Optional[ViewMenu] = None
@@ -155,8 +153,6 @@ class ViewSelect(discord.ui.Select):
             - Set an ellipsis to have the library automatically assign all page numbers to the amount of pages that you've added to the menu.
             
         NOTE: Setting the `page_numbers` parameter to an ellipsis (...) only works as intended if you've added the go to select AFTER you've added pages to the menu
-        
-            .. added:: v3.1.0
         """
         def __init__(self, *, title: Union[str, None], page_numbers: Union[List[int], Dict[int, Union[str, discord.Emoji, discord.PartialEmoji]], ellipsis]) -> None:
             self.callback = self._select_go_to_callback
@@ -303,8 +299,6 @@ class ViewMenu(_BaseMenu):
         Returns
         -------
         List[:class:`ViewSelect`]: All selects that have been added to the menu
-        
-            .. added:: v3.1.0
         """
         return self.__selects
     
@@ -314,8 +308,6 @@ class ViewMenu(_BaseMenu):
         Returns
         -------
         List[:class:`ViewSelect.GoTo`]: All go to selects that have been added to the menu
-        
-            .. added:: v3.1.0
         """
         return self._gotos
     
@@ -377,8 +369,6 @@ class ViewMenu(_BaseMenu):
         - `NoPages`: The menu was started when no pages have been added
         - `NoButtons`: Attempted to start the menu when no Buttons have been registered
         - `IncorrectType`: All items in :param:`pages` were not of type :class:`discord.Embed` or :class:`str`
-        
-            .. added v3.1.0
         """
         menu = cls(method, menu_type=cls._quick_check(pages))
         menu.add_pages(pages) # type: ignore
@@ -387,10 +377,7 @@ class ViewMenu(_BaseMenu):
         return menu
     
     def _should_persist(self, button: ViewButton) -> bool:
-        """Determine if a link button should stay enabled/remain on the menu when it times out or is stopped
-
-            .. added:: v3.1.0
-        """
+        """Determine if a link button should stay enabled/remain on the menu when it times out or is stopped"""
         return True if all([
             button.custom_id is None,
             button.url,
@@ -481,8 +468,6 @@ class ViewMenu(_BaseMenu):
         Raises
         ------
         - `IncorrectType`: The :param:`func` argument provided was not callable
-        
-            .. added:: v3.1.0
         """
         
         if callable(func):
@@ -491,10 +476,7 @@ class ViewMenu(_BaseMenu):
             raise IncorrectType('When setting the relay for a select option, argument "func" must be callable')
     
     def remove_select_option_relay(self) -> None:
-        """Remove the select option relay that's been set
-        
-            .. added:: v3.1.0
-        """
+        """Remove the select option relay that's been set"""
         self._options_relay_info = None
     
     @ensure_not_primed
@@ -510,8 +492,6 @@ class ViewMenu(_BaseMenu):
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
         - `ViewMenuException`:  The `menu_type` was not of :attr:`TypeEmbed`. The "embed" parameter in a :class:`Page` was not set. Or both :class:`ViewSelect` and a :class:`ViewSelect.GoTo` were being used
-
-            .. added:: v3.1.0
         """
         if self._gotos:
             raise ViewMenuException('Category selects cannot be used in conjunction with go to selects')
@@ -546,8 +526,6 @@ class ViewMenu(_BaseMenu):
         Raises
         ------
         - `SelectNotFound`: The provided select was not found in the list of selects on the menu
-        
-            .. added:: v3.1.0
         """
         if select in self.__selects:
             select._menu = None
@@ -557,10 +535,7 @@ class ViewMenu(_BaseMenu):
             raise SelectNotFound('Cannot remove a select that is not registered')
     
     def remove_all_selects(self) -> None:
-        """Remove all selects from the menu
-        
-            .. added:: v3.1.0
-        """
+        """Remove all selects from the menu"""
         while self.__selects:
             self.remove_select(self.__selects[0])
 
@@ -575,8 +550,6 @@ class ViewMenu(_BaseMenu):
         Raises
         ------
         - `SelectNotFound`: The provided select was not found in the list of selects on the menu
-        
-            .. added:: v3.1.0
         """
         if select in self.__selects:
             select.disabled = True
@@ -584,10 +557,7 @@ class ViewMenu(_BaseMenu):
             raise SelectNotFound('Cannot disable a select that is not registered')
     
     def disable_all_selects(self) -> None:
-        """Disable all selects on the menu
-        
-            .. added:: v3.1.0
-        """
+        """Disable all selects on the menu"""
         for select in self.__selects:
             select.disabled = True
     
@@ -602,8 +572,6 @@ class ViewMenu(_BaseMenu):
         Raises
         ------
         - `SelectNotFound`: The provided select was not found in the list of selects on the menu
-        
-            .. added:: v3.1.0
         """
         if select in self.__selects:
             select.disabled = False
@@ -611,10 +579,7 @@ class ViewMenu(_BaseMenu):
             raise SelectNotFound('Cannot enable a select that is not registered')
     
     def enable_all_selects(self) -> None:
-        """Enable all selects on the menu
-        
-            .. added:: v3.1.0
-        """
+        """Enable all selects on the menu"""
         for select in self.__selects:
             self.enable_select(select)
     
@@ -652,9 +617,7 @@ class ViewMenu(_BaseMenu):
         Raises
         ------
         - `MenuAlreadyRunning`: Attempted to call method after the menu has already started
-        - `ViewMenuException`:  A :class:`ViewSelect` was already added to the menu. A :class:`ViewSelect` and a :class:`ViewSelect.GoTo` cannot both be used on a single menu 
-
-            .. added:: v3.1.0
+        - `ViewMenuException`:  A :class:`ViewSelect` was already added to the menu. A :class:`ViewSelect` and a :class:`ViewSelect.GoTo` cannot both be used on a single menu
         """
         if not self.__selects:
             goto._menu = self
@@ -673,17 +636,12 @@ class ViewMenu(_BaseMenu):
         ----------
         goto: :class:`ViewSelect.GoTo`
             The go to select to enable
-        
-            .. added:: v3.1.0
         """
         if goto in self._gotos:
             goto.disabled = False
     
     def enable_all_go_to_selects(self) -> None:
-        """Enable all go to selects
-        
-            .. added:: v3.1.0
-        """
+        """Enable all go to selects"""
         for goto in self._gotos:
             goto.disabled = False
     
@@ -694,17 +652,12 @@ class ViewMenu(_BaseMenu):
         ----------
         goto: :class:`ViewSelect.GoTo`
             The go to select to disable
-        
-            .. added:: v3.1.0
         """
         if goto in self._gotos:
             goto.disabled = True
     
     def disable_all_go_to_selects(self) -> None:
-        """Disable all go to selects
-        
-            .. added:: v3.1.0
-        """
+        """Disable all go to selects"""
         for goto in self._gotos:
             goto.disabled = True
     
@@ -719,8 +672,6 @@ class ViewMenu(_BaseMenu):
         Raises
         ------
         - `SelectNotFound`: The provided go to select was not found in the list of selects on the menu
-        
-            .. added:: v3.1.0
         """
         if goto in self._gotos:
             goto._menu = None
@@ -730,10 +681,7 @@ class ViewMenu(_BaseMenu):
             raise SelectNotFound('Cannot remove a go to select that is not registered')
 
     def remove_all_go_to_selects(self) -> None:
-        """Remove all go to selects from the menu
-        
-            .. added:: v3.1.0
-        """
+        """Remove all go to selects from the menu"""
         while self._gotos:
             self.remove_go_to_select(self._gotos[0])
     
@@ -1288,10 +1236,7 @@ class ViewMenu(_BaseMenu):
                 await self._handle_on_timeout()
     
     def _override_dm_settings(self) -> None:
-        """If a menu session is in a direct message the following settings are disabled/changed because of discord limitations and resource/safety reasons
-        
-            .. added:: v3.1.0
-        """
+        """If a menu session is in a direct message the following settings are disabled/changed because of discord limitations and resource/safety reasons"""
         if self.in_dms:
             # Can't delete someone else's message in DMs
             if self.delete_interactions:
@@ -1306,10 +1251,7 @@ class ViewMenu(_BaseMenu):
                 self.timeout = 60.0
     
     def __generate_viewmenu_payload(self) -> dict:
-        """Creates the parameters needed for :meth:`discord.Messageable.send()`
-        
-            .. added:: v3.1.0
-        """
+        """Creates the parameters needed for :meth:`discord.Messageable.send()`"""
         return {
             "content" : self._pages[0].content if self._pages else None,
             "embed" : self._pages[0].embed if self._pages else discord.utils.MISSING,

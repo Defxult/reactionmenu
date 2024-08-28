@@ -89,8 +89,5 @@ class ButtonNotFound(MenuException):
 	pass
 
 class SelectNotFound(MenuException):
-	"""Raised when :meth:`.remove_select()` did not find any matching selects
-	
-		.. added:: v3.1.0
-	"""
+	"""Raised when :meth:`.remove_select()` did not find any matching selects"""
 	pass

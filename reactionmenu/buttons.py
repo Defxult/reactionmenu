@@ -99,9 +99,6 @@ class ViewButton(discord.ui.Button, _BaseButton):
 	
 	persist: :class:`bool`
 		Available only when using link buttons. This prevents link buttons from being disabled/removed when the menu times out or is stopped so they can remain clickable
-	
-		.. added v3.1.0
-			:param:`persist`
 	"""
 	ID_NEXT_PAGE: Final[str] = '0'
 	ID_PREVIOUS_PAGE: Final[str] = '1'
@@ -454,8 +451,6 @@ class ViewButton(discord.ui.Button, _BaseButton):
 		Returns
 		-------
 		List[:class:`ViewButton`]
-
-			.. added:: v3.1.0
 		"""
 		return [
 			cls(style=discord.ButtonStyle.gray, emoji='⏪', custom_id=cls.ID_GO_TO_FIRST_PAGE),
